@@ -1,0 +1,16 @@
+{
+  "name": "devconnect-deliverables",
+  "version": "1.0.0",
+  "description": "PDF Report and PPTX Presentation generators for DevConnect midterm",
+  "scripts": {
+    "pdf": "node generate-pdf.js",
+    "pptx": "node generate-pptx.js",
+    "all": "node generate-pdf.js && node generate-pptx.js"
+  },
+  "dependencies": {
+    "pptxgenjs": "^3.12.0",
+    "puppeteer": "^22.0.0",
+    "marked": "^12.0.0",
+    "gray-matter": "^4.0.3"
+  }
+}

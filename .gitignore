@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+*.iml
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Docker volumes
+pgdata/
+redisdata/
+
+# IDE
+.vscode/
+*.swp
+*.swo
+
+# Misc
+.gitnexus/

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevConnect — Tài Liệu Kỹ Thuật</title>
+  <meta name="description" content="DevConnect: Mạng xã hội cho lập trình viên. 20 màn hình, 23 tính năng, Flutter + NestJS + AI. Tài liệu kỹ thuật chi tiết.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- ===== HEADER ===== -->
+  <header class="header" id="header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <svg class="header-logo" viewBox="0 0 32 32" fill="none"><path d="M8 8l-4 8 4 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 8l4 8-4 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 6l-6 20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        <h1 class="header-title">DevConnect</h1>
+
+      </div>
+      <nav class="header-nav">
+        <a href="#screens">Màn hình</a>
+        <a href="#architecture">Kiến trúc</a>
+        <a href="#techstack">Công nghệ</a>
+        <a href="#features-detail">Tính năng</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===== OVERVIEW BAR ===== -->
+  <section class="overview" id="overview">
+    <div class="overview-inner">
+      <p class="overview-desc">Mạng xã hội dành riêng cho lập trình viên — nơi chia sẻ code, tìm mentor, và cộng tác dự án cùng nhau. Xây dựng bằng Flutter (ứng dụng di động) + NestJS (máy chủ API) + Trí tuệ nhân tạo.</p>
+      <div class="overview-stats">
+        <div class="stat"><span class="stat-num">20</span><span class="stat-label">Màn hình</span></div>
+        <div class="stat"><span class="stat-num">23</span><span class="stat-label">Tính năng</span></div>
+        <div class="stat"><span class="stat-num">3</span><span class="stat-label">Cơ sở dữ liệu</span></div>
+        <div class="stat"><span class="stat-num">10</span><span class="stat-label">Công nghệ</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SCREEN GALLERY ===== -->
+  <section class="section" id="screens">
+    <div class="section-header">
+      <h2>20 Màn hình ứng dụng</h2>
+      <p>Nhấn vào bất kỳ màn hình nào để xem chi tiết kỹ thuật và các tính năng liên quan</p>
+    </div>
+    <div class="filter-bar" id="filterBar">
+      <!-- JS tạo nút lọc -->
+    </div>
+    <div class="screen-grid" id="screenGrid">
+      <!-- JS tạo thẻ màn hình -->
+    </div>
+  </section>
+
+  <!-- ===== ARCHITECTURE ===== -->
+  <section class="section" id="architecture">
+    <div class="section-header">
+      <h2>Kiến trúc hệ thống</h2>
+      <p>Toàn bộ hệ thống được chia thành 4 phần chính, hoạt động phối hợp với nhau</p>
+    </div>
+    <div class="arch-grid">
+      <div class="arch-card">
+        <div class="arch-card-header">
+          <span class="arch-icon">📱</span>
+          <h3>Ứng dụng di động</h3>
+        </div>
+        <div class="arch-card-body">
+          <code>Flutter 3.x + Dart</code>
+          <ul>
+            <li>Quản lý trạng thái bằng Riverpod</li>
+            <li>Gọi API qua Dio (tự động refresh token)</li>
+            <li>Kết nối thời gian thực qua Socket.io</li>
+            <li>Ảnh tự cache, tải nhanh lần 2</li>
+            <li>Hiệu ứng loading dạng xương (skeleton)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-card-header">
+          <span class="arch-icon">⚡</span>
+          <h3>Máy chủ API</h3>
+        </div>
+        <div class="arch-card-body">
+          <code>NestJS + TypeScript</code>
+          <ul>
+            <li>API RESTful + kênh WebSocket thời gian thực</li>
+            <li>Xác thực JWT, token tự động làm mới</li>
+            <li>Giới hạn tốc độ truy cập (chống spam)</li>
+            <li>Xử lý tác vụ nền bằng BullMQ</li>
+            <li>Đóng gói Docker, dễ triển khai</li>
+          </ul>
+        </div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-card-header">
+          <span class="arch-icon">🗄️</span>
+          <h3>Tầng dữ liệu</h3>
+        </div>
+        <div class="arch-card-body">
+          <code>PostgreSQL + MongoDB + Redis</code>
+          <ul>
+            <li><strong>PostgreSQL:</strong> người dùng, bài viết, theo dõi, tương tác</li>
+            <li><strong>MongoDB:</strong> tin nhắn chat (linh hoạt, ghi nhanh)</li>
+            <li><strong>Redis:</strong> bộ nhớ đệm, giới hạn tốc độ, trạng thái online</li>
+            <li><strong>VPS Storage:</strong> lưu trữ ảnh và media (chia thư mục)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-card-header">
+          <span class="arch-icon">🤖</span>
+          <h3>Trí tuệ nhân tạo</h3>
+        </div>
+        <div class="arch-card-body">
+          <code>Proxy AI open-source + SVD (scipy)</code>
+          <ul>
+            <li>Đánh giá code: tìm lỗi, chấm điểm 1-10</li>
+            <li>Giải thích code: 3 cấp độ (mới học → chuyên gia)</li>
+            <li>Ghép cặp mentor: chấm điểm tương thích kỹ năng</li>
+            <li>Gợi ý bài viết: thuật toán SVD + lọc cộng tác</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Luồng dữ liệu -->
+    <div class="arch-flow">
+      <h3>Luồng xử lý dữ liệu</h3>
+      <pre class="code-block">Ứng dụng Flutter  →  Máy chủ NestJS API  →  PostgreSQL (dữ liệu chính)
+       ↕                    ↕                    MongoDB (dữ liệu chat)
+  Socket.io           Tác vụ nền BullMQ         Redis (bộ nhớ đệm)
+       ↕                    ↕                    VPS Storage (ảnh/video, chia thư mục)
+  Thời gian thực      Firebase FCM              Proxy AI open-source (AI đánh giá code)</pre>
+    </div>
+
+    <!-- Nguyên tắc xuyên suốt -->
+    <div class="principles-header">
+      <h3>6 Nguyên tắc xử lý xuyên suốt</h3>
+      <p>Áp dụng cho toàn bộ hệ thống, không riêng tính năng nào</p>
+    </div>
+    <div class="principles-grid">
+      <div class="principle-card">
+        <h4>📄 Phân trang thông minh</h4>
+        <p>Không tải hết dữ liệu — chỉ lấy 20 mục mỗi lần. Cuộn xuống → tự tải thêm. Dùng "con trỏ" thay vì số trang để tránh lặp dữ liệu.</p>
+        <code>Lấy 21 dòng, hiện 20, dòng 21 = biết còn tiếp hay không</code>
+      </div>
+      <div class="principle-card">
+        <h4>🛡️ Giới hạn tốc độ</h4>
+        <p>Chống spam và tấn công — mỗi IP chỉ được gửi tối đa 100 yêu cầu/phút. Đăng nhập sai: tối đa 5 lần/phút. Đăng bài: 10 lần/phút.</p>
+        <code>Vượt giới hạn → trả lỗi 429 "Quá nhiều yêu cầu"</code>
+      </div>
+      <div class="principle-card">
+        <h4>⚡ Bộ nhớ đệm Redis</h4>
+        <p>Dữ liệu hay truy cập được lưu tạm trong Redis (bộ nhớ siêu nhanh). Lần sau truy cập → trả ngay từ Redis, không cần hỏi database.</p>
+        <code>Có trong cache → trả ngay | Không có → hỏi DB → lưu cache</code>
+      </div>
+      <div class="principle-card">
+        <h4>✨ Giao diện phản hồi tức thì</h4>
+        <p>Khi bấm "Thích" hay "Theo dõi" → giao diện thay đổi NGAY LẬP TỨC, không đợi máy chủ. Nếu máy chủ báo lỗi → tự hoàn tác.</p>
+        <code>Bấm Like → trái tim đỏ ngay → API chạy nền → lỗi? → hoàn tác</code>
+      </div>
+      <div class="principle-card">
+        <h4>🔌 Kết nối thời gian thực</h4>
+        <p>WebSocket giữ kênh mở liên tục — tin nhắn mới, thông báo, trạng thái online đều cập nhật tức thì, không cần tải lại trang.</p>
+        <code>Mất kết nối → tự kết nối lại: 1s → 2s → 4s → tối đa 30s</code>
+      </div>
+      <div class="principle-card">
+        <h4>🖼️ Xử lý ảnh thông minh</h4>
+        <p>Ảnh upload → tự nén và tạo 2 phiên bản: ảnh nhỏ (xem nhanh trong danh sách) + ảnh gốc (xem chi tiết). Lưu trên VPS theo thư mục.</p>
+        <code>Upload → nén 1200px → tạo thumb 300px + gốc → lưu /uploads/</code>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TECH STACK TABLE ===== -->
+  <section class="section" id="techstack">
+    <div class="section-header">
+      <h2>Công nghệ sử dụng</h2>
+      <p>14 công nghệ production-grade cho nền tảng mạng xã hội lập trình viên</p>
+    </div>
+    <table class="tech-table">
+      <thead>
+        <tr>
+          <th>Công nghệ</th>
+          <th>Phân loại</th>
+          <th>Vai trò</th>
+          <th>Chi tiết sử dụng</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Flutter 3.x</strong></td>
+          <td><span class="tag tag--blue">Giao diện</span></td>
+          <td>Ứng dụng di động</td>
+          <td>Viết 1 lần chạy cả Android + iOS. Quản lý trạng thái Riverpod, gọi API qua Dio, ảnh tự cache</td>
+        </tr>
+        <tr>
+          <td><strong>Dart</strong></td>
+          <td><span class="tag tag--blue">Giao diện</span></td>
+          <td>Ngôn ngữ lập trình</td>
+          <td>Ngôn ngữ của Flutter, hỗ trợ null safety, xử lý bất đồng bộ tốt</td>
+        </tr>
+        <tr>
+          <td><strong>NestJS</strong></td>
+          <td><span class="tag tag--red">Máy chủ</span></td>
+          <td>API + WebSocket</td>
+          <td>Framework phía máy chủ, kiến trúc module. Guards (bảo vệ), Pipes (kiểm tra dữ liệu), WebSocket Gateway</td>
+        </tr>
+        <tr>
+          <td><strong>TypeScript</strong></td>
+          <td><span class="tag tag--red">Máy chủ</span></td>
+          <td>Ngôn ngữ lập trình</td>
+          <td>JavaScript nâng cao, kiểm tra kiểu dữ liệu tại lúc viết code, giảm lỗi runtime</td>
+        </tr>
+        <tr>
+          <td><strong>PostgreSQL</strong></td>
+          <td><span class="tag tag--green">CSDL</span></td>
+          <td>Cơ sở dữ liệu chính</td>
+          <td>Lưu người dùng, bài viết, theo dõi, tương tác, thông báo. Tìm kiếm full-text (tsvector + GIN). ORM Prisma</td>
+        </tr>
+        <tr>
+          <td><strong>MongoDB</strong></td>
+          <td><span class="tag tag--green">CSDL</span></td>
+          <td>Cơ sở dữ liệu chat</td>
+          <td>Lưu hội thoại + tin nhắn. Schema linh hoạt (text/ảnh/code/reactions). Tối ưu ghi nhanh liên tục</td>
+        </tr>
+        <tr>
+          <td><strong>Redis</strong></td>
+          <td><span class="tag tag--green">CSDL</span></td>
+          <td>Bộ nhớ đệm + thời gian thực</td>
+          <td>Cache feed (5 phút), profile (10 phút). Đếm giới hạn truy cập. Lưu trạng thái online</td>
+        </tr>
+        <tr>
+          <td><strong>VPS Storage</strong></td>
+          <td><span class="tag tag--purple">Lưu trữ</span></td>
+          <td>Lưu trữ file trên VPS</td>
+          <td>Avatar, ảnh bài viết. Chia thư mục: /uploads/avatars/, /uploads/posts/, /uploads/chat/. Tạo 2 phiên bản: thumb + gốc. Nginx phục vụ file tĩnh</td>
+        </tr>
+        <tr>
+          <td><strong>Proxy AI open-source</strong></td>
+          <td><span class="tag tag--mint">AI</span></td>
+          <td>Trí tuệ nhân tạo</td>
+          <td>Đánh giá code (chấm điểm 1-10, tìm lỗi), giải thích code (3 cấp độ), ghép mentor. Miễn phí: 15 yêu cầu/phút</td>
+        </tr>
+        <tr>
+          <td><strong>Firebase FCM</strong></td>
+          <td><span class="tag tag--orange">Dịch vụ</span></td>
+          <td>Thông báo đẩy</td>
+          <td>Gửi thông báo khi người dùng offline. Hỗ trợ Android + iOS. Badge đếm số, nhấn vào → mở đúng bài viết</td>
+        </tr>
+        <tr>
+          <td><strong>Docker</strong></td>
+          <td><span class="tag tag--gray">Vận hành</span></td>
+          <td>Đóng gói ứng dụng</td>
+          <td>Gói toàn bộ hệ thống vào container, chạy ở đâu cũng được. Compose: API, PostgreSQL, MongoDB, Redis</td>
+        </tr>
+        <tr>
+          <td><strong>BullMQ</strong></td>
+          <td><span class="tag tag--red">Máy chủ</span></td>
+          <td>Hàng đợi tác vụ</td>
+          <td>Xử lý nền: tái tính feed (15 phút), SVD (6 giờ), gửi email, gộp thông báo, dọn dẹp ảnh lẻ</td>
+        </tr>
+        <tr>
+          <td><strong>scipy (SVD)</strong></td>
+          <td><span class="tag tag--mint">AI</span></td>
+          <td>Thuật toán gợi ý</td>
+          <td>Phân tích hành vi người dùng (xem/thích/lưu) → tìm bài viết phù hợp. Kết hợp: SVD 50% + nội dung 30% + mới 10% + bạn bè 10%</td>
+        </tr>
+        <tr>
+          <td><strong>Judge0 API</strong></td>
+          <td><span class="tag tag--orange">Dịch vụ</span></td>
+          <td>Chạy code trực tuyến</td>
+          <td>Sân chơi code an toàn — chạy Python, JS, Dart, C++. Cách ly hoàn toàn (không mạng, giới hạn RAM). Miễn phí 50 lần/ngày</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== FEATURES DETAIL ===== -->
+  <section class="section" id="features-detail">
+    <div class="section-header">
+      <h2>23 Tính năng — Chi tiết kỹ thuật</h2>
+      <p>Mỗi tính năng ghi rõ: cách hoạt động, luồng xử lý, API, cơ sở dữ liệu, tình huống đặc biệt</p>
+    </div>
+    <div class="features-filter" id="featuresFilter">
+      <!-- JS tạo nút lọc -->
+    </div>
+    <div class="features-list" id="featuresList">
+      <!-- JS tạo danh sách -->
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>DevConnect</span>
+      <span>Flutter + NestJS + PostgreSQL + MongoDB + Redis + Proxy AI open-source</span>
+    </div>
+  </footer>
+
+  <!-- ===== MODAL ===== -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+      <div class="modal-top">
+        <button class="modal-close" id="modalClose" aria-label="Đóng">
+          <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <span class="modal-counter" id="modalCounter">1/20</span>
+        <div class="modal-nav">
+          <button class="modal-nav-btn" id="modalPrev" aria-label="Trước">
+            <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="modal-nav-btn" id="modalNext" aria-label="Tiếp">
+            <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="modal-preview">
+          <img src="" alt="" id="modalImage" class="modal-img">
+          <div class="modal-zoom">
+            <button class="zoom-btn" id="zoomIn" aria-label="Phóng to">+</button>
+            <button class="zoom-btn" id="zoomOut" aria-label="Thu nhỏ">−</button>
+            <button class="zoom-btn" id="zoomReset" aria-label="Về gốc">⟲</button>
+          </div>
+        </div>
+        <div class="modal-info">
+          <h2 class="modal-title" id="modalTitle">Màn hình</h2>
+          <p class="modal-desc" id="modalDesc">Mô tả</p>
+          <div class="modal-patterns" id="modalPatterns"></div>
+          <div class="modal-features-label">Các tính năng liên quan</div>
+          <div class="modal-features" id="modalFeatures"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

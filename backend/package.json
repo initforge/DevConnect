@@ -1,0 +1,26 @@
+{
+  "name": "devconnect-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Backend API for DevConnect Mobile using Node.js and PostgreSQL.",
+  "type": "commonjs",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test:api": "node scripts/test_api.js",
+    "test:login": "node scripts/test_login.js",
+    "seed:users": "node scripts/seed_users.js",
+    "seed:db": "psql $DATABASE_URL -f init.sql && psql $DATABASE_URL -f seed.sql",
+    "update:passwords": "node scripts/update_passwords.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.12.0",
+    "ws": "^8.18.0"
+  }
+}

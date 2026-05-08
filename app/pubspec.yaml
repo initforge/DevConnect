@@ -1,0 +1,63 @@
+name: devconnect
+description: "Midterm phase mobile app for DevConnect"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  
+  # State Management - Riverpod only (removed Provider)
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+  
+  # Networking
+  dio: ^5.9.2
+  web_socket_channel: ^3.0.0
+  
+  # Routing
+  go_router: ^17.0.0
+  
+  # UI
+  cached_network_image: ^3.4.1
+  shimmer: ^3.0.0
+  google_fonts: ^6.3.2
+  flutter_markdown: ^0.7.7+1
+  
+  # Storage
+  shared_preferences: ^2.5.3
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
+  
+  # Utilities
+  intl: ^0.20.2
+  equatable: ^2.0.8
+  connectivity_plus: ^6.0.5
+  image_picker: ^1.1.2
+  share_plus: ^10.1.4
+  
+  # Code Generation Support
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  
+  # Code Generation
+  build_runner: ^2.4.8
+  json_serializable: ^6.9.0
+  riverpod_generator: ^2.6.3
+  
+  # Testing
+  mockito: ^5.4.4
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

@@ -1,0 +1,85 @@
+# DevConnect Full Stack (Backend + Postgres + Redis + Flutter)
+services:
+  # ========== BACKEND (Node.js API) ==========
+  backend:
+    image: devconnect/backend:local
+    container_name: devconnect_backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgresql://devconnect:devconnect123@postgres:5432/devconnect
+      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=development
+      - PORT=8080
+      - JWT_SECRET=devconnect-secret-key-2024
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - devconnect_network
+
+  # ========== POSTGRESQL ==========
+  postgres:
+    image: postgres:16-alpine
+    container_name: devconnect_postgres
+    environment:
+      - POSTGRES_DB=devconnect
+      - POSTGRES_USER=devconnect
+      - POSTGRES_PASSWORD=devconnect123
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devconnect -d devconnect"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - devconnect_network
+
+  # ========== REDIS ==========
+  redis:
+    image: redis:7-alpine
+    container_name: devconnect_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    restart: unless-stopped
+    networks:
+      - devconnect_network
+
+  # ========== FLUTTER TEST ENVIRONMENT ==========
+  # Dùng để chạy integration tests hoặc build trong môi trường sạch
+  flutter-test:
+    build:
+      context: .
+      dockerfile: docker/flutter/Dockerfile
+    container_name: devconnect_flutter_test
+    environment:
+      - API_BASE_URL=http://backend:8080
+      - WS_BASE_URL=ws://backend:8080
+    volumes:
+      - ./app:/app
+    working_dir: /app
+    command: sleep infinity
+    networks:
+      - devconnect_network
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  devconnect_network:
+    driver: bridge
