@@ -7,11 +7,13 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('Hành trình người dùng (Full User Journey)', () {
-    testWidgets('TC-JOURNEY-01: Từ Đăng ký mới đến khi sử dụng hết tính năng', (tester) async {
+    testWidgets('TC-JOURNEY-01: Từ Đăng ký mới đến khi sử dụng hết tính năng', (
+      tester,
+    ) async {
       await app.main();
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
-      print('🚀 Khởi hành: Đăng ký tài khoản mới');
+      debugPrint('🚀 Khởi hành: Đăng ký tài khoản mới');
       final registerLink = find.text('Đăng ký ngay');
       await tester.tap(registerLink);
       await tester.pumpAndSettle();
@@ -28,7 +30,7 @@ void main() {
       await tester.tap(find.widgetWithText(ElevatedButton, 'Hoàn tất đăng ký'));
       await tester.pumpAndSettle(const Duration(seconds: 5));
 
-      print('✨ Onboarding: Chọn sở thích');
+      debugPrint('✨ Onboarding: Chọn sở thích');
       // Chọn vài chip
       final chips = find.byType(GestureDetector);
       if (chips.evaluate().length >= 3) {
@@ -41,28 +43,34 @@ void main() {
       await tester.tap(find.text('Bắt đầu ngay'));
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
-      print('📝 Content: Tạo bài viết đầu tiên');
+      debugPrint('📝 Content: Tạo bài viết đầu tiên');
       await tester.tap(find.byType(FloatingActionButton));
       await tester.pumpAndSettle();
       final postFields = find.byType(TextField);
       await tester.enterText(postFields.first, 'Chào thế giới từ E2E!');
-      await tester.enterText(postFields.last, 'Đây là bài viết đầu tiên được tạo tự động bởi hành trình người dùng.');
+      await tester.enterText(
+        postFields.last,
+        'Đây là bài viết đầu tiên được tạo tự động bởi hành trình người dùng.',
+      );
       await tester.tap(find.text('Đăng bài'));
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
-      print('💬 Social: Gửi tin nhắn chào mừng');
+      debugPrint('💬 Social: Gửi tin nhắn chào mừng');
       final destinations = find.byType(NavigationDestination);
       await tester.tap(destinations.at(2)); // Tab Chat
       await tester.pumpAndSettle(const Duration(seconds: 2));
       await tester.tap(find.byType(ListTile).first);
       await tester.pumpAndSettle(const Duration(seconds: 1));
-      await tester.enterText(find.byType(TextField), 'Chào bạn, tôi là người mới!');
+      await tester.enterText(
+        find.byType(TextField),
+        'Chào bạn, tôi là người mới!',
+      );
       await tester.tap(find.byIcon(Icons.send));
       await tester.pumpAndSettle();
       await tester.pageBack();
       await tester.pumpAndSettle();
 
-      print('💼 Career: Ứng tuyển việc làm');
+      debugPrint('💼 Career: Ứng tuyển việc làm');
       await tester.tap(destinations.at(1)); // Tab Explore
       await tester.pumpAndSettle(const Duration(seconds: 1));
       await tester.tap(find.text('Việc làm'));
@@ -72,7 +80,7 @@ void main() {
       await tester.pageBack();
       await tester.pumpAndSettle();
 
-      print('⚙️ Settings: Đổi giao diện sang Dark Mode');
+      debugPrint('⚙️ Settings: Đổi giao diện sang Dark Mode');
       await tester.tap(destinations.at(4)); // Tab Profile
       await tester.pumpAndSettle(const Duration(seconds: 1));
       await tester.tap(find.byIcon(Icons.settings_outlined));
@@ -80,12 +88,12 @@ void main() {
       await tester.tap(find.byType(Switch).first);
       await tester.pumpAndSettle();
 
-      print('🏁 Kết thúc: Đăng xuất');
+      debugPrint('🏁 Kết thúc: Đăng xuất');
       await tester.tap(find.text('Đăng xuất'));
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
       expect(find.text('Đăng nhập'), findsWidgets);
-      print('✅ HÀNH TRÌNH HOÀN TẤT: Toàn bộ hệ thống hoạt động hoàn hảo!');
+      debugPrint('✅ HÀNH TRÌNH HOÀN TẤT: Toàn bộ hệ thống hoạt động hoàn hảo!');
     });
   });
 }

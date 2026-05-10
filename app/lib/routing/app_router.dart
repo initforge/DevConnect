@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/screens/login_screen.dart';
@@ -9,6 +9,7 @@ import '../features/feed/screens/home_screen.dart';
 import '../features/feed/screens/post_detail_screen.dart';
 import '../features/feed/screens/create_post_screen.dart';
 import '../features/explore/screens/explore_screen.dart';
+import '../features/explore/screens/search_results_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/chat/screens/chat_list_screen.dart';
 import '../features/chat/screens/chat_screen.dart';
@@ -22,17 +23,22 @@ import '../features/playground/screens/playground_screen.dart';
 import '../features/playground/screens/live_code_screen.dart';
 import '../features/mentorship/screens/mentorship_screen.dart';
 import '../features/settings/screens/settings_screen.dart';
+import '../core/constants/routes.dart';
+import '../core/config/app_runtime_config.dart';
+import '../core/riverpod/providers.dart';
 import '../core/state/feed_refresh_bus.dart';
 import '../core/theme/app_colors.dart';
 import '../core/services/app_preferences.dart';
-import '../data/repositories/chat_repository.dart';
-import '../data/repositories/notification_repository.dart';
+import '../core/widgets/shared_widgets.dart';
 
-const bool kScreenshotMode = kDebugMode && bool.fromEnvironment('SCREENSHOT_MODE');
+const bool kScreenshotMode = AppRuntimeConfig.screenshotMode;
 
 final appRouter = GoRouter(
-  initialLocation: kScreenshotMode ? '/shot-lab' : '/login',
+  initialLocation: kScreenshotMode ? AppRoutes.shotLab : AppRoutes.login,
   redirect: (context, state) {
+    if (kScreenshotMode) {
+      return null;
+    }
     // AppPreferences may not be initialized yet during early redirects
     String? token;
     bool onboardingCompleted = false;
@@ -44,19 +50,26 @@ final appRouter = GoRouter(
       return null;
     }
     final isLoggedIn = token != null;
-    final isAuthRoute = state.uri.toString() == '/login' || state.uri.toString() == '/register' || state.uri.toString() == '/onboarding';
+    final isAuthRoute =
+        state.uri.toString() == AppRoutes.login ||
+        state.uri.toString() == AppRoutes.register ||
+        state.uri.toString() == AppRoutes.onboarding;
 
     if (!isLoggedIn && !isAuthRoute) {
-      return '/login';
+      return AppRoutes.login;
     }
-    if (isLoggedIn && (state.uri.toString() == '/login' || state.uri.toString() == '/register')) {
+    if (isLoggedIn &&
+        (state.uri.toString() == AppRoutes.login ||
+            state.uri.toString() == AppRoutes.register)) {
       // If logged in but onboarding not completed, go to onboarding
-      if (!onboardingCompleted) return '/onboarding';
-      return '/home';
+      if (!onboardingCompleted) return AppRoutes.onboarding;
+      return AppRoutes.home;
     }
     // If logged in and going to home, check onboarding status
-    if (isLoggedIn && state.uri.toString() == '/home' && !onboardingCompleted) {
-      return '/onboarding';
+    if (isLoggedIn &&
+        state.uri.toString() == AppRoutes.home &&
+        !onboardingCompleted) {
+      return AppRoutes.onboarding;
     }
     return null;
   },
@@ -64,60 +77,148 @@ final appRouter = GoRouter(
     if (kScreenshotMode)
       GoRoute(
         path: '/shot-lab',
-        name: 'shotLab',
+        name: AppRoutes.nameShotLab,
         builder: (_, __) => const ScreenshotLabScreen(),
       ),
     // Auth
-    GoRoute(path: '/login', name: 'login', builder: (_, __) => const LoginScreen()),
-    GoRoute(path: '/register', name: 'register', builder: (_, __) => const RegisterScreen()),
-    GoRoute(path: '/onboarding', name: 'onboarding', builder: (_, __) => const OnboardingScreen()),
+    GoRoute(
+      path: AppRoutes.login,
+      name: AppRoutes.nameLogin,
+      builder: (_, __) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.register,
+      name: AppRoutes.nameRegister,
+      builder: (_, __) => const RegisterScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.onboarding,
+      name: AppRoutes.nameOnboarding,
+      builder: (_, __) => const OnboardingScreen(),
+    ),
 
     // Main app — Bottom navigation shell
     ShellRoute(
       builder: (context, state, child) => _MainShell(child: child),
       routes: [
-        GoRoute(path: '/home', name: 'home', builder: (_, __) => const HomeScreen()),
-        GoRoute(path: '/explore', name: 'explore', builder: (_, __) => const ExploreScreen()),
-        GoRoute(path: '/chat', name: 'chatList', builder: (_, __) => const ChatListScreen()),
-        GoRoute(path: '/notifications', name: 'notifications', builder: (_, __) => const NotificationsScreen()),
-        GoRoute(path: '/profile', name: 'profile', builder: (_, __) => const ProfileScreen()),
+        GoRoute(
+          path: AppRoutes.home,
+          name: AppRoutes.nameHome,
+          builder: (_, __) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.explore,
+          name: AppRoutes.nameExplore,
+          builder: (_, __) => const ExploreScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.chat,
+          name: AppRoutes.nameChatList,
+          builder: (_, __) => const ChatListScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.notifications,
+          name: AppRoutes.nameNotifications,
+          builder: (_, __) => const NotificationsScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.profile,
+          name: AppRoutes.nameProfile,
+          builder:
+              (_, __) =>
+                  kScreenshotMode
+                      ? const ProfileScreen(userId: 'u1')
+                      : const ProfileScreen(),
+        ),
       ],
     ),
 
     // Detail screens
-    GoRoute(path: '/post/:id', name: 'postDetail',
-      builder: (_, state) => PostDetailScreen(postId: state.pathParameters['id']!)),
-    GoRoute(path: '/create-post', name: 'createPost', builder: (_, __) => const CreatePostScreen()),
-    GoRoute(path: '/chat/:id', name: 'chatScreen',
-      builder: (_, state) => ChatScreen(conversationId: state.pathParameters['id']!)),
-    GoRoute(path: '/user/:id', name: 'userProfile',
-      builder: (_, state) => ProfileScreen(userId: state.pathParameters['id'])),
+    GoRoute(
+      path: AppRoutes.postDetail,
+      name: AppRoutes.namePostDetail,
+      builder:
+          (_, state) => PostDetailScreen(postId: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: AppRoutes.createPost,
+      name: AppRoutes.nameCreatePost,
+      builder: (_, __) => const CreatePostScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.chatDetail,
+      name: AppRoutes.nameChatScreen,
+      builder:
+          (_, state) => ChatScreen(conversationId: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: AppRoutes.userProfile,
+      name: AppRoutes.nameUserProfile,
+      builder: (_, state) => ProfileScreen(userId: state.pathParameters['id']),
+    ),
+    GoRoute(
+      path: AppRoutes.search,
+      name: AppRoutes.nameSearch,
+      builder:
+          (_, state) => SearchResultsScreen(
+            initialQuery: state.uri.queryParameters['q'] ?? '',
+          ),
+    ),
 
     // Features
-    GoRoute(path: '/projects', name: 'projects', builder: (_, __) => const ProjectMarketplaceScreen()),
-    GoRoute(path: '/jobs', name: 'jobs', builder: (_, __) => const JobBoardScreen()),
-    GoRoute(path: '/leaderboard', name: 'leaderboard', builder: (_, __) => const LeaderboardScreen()),
-    GoRoute(path: '/analytics', name: 'analytics', builder: (_, __) => const AnalyticsScreen()),
-    GoRoute(path: '/playground', name: 'playground', builder: (_, __) => const PlaygroundScreen()),
-    GoRoute(path: '/live-code', name: 'liveCode', builder: (_, __) => const LiveCodeScreen()),
-    GoRoute(path: '/mentorship', name: 'mentorship', builder: (_, __) => const MentorshipScreen()),
-    GoRoute(path: '/settings', name: 'settings', builder: (_, __) => const SettingsScreen()),
+    GoRoute(
+      path: AppRoutes.projects,
+      name: AppRoutes.nameProjects,
+      builder: (_, __) => const ProjectMarketplaceScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.jobs,
+      name: AppRoutes.nameJobs,
+      builder: (_, __) => const JobBoardScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.leaderboard,
+      name: AppRoutes.nameLeaderboard,
+      builder: (_, __) => const LeaderboardScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.analytics,
+      name: AppRoutes.nameAnalytics,
+      builder: (_, __) => const AnalyticsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.playground,
+      name: AppRoutes.namePlayground,
+      builder: (_, __) => const PlaygroundScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.liveCode,
+      name: AppRoutes.nameLiveCode,
+      builder: (_, __) => const LiveCodeScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.mentorship,
+      name: AppRoutes.nameMentorship,
+      builder: (_, __) => const MentorshipScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.settings,
+      name: AppRoutes.nameSettings,
+      builder: (_, __) => const SettingsScreen(),
+    ),
   ],
 );
 
 /// Bottom Navigation Shell — hiện ở tất cả main tabs
-class _MainShell extends StatefulWidget {
+class _MainShell extends ConsumerStatefulWidget {
   final Widget child;
   const _MainShell({required this.child});
 
   @override
-  State<_MainShell> createState() => _MainShellState();
+  ConsumerState<_MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<_MainShell> {
-  final _chatRepository = ChatRepository();
-  final _notificationRepository = NotificationRepository();
-  
+class _MainShellState extends ConsumerState<_MainShell> {
   int _unreadChats = 0;
   int _unreadNotifications = 0;
 
@@ -129,11 +230,16 @@ class _MainShellState extends State<_MainShell> {
 
   Future<void> _loadUnreadCounts() async {
     try {
-      final conversations = await _chatRepository.getConversations();
-      final notifications = await _notificationRepository.getNotifications();
+      final chatRepository = ref.read(chatRepositoryProvider);
+      final notificationRepository = ref.read(notificationRepositoryProvider);
+      final conversations = await chatRepository.getConversations();
+      final notifications = await notificationRepository.getNotifications();
       if (mounted) {
         setState(() {
-          _unreadChats = conversations.fold<int>(0, (sum, c) => sum + c.unreadCount);
+          _unreadChats = conversations.fold<int>(
+            0,
+            (sum, c) => sum + c.unreadCount,
+          );
           _unreadNotifications = notifications.where((n) => !n.isRead).length;
         });
       }
@@ -150,78 +256,68 @@ class _MainShellState extends State<_MainShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: widget.child,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final created = await context.push<bool>('/create-post');
-          if (created == true) {
-            FeedRefreshBus.instance.refresh();
-          }
-        },
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        child: const Icon(Icons.edit),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _calcIndex(GoRouterState.of(context).uri.toString()),
-        onDestinationSelected: (i) {
-          switch (i) {
-            case 0: context.go('/home');
-            case 1: context.go('/explore');
-            case 2: context.go('/chat');
-            case 3: context.go('/notifications');
-            case 4: context.go('/profile');
-          }
-        },
-        animationDuration: const Duration(milliseconds: 300),
-        destinations: [
-          const NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Trang chủ',
+      floatingActionButton:
+          kScreenshotMode
+              ? null
+              : FloatingActionButton(
+                onPressed: () async {
+                  final created = await context.push<bool>('/create-post');
+                  if (created == true) {
+                    FeedRefreshBus.instance.refresh();
+                  }
+                },
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 4,
+                child: const Icon(Icons.edit),
+              ),
+      floatingActionButtonLocation:
+          kScreenshotMode ? null : FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: AppBottomNavBar(
+        items: const [
+          AppBottomNavItem(
+            icon: Icons.home_outlined,
+            selectedIcon: Icons.home,
+            label: 'Home',
+            route: AppRoutes.home,
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.explore_outlined),
-            selectedIcon: Icon(Icons.explore),
-            label: 'Khám phá',
+          AppBottomNavItem(
+            icon: Icons.explore_outlined,
+            selectedIcon: Icons.explore,
+            label: 'Explore',
+            route: AppRoutes.explore,
           ),
-          NavigationDestination(
-            icon: _buildBadge(_unreadChats, Icons.chat_bubble_outline),
-            selectedIcon: _buildBadge(_unreadChats, Icons.chat_bubble, selected: true),
+          AppBottomNavItem(
+            icon: Icons.chat_bubble_outline,
+            selectedIcon: Icons.chat_bubble,
             label: 'Chat',
+            route: AppRoutes.chat,
           ),
-          NavigationDestination(
-            icon: _buildBadge(_unreadNotifications, Icons.notifications_outlined),
-            selectedIcon: _buildBadge(_unreadNotifications, Icons.notifications, selected: true),
-            label: 'Thông báo',
+          AppBottomNavItem(
+            icon: Icons.notifications_outlined,
+            selectedIcon: Icons.notifications,
+            label: 'Notifications',
+            route: AppRoutes.notifications,
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Hồ sơ',
+          AppBottomNavItem(
+            icon: Icons.person_outline,
+            selectedIcon: Icons.person,
+            label: 'Profile',
+            route: AppRoutes.profile,
           ),
         ],
+        selectedIndex: _calcIndex(GoRouterState.of(context).uri.toString()),
+        currentRoute: GoRouterState.of(context).uri.toString(),
+        badgeCounts: {2: _unreadChats, 3: _unreadNotifications},
       ),
-    );
-  }
-
-  Widget _buildBadge(int count, IconData icon, {bool selected = false}) {
-    if (count == 0) {
-      return Icon(icon);
-    }
-    return Badge(
-      label: Text(count > 99 ? '99+' : '$count', style: const TextStyle(fontSize: 10)),
-      backgroundColor: count > 0 ? AppColors.error : AppColors.primary,
-      child: Icon(icon),
     );
   }
 
   int _calcIndex(String path) {
-    if (path.startsWith('/explore')) return 1;
-    if (path.startsWith('/chat')) return 2;
-    if (path.startsWith('/notifications')) return 3;
-    if (path.startsWith('/profile')) return 4;
+    if (path.startsWith(AppRoutes.explore)) return 1;
+    if (path.startsWith(AppRoutes.chat)) return 2;
+    if (path.startsWith(AppRoutes.notifications)) return 3;
+    if (path.startsWith(AppRoutes.profile)) return 4;
     return 0;
   }
 }

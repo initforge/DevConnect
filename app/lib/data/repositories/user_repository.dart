@@ -8,8 +8,8 @@ import '../mappers/model_mapper.dart';
 
 class UserRepository {
   UserRepository({AppDatabase? database, bool useApi = true})
-      : _database = database ?? AppDatabase.instance,
-        _useApi = useApi;
+    : _database = database ?? AppDatabase.instance,
+      _useApi = useApi;
 
   final AppDatabase _database;
   final bool _useApi;
@@ -23,7 +23,13 @@ class UserRepository {
   Future<List<User>> getAllUsers() async {
     if (_useApi) {
       final data = await ApiService.instance.get('/api/users');
-      final users = data.map((json) => ModelMappers.userFromJson(json as Map<String, dynamic>)).toList();
+      final users =
+          data
+              .map(
+                (json) =>
+                    ModelMappers.userFromJson(json as Map<String, dynamic>),
+              )
+              .toList();
       await _saveUsersToDb(users);
       return users;
     }
@@ -35,12 +41,23 @@ class UserRepository {
   Future<List<User>> getTopUsers({int limit = 6}) async {
     if (_useApi) {
       final data = await ApiService.instance.get('/api/users');
-      final users = data.take(limit).map((json) => ModelMappers.userFromJson(json as Map<String, dynamic>)).toList();
+      final users =
+          data
+              .take(limit)
+              .map(
+                (json) =>
+                    ModelMappers.userFromJson(json as Map<String, dynamic>),
+              )
+              .toList();
       await _saveUsersToDb(users);
       return users;
     }
     final db = await _database.database;
-    final rows = await db.query('users', orderBy: 'reputation DESC', limit: limit);
+    final rows = await db.query(
+      'users',
+      orderBy: 'reputation DESC',
+      limit: limit,
+    );
     return rows.map(ModelMappers.userFromRow).toList();
   }
 
@@ -52,7 +69,12 @@ class UserRepository {
       return user;
     }
     final db = await _database.database;
-    final rows = await db.query('users', where: 'id = ?', whereArgs: [id], limit: 1);
+    final rows = await db.query(
+      'users',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
     if (rows.isEmpty) return null;
     return ModelMappers.userFromRow(rows.first);
   }
@@ -61,7 +83,15 @@ class UserRepository {
     if (_useApi) {
       final data = await ApiService.instance.get('/api/leaderboard');
       final List<dynamic> dataList = data;
-      final users = dataList.map((item) => ModelMappers.userFromJson((item as Map<String, dynamic>)['user'] as Map<String, dynamic>)).toList();
+      final users =
+          dataList
+              .map(
+                (item) => ModelMappers.userFromJson(
+                  (item as Map<String, dynamic>)['user']
+                      as Map<String, dynamic>,
+                ),
+              )
+              .toList();
       await _saveUsersToDb(users);
       return users;
     }
@@ -73,8 +103,17 @@ class UserRepository {
   Future<List<User>> searchUsers(String query) async {
     if (query.length < 2) return [];
     if (_useApi) {
-      final data = await ApiService.instance.get('/api/users/search?q=${Uri.encodeComponent(query)}');
-      final users = data.map((json) => ModelMappers.userFromJson(json as Map<String, dynamic>)).toList();
+      final data = await ApiService.instance.get(
+        '/api/users/search',
+        queryParams: {'q': query},
+      );
+      final users =
+          data
+              .map(
+                (json) =>
+                    ModelMappers.userFromJson(json as Map<String, dynamic>),
+              )
+              .toList();
       return users;
     }
     final db = await _database.database;
@@ -90,11 +129,19 @@ class UserRepository {
 
   Future<bool> toggleFollow(String userId) async {
     if (_useApi) {
-      final result = await ApiService.instance.post('/api/users/$userId/follow', {});
+      final result = await ApiService.instance.post(
+        '/api/users/$userId/follow',
+        {},
+      );
       return result['following'] == true;
     }
     final db = await _database.database;
-    final rows = await db.query('users', where: 'id = ?', whereArgs: [userId], limit: 1);
+    final rows = await db.query(
+      'users',
+      where: 'id = ?',
+      whereArgs: [userId],
+      limit: 1,
+    );
     if (rows.isEmpty) return false;
     final isFollowed = (rows.first['is_followed_by_me'] as int? ?? 0) == 1;
     await db.update(
@@ -106,20 +153,72 @@ class UserRepository {
     return !isFollowed;
   }
 
+  Future<User> updateCurrentUser({
+    required String displayName,
+    String? bio,
+    List<String>? skills,
+  }) async {
+    final userId = AppPreferences.instance.user?['id']?.toString();
+    if (userId == null) {
+      throw Exception('User not logged in');
+    }
+
+    final data = await ApiService.instance.put('/api/users/$userId', {
+      'displayName': displayName,
+      'bio': bio ?? '',
+      if (skills != null) 'skills': skills,
+    });
+
+    final updatedUser = ModelMappers.userFromJson(data);
+    await _saveUserToDb(updatedUser);
+    await AppPreferences.instance.saveUser(data);
+    return updatedUser;
+  }
+
+  Future<void> deleteCurrentUser() async {
+    final userId = AppPreferences.instance.user?['id']?.toString();
+    if (userId == null) {
+      throw Exception('User not logged in');
+    }
+
+    await ApiService.instance.delete('/api/users/$userId');
+  }
+
+  Future<void> updateOnlineStatus(bool isOnline) async {
+    final userId = AppPreferences.instance.user?['id']?.toString();
+    if (userId == null) {
+      throw Exception('User not logged in');
+    }
+
+    final data = await ApiService.instance.put('/api/users/$userId', {
+      'isOnline': isOnline,
+    });
+
+    final updatedUser = ModelMappers.userFromJson(data);
+    await _saveUserToDb(updatedUser);
+    await AppPreferences.instance.saveUser(data);
+  }
+
   Future<void> _saveUsersToDb(List<User> users) async {
     final db = await _database.database;
     await db.transaction((txn) async {
       for (final user in users) {
-        await txn.insert('users', ModelMappers.userToRow(user),
-            conflictAlgorithm: ConflictAlgorithm.replace);
+        await txn.insert(
+          'users',
+          ModelMappers.userToRow(user),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
       }
     });
   }
 
   Future<void> _saveUserToDb(User user) async {
     final db = await _database.database;
-    await db.insert('users', ModelMappers.userToRow(user),
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert(
+      'users',
+      ModelMappers.userToRow(user),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   // Public mappers for testing

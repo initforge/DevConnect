@@ -7,12 +7,12 @@ class AppColors {
   // ============================================================
   // PRIMARY COLORS
   // ============================================================
-  
-  // Primary — Vibrant Blue
-  static const primary = Color(0xFF3B82F6);
-  static const primaryLight = Color(0xFF60A5FA);
-  static const primaryDark = Color(0xFF2563EB);
-  static const primarySurface = Color(0xFFEFF6FF);
+
+  // Primary — Showcase Purple
+  static const primary = Color(0xFF5B53F6);
+  static const primaryLight = Color(0xFF7C74FF);
+  static const primaryDark = Color(0xFF4F46E5);
+  static const primarySurface = Color(0xFFF3F0FF);
 
   // Accent — Teal / Mint
   static const accent = Color(0xFF00D9A6);
@@ -27,7 +27,7 @@ class AppColors {
   // ============================================================
   // SEMANTIC COLORS
   // ============================================================
-  
+
   static const success = Color(0xFF10B981);
   static const successLight = Color(0xFFD1FAE5);
   static const successSurface = Color(0xFFECFDF5);
@@ -47,7 +47,7 @@ class AppColors {
   // ============================================================
   // STATE COLORS (disabled, inactive, etc.)
   // ============================================================
-  
+
   // Disabled states
   static const disabled = Color(0xFFCBD5E1);
   static const disabledText = Color(0xFF94A3B8);
@@ -68,7 +68,7 @@ class AppColors {
   // ============================================================
   // LIGHT THEME — NEUTRALS
   // ============================================================
-  
+
   static const background = Color(0xFFF8F9FC);
   static const surface = Color(0xFFFFFFFF);
   static const surfaceAlt = Color(0xFFF1F3F9);
@@ -84,7 +84,7 @@ class AppColors {
   // ============================================================
   // DARK THEME — NEUTRALS
   // ============================================================
-  
+
   static const darkBackground = Color(0xFF0F172A);
   static const darkSurface = Color(0xFF1E293B);
   static const darkSurfaceAlt = Color(0xFF334155);
@@ -100,7 +100,7 @@ class AppColors {
   // ============================================================
   // TAG COLORS
   // ============================================================
-  
+
   static const tagBlue = Color(0xFFDBEAFE);
   static const tagGreen = Color(0xFFD1FAE5);
   static const tagPurple = Color(0xFFEDE9FE);
@@ -113,7 +113,7 @@ class AppColors {
   // ============================================================
   // GRADIENTS
   // ============================================================
-  
+
   static const primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -141,7 +141,7 @@ class AppColors {
   // ============================================================
   // SHADOW COLORS
   // ============================================================
-  
+
   static const shadowColor = Color(0x1A000000);
   static const shadowColorDark = Color(0x40000000);
   static const shadowColorLight = Color(0x0D000000);
@@ -152,8 +152,8 @@ class AppColors {
 
   /// Get surface color based on brightness
   static Color getSurfaceColor(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.dark 
-        ? darkSurface 
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkSurface
         : surface;
   }
 
@@ -167,8 +167,8 @@ class AppColors {
 
   /// Get disabled color
   static Color getDisabledColor(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.dark 
-        ? darkTextDisabled 
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkTextDisabled
         : disabled;
   }
 
@@ -195,17 +195,25 @@ class AppColors {
     final tagLower = tag.toLowerCase();
     if (tagLower.contains('flutter') || tagLower.contains('dart')) {
       return const Color(0xFF0175C2);
-    } else if (tagLower.contains('react') || tagLower.contains('javascript') || tagLower.contains('js')) {
+    } else if (tagLower.contains('react') ||
+        tagLower.contains('javascript') ||
+        tagLower.contains('js')) {
       return const Color(0xFFF7DF1E);
     } else if (tagLower.contains('python')) {
       return const Color(0xFF3776AB);
     } else if (tagLower.contains('node') || tagLower.contains('backend')) {
       return const Color(0xFF339933);
-    } else if (tagLower.contains('ai') || tagLower.contains('ml') || tagLower.contains('machine learning')) {
+    } else if (tagLower.contains('ai') ||
+        tagLower.contains('ml') ||
+        tagLower.contains('machine learning')) {
       return aiPurple;
-    } else if (tagLower.contains('design') || tagLower.contains('ui') || tagLower.contains('ux')) {
+    } else if (tagLower.contains('design') ||
+        tagLower.contains('ui') ||
+        tagLower.contains('ux')) {
       return tagPink;
-    } else if (tagLower.contains('devops') || tagLower.contains('docker') || tagLower.contains('cloud')) {
+    } else if (tagLower.contains('devops') ||
+        tagLower.contains('docker') ||
+        tagLower.contains('cloud')) {
       return const Color(0xFF2496ED);
     }
     return tagBlue;

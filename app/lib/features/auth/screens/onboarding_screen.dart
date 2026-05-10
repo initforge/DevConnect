@@ -1,140 +1,287 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../core/constants/app_seed_constants.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/constants/routes.dart';
 import '../../../core/services/app_preferences.dart';
+import '../../../core/theme/app_colors.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
+
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  int _page = 0; // 0: languages, 1: frameworks, 2: topics
-  final Set<String> _selectedLangs = {};
-  final Set<String> _selectedFrameworks = {};
-  final Set<String> _selectedTopics = {};
+  final Set<String> _selected = {'React', 'Node.js', 'Go'};
 
-  Set<String> get _currentSet => _page == 0 ? _selectedLangs : _page == 1 ? _selectedFrameworks : _selectedTopics;
-  List<String> get _currentItems => _page == 0
-      ? AppSeedConstants.languages
-      : _page == 1
-          ? AppSeedConstants.frameworks
-          : AppSeedConstants.topics;
-  String get _title => _page == 0 ? 'Ngôn ngữ lập trình' : _page == 1 ? 'Framework yêu thích' : 'Chủ đề quan tâm';
-  String get _subtitle => _page == 0 ? 'Bạn đang dùng ngôn ngữ nào?' : _page == 1 ? 'Bạn thích framework nào?' : 'Bạn hứng thú với chủ đề gì?';
+  List<String> get _items => [
+    'React',
+    'Flutter',
+    'Python',
+    'Node.js',
+    'TypeScript',
+    'Docker',
+    'AWS',
+    'PostgreSQL',
+    'AI/ML',
+    'DevOps',
+    'Rust',
+    'Go',
+  ];
+
+  Future<void> _continue() async {
+    await AppPreferences.instance.saveOnboardingData(
+      languages: _selected.toList(),
+      frameworks: const <String>[],
+      topics: AppSeedConstants.topics.take(3).toList(),
+    );
+    await AppPreferences.instance.setOnboardingCompleted(true);
+    if (!mounted) return;
+    context.go(AppRoutes.home);
+  }
 
   void _toggle(String item) {
     HapticFeedback.selectionClick();
     setState(() {
-      if (_currentSet.contains(item)) { _currentSet.remove(item); }
-      else { _currentSet.add(item); }
+      if (_selected.contains(item)) {
+        _selected.remove(item);
+      } else {
+        _selected.add(item);
+      }
     });
-  }
-
-  void _next() async {
-    if (_page < 2) { setState(() => _page++); }
-    else {
-      // Save onboarding data and mark as completed
-      await AppPreferences.instance.saveOnboardingData(
-        languages: _selectedLangs.toList(),
-        frameworks: _selectedFrameworks.toList(),
-        topics: _selectedTopics.toList(),
-      );
-      await AppPreferences.instance.setOnboardingCompleted(true);
-      if (mounted) context.go('/home');
-    }
-  }
-
-  void _skip() async {
-    await AppPreferences.instance.setOnboardingCompleted(true);
-    if (mounted) context.go('/home');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
-            colors: [Color(0xFFEEF2FF), Color(0xFFF0FDFA), Color(0xFFFAF5FF)]),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(children: [
-                  if (_page > 0) IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => setState(() => _page--)),
-                  const Spacer(),
-                  TextButton(onPressed: _skip, child: const Text('Bỏ qua')),
-                ]),
-              ),
-              // Progress
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Row(children: List.generate(3, (i) => Expanded(
-                  child: Container(height: 4, margin: const EdgeInsets.symmetric(horizontal: 2),
-                    decoration: BoxDecoration(color: i <= _page ? AppColors.accent : AppColors.border, borderRadius: BorderRadius.circular(2))),
-                ))),
-              ),
-              const SizedBox(height: 32),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(_title, style: Theme.of(context).textTheme.displayMedium),
-                  const SizedBox(height: 8),
-                  Text(_subtitle, style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary)),
-                ]),
-              ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child: SingleChildScrollView(
-                    key: ValueKey(_page),
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Wrap(
-                      spacing: 10, runSpacing: 10,
-                      children: _currentItems.map((item) {
-                        final selected = _currentSet.contains(item);
-                        return GestureDetector(
-                          onTap: () => _toggle(item),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: selected ? AppColors.primary : Colors.white,
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(color: selected ? AppColors.primary : AppColors.border),
-                              boxShadow: selected ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 2))] : null,
-                            ),
-                            child: Text(item, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
-                              color: selected ? Colors.white : AppColors.textPrimary)),
-                          ),
-                        );
-                      }).toList(),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => context.pop(),
+                    icon: const Icon(Icons.arrow_back, size: 20),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Onboarding',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 44),
+                ],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(4, (index) {
+                final selected = index == 3;
+                return Container(
+                  width: 6,
+                  height: 6,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color:
+                        selected
+                            ? const Color(0xFF5B53F6)
+                            : const Color(0xFFD6DAE6),
+                    shape: BoxShape.circle,
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Almost there!',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 28),
+              child: Text(
+                'Pick your interests to personalize your feed',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: GridView.builder(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.96,
+                ),
+                itemCount: _items.length,
+                itemBuilder: (context, index) {
+                  final item = _items[index];
+                  final selected = _selected.contains(item);
+                  return _InterestCard(
+                    label: item,
+                    selected: selected,
+                    icon: _iconFor(item),
+                    onTap: () => _toggle(item),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _selected.isEmpty ? null : _continue,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF4F46E5),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                      ),
+                      child: const Text('Continue'),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextButton(
+                    onPressed: _continue,
+                    child: const Text(
+                      'Skip for now',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _iconFor(String label) {
+    switch (label) {
+      case 'React':
+        return Icons.code;
+      case 'Flutter':
+        return Icons.phone_android;
+      case 'Python':
+        return Icons.terminal;
+      case 'Node.js':
+        return Icons.javascript;
+      case 'TypeScript':
+        return Icons.description_outlined;
+      case 'Docker':
+        return Icons.inventory_2_outlined;
+      case 'AWS':
+        return Icons.cloud_outlined;
+      case 'PostgreSQL':
+        return Icons.storage_outlined;
+      case 'AI/ML':
+        return Icons.psychology_outlined;
+      case 'DevOps':
+        return Icons.all_inclusive;
+      case 'Rust':
+        return Icons.build_outlined;
+      case 'Go':
+        return Icons.rocket_launch_outlined;
+      default:
+        return Icons.circle_outlined;
+    }
+  }
+}
+
+class _InterestCard extends StatelessWidget {
+  const _InterestCard({
+    required this.label,
+    required this.selected,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: selected ? const Color(0xFF5B53F6) : const Color(0xFFE5E8F0),
+            width: selected ? 1.7 : 1,
+          ),
+        ),
+        child: Stack(
+          children: [
+            if (selected)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF5B53F6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check, size: 12, color: Colors.white),
                 ),
               ),
-              // Bottom
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(children: [
-                  Text('Đã chọn ${_currentSet.length} mục', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textTertiary)),
-                  const SizedBox(height: 12),
-                  SizedBox(width: double.infinity, height: 52,
-                    child: ElevatedButton(
-                      onPressed: _currentSet.isNotEmpty ? _next : null,
-                      child: Text(_page < 2 ? 'Tiếp tục' : 'Bắt đầu khám phá'),
-                    )),
-                ]),
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    size: 22,
+                    color:
+                        selected
+                            ? const Color(0xFF5B53F6)
+                            : const Color(0xFF1F2937),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color:
+                          selected
+                              ? const Color(0xFF5B53F6)
+                              : const Color(0xFF1F2937),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

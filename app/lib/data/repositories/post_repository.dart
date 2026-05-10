@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../core/database/app_database.dart';
 import '../../core/models/models.dart';
@@ -7,11 +8,7 @@ import 'user_repository.dart';
 import '../mappers/model_mapper.dart';
 
 /// FeedType enum for differentiating between feed types
-enum FeedType {
-  forYou,
-  following,
-  trending,
-}
+enum FeedType { forYou, following, trending }
 
 extension FeedTypeExtension on FeedType {
   String get displayName {
@@ -42,9 +39,9 @@ class PostRepository {
     AppDatabase? database,
     UserRepository? userRepository,
     bool useApi = true,
-  })  : _database = database ?? AppDatabase.instance,
-        _userRepository = userRepository ?? UserRepository(database: database),
-        _useApi = useApi;
+  }) : _database = database ?? AppDatabase.instance,
+       _userRepository = userRepository ?? UserRepository(database: database),
+       _useApi = useApi;
 
   final AppDatabase _database;
   final UserRepository _userRepository;
@@ -52,26 +49,31 @@ class PostRepository {
 
   Future<List<Post>> getForYouPosts({String? cursor, int limit = 20}) async {
     if (_useApi) {
-      final queryParams = <String, dynamic>{
-        'type': 'foryou',
-        'limit': limit,
-      };
+      final queryParams = <String, dynamic>{'type': 'foryou', 'limit': limit};
       if (cursor != null) queryParams['cursor'] = cursor;
 
-      final data = await ApiService.instance.get('/api/posts', queryParams: queryParams);
-      final posts = data.map((json) => ModelMappers.postFromJson(json as Map<String, dynamic>)).toList();
+      final data = await ApiService.instance.get(
+        '/api/posts',
+        queryParams: queryParams,
+      );
+      final posts =
+          data
+              .map(
+                (json) =>
+                    ModelMappers.postFromJson(json as Map<String, dynamic>),
+              )
+              .toList();
       await _savePostsToDb(posts);
       return posts;
     }
-    return _fetchPosts(
-      'SELECT * FROM posts ORDER BY created_at DESC LIMIT ?',
-      [limit + 1],
-    );
+    return _fetchPosts('SELECT * FROM posts ORDER BY created_at DESC LIMIT ?', [
+      limit + 1,
+    ]);
   }
 
   Future<List<Post>> getFollowingPosts({String? cursor, int limit = 20}) async {
     final currentUserId = AppPreferences.instance.user?['id'];
-    
+
     if (_useApi) {
       final queryParams = <String, dynamic>{
         'type': 'following',
@@ -79,14 +81,23 @@ class PostRepository {
       };
       if (cursor != null) queryParams['cursor'] = cursor;
 
-      final data = await ApiService.instance.get('/api/posts', queryParams: queryParams);
-      final posts = data.map((json) => ModelMappers.postFromJson(json as Map<String, dynamic>)).toList();
+      final data = await ApiService.instance.get(
+        '/api/posts',
+        queryParams: queryParams,
+      );
+      final posts =
+          data
+              .map(
+                (json) =>
+                    ModelMappers.postFromJson(json as Map<String, dynamic>),
+              )
+              .toList();
       await _savePostsToDb(posts);
       return posts;
     }
-    
+
     if (currentUserId == null) return [];
-    
+
     return _fetchPosts(
       '''
       SELECT p.* FROM posts p
@@ -101,25 +112,35 @@ class PostRepository {
 
   Future<List<Post>> getTrendingPosts({String? cursor, int limit = 20}) async {
     if (_useApi) {
-      final queryParams = <String, dynamic>{
-        'type': 'trending',
-        'limit': limit,
-      };
+      final queryParams = <String, dynamic>{'type': 'trending', 'limit': limit};
       if (cursor != null) queryParams['cursor'] = cursor;
 
-      final data = await ApiService.instance.get('/api/posts', queryParams: queryParams);
-      final posts = data.map((json) => ModelMappers.postFromJson(json as Map<String, dynamic>)).toList();
+      final data = await ApiService.instance.get(
+        '/api/posts',
+        queryParams: queryParams,
+      );
+      final posts =
+          data
+              .map(
+                (json) =>
+                    ModelMappers.postFromJson(json as Map<String, dynamic>),
+              )
+              .toList();
       await _savePostsToDb(posts);
       return posts;
     }
-    
+
     return _fetchPosts(
       'SELECT * FROM posts ORDER BY like_count DESC, created_at DESC LIMIT ?',
       [limit + 1],
     );
   }
 
-  Future<List<Post>> getPostsByAuthor(String authorId, {String? cursor, int limit = 20}) async {
+  Future<List<Post>> getPostsByAuthor(
+    String authorId, {
+    String? cursor,
+    int limit = 20,
+  }) async {
     if (_useApi) {
       final queryParams = <String, dynamic>{
         'authorId': authorId,
@@ -127,8 +148,17 @@ class PostRepository {
       };
       if (cursor != null) queryParams['cursor'] = cursor;
 
-      final data = await ApiService.instance.get('/api/posts', queryParams: queryParams);
-      final posts = data.map((json) => ModelMappers.postFromJson(json as Map<String, dynamic>)).toList();
+      final data = await ApiService.instance.get(
+        '/api/posts',
+        queryParams: queryParams,
+      );
+      final posts =
+          data
+              .map(
+                (json) =>
+                    ModelMappers.postFromJson(json as Map<String, dynamic>),
+              )
+              .toList();
       await _savePostsToDb(posts);
       return posts;
     }
@@ -145,9 +175,14 @@ class PostRepository {
         final post = ModelMappers.postFromJson(data);
         await _savePostToDb(post);
         return post;
-      } catch (_) {}
+      } catch (error) {
+        debugPrint('PostRepository.getPostById API fallback: $error');
+      }
     }
-    final items = await _fetchPosts('SELECT * FROM posts WHERE id = ? LIMIT 1', [postId]);
+    final items = await _fetchPosts(
+      'SELECT * FROM posts WHERE id = ? LIMIT 1',
+      [postId],
+    );
     return items.isEmpty ? null : items.first;
   }
 
@@ -178,20 +213,23 @@ class PostRepository {
           'tags': tags,
           if (imageUrl != null) 'imageUrl': imageUrl,
         });
-        
+
         final post = ModelMappers.postFromJson(data);
         await _savePostToDb(post);
-        
+
         final db = await _database.database;
         await db.rawUpdate(
           'UPDATE users SET post_count = post_count + 1 WHERE id = ?',
           [userId],
         );
-        
+
         return post;
-      } catch (_) {}
+      } catch (error) {
+        debugPrint('PostRepository.createPost API failed: $error');
+        rethrow;
+      }
     }
-    
+
     final db = await _database.database;
     final post = Post(
       id: id,
@@ -216,13 +254,24 @@ class PostRepository {
   Future<bool> toggleLike(String postId) async {
     if (_useApi) {
       try {
-        final result = await ApiService.instance.post('/api/posts/$postId/like', {});
+        final result = await ApiService.instance.post(
+          '/api/posts/$postId/like',
+          {},
+        );
         return result['liked'] == true;
-      } catch (_) {}
+      } catch (error) {
+        debugPrint('PostRepository.toggleLike API failed: $error');
+        rethrow;
+      }
     }
-    
+
     final db = await _database.database;
-    final rows = await db.query('posts', where: 'id = ?', whereArgs: [postId], limit: 1);
+    final rows = await db.query(
+      'posts',
+      where: 'id = ?',
+      whereArgs: [postId],
+      limit: 1,
+    );
     if (rows.isEmpty) return false;
 
     final isLiked = (rows.first['is_liked_by_me'] as int? ?? 0) == 1;
@@ -262,13 +311,24 @@ class PostRepository {
   Future<bool> toggleBookmark(String postId) async {
     if (_useApi) {
       try {
-        final result = await ApiService.instance.post('/api/posts/$postId/bookmark', {});
+        final result = await ApiService.instance.post(
+          '/api/posts/$postId/bookmark',
+          {},
+        );
         return result['bookmarked'] == true;
-      } catch (_) {}
+      } catch (error) {
+        debugPrint('PostRepository.toggleBookmark API failed: $error');
+        rethrow;
+      }
     }
-    
+
     final db = await _database.database;
-    final rows = await db.query('posts', where: 'id = ?', whereArgs: [postId], limit: 1);
+    final rows = await db.query(
+      'posts',
+      where: 'id = ?',
+      whereArgs: [postId],
+      limit: 1,
+    );
     if (rows.isEmpty) return false;
 
     final isBookmarked = (rows.first['is_bookmarked_by_me'] as int? ?? 0) == 1;
@@ -278,7 +338,8 @@ class PostRepository {
       'posts',
       {
         'is_bookmarked_by_me': isBookmarked ? 0 : 1,
-        'bookmark_count': isBookmarked ? currentBookmarks - 1 : currentBookmarks + 1,
+        'bookmark_count':
+            isBookmarked ? currentBookmarks - 1 : currentBookmarks + 1,
       },
       where: 'id = ?',
       whereArgs: [postId],
@@ -309,9 +370,17 @@ class PostRepository {
     if (_useApi) {
       try {
         final data = await ApiService.instance.get('/api/posts/bookmarked');
-        final posts = data.map((json) => ModelMappers.postFromJson(json as Map<String, dynamic>)).toList();
+        final posts =
+            data
+                .map(
+                  (json) =>
+                      ModelMappers.postFromJson(json as Map<String, dynamic>),
+                )
+                .toList();
         return posts;
-      } catch (_) {}
+      } catch (error) {
+        debugPrint('PostRepository.getBookmarkedPosts API fallback: $error');
+      }
     }
     return _fetchPosts(
       "SELECT * FROM posts WHERE is_bookmarked_by_me = 1 ORDER BY created_at DESC",
@@ -322,9 +391,12 @@ class PostRepository {
     if (_useApi) {
       try {
         await ApiService.instance.delete('/api/posts/$postId');
-      } catch (_) {}
+      } catch (error) {
+        debugPrint('PostRepository.deletePost API failed: $error');
+        rethrow;
+      }
     }
-    
+
     final db = await _database.database;
     await db.delete('posts', where: 'id = ?', whereArgs: [postId]);
   }
@@ -333,25 +405,38 @@ class PostRepository {
     final db = await _database.database;
     await db.transaction((txn) async {
       for (final post in posts) {
-        await txn.insert('posts', ModelMappers.postToRow(post), conflictAlgorithm: ConflictAlgorithm.replace);
+        await txn.insert(
+          'posts',
+          ModelMappers.postToRow(post),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
       }
     });
   }
 
   Future<void> _savePostToDb(Post post) async {
     final db = await _database.database;
-    await db.insert('posts', ModelMappers.postToRow(post), conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert(
+      'posts',
+      ModelMappers.postToRow(post),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
-  Future<List<Post>> _fetchPosts(String sql, [List<Object?> params = const []]) async {
+  Future<List<Post>> _fetchPosts(
+    String sql, [
+    List<Object?> params = const [],
+  ]) async {
     final db = await _database.database;
     final rows = await db.rawQuery(sql, params);
     final posts = <Post>[];
-    
+
     for (final row in rows) {
-      final author = await _userRepository.getUserById(row['author_id'] as String);
+      final author = await _userRepository.getUserById(
+        row['author_id'] as String,
+      );
       if (author == null) continue;
-      
+
       posts.add(ModelMappers.postFromRow(row, author));
     }
     return posts;

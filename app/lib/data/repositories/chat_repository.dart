@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../core/database/app_database.dart';
 import '../../core/models/models.dart';
@@ -7,8 +8,8 @@ import '../mappers/model_mapper.dart';
 
 class ChatRepository {
   ChatRepository({AppDatabase? database, bool useApi = true})
-      : _database = database ?? AppDatabase.instance,
-        _useApi = useApi;
+    : _database = database ?? AppDatabase.instance,
+      _useApi = useApi;
 
   final AppDatabase _database;
   final bool _useApi;
@@ -16,7 +17,14 @@ class ChatRepository {
   Future<List<Conversation>> getConversations() async {
     if (_useApi) {
       final data = await ApiService.instance.get('/api/conversations');
-      final conversations = data.map((json) => ModelMappers.conversationFromJson(json as Map<String, dynamic>)).toList();
+      final conversations =
+          data
+              .map(
+                (json) => ModelMappers.conversationFromJson(
+                  json as Map<String, dynamic>,
+                ),
+              )
+              .toList();
       await _saveConversationsToDb(conversations);
       return conversations;
     }
@@ -27,17 +35,43 @@ class ChatRepository {
 
   Future<Conversation?> getConversationById(String id) async {
     if (_useApi) {
-      final data = await ApiService.instance.getObject('/api/conversations/$id');
-      return ModelMappers.conversationFromJson(data);
+      try {
+        final data = await ApiService.instance.getObject(
+          '/api/conversations/$id',
+        );
+        if (data.isNotEmpty) {
+          return ModelMappers.conversationFromJson(data);
+        }
+      } catch (error) {
+        debugPrint('ChatRepository.getConversationById API fallback: $error');
+        // Fall back to the conversations collection when the backend does not
+        // expose a dedicated detail endpoint for a single conversation.
+      }
+
+      final conversations = await getConversations();
+      for (final conversation in conversations) {
+        if (conversation.id == id) {
+          return conversation;
+        }
+      }
+      return null;
     }
     final db = await _database.database;
-    final rows = await db.query('conversations', where: 'id = ?', whereArgs: [id], limit: 1);
+    final rows = await db.query(
+      'conversations',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
     if (rows.isEmpty) return null;
     final convs = await _conversationsFromRows(rows);
     return convs.isEmpty ? null : convs.first;
   }
 
-  Future<List<Message>> getMessages(String conversationId, {int limit = 50}) async {
+  Future<List<Message>> getMessages(
+    String conversationId, {
+    int limit = 50,
+  }) async {
     if (_useApi) {
       final data = await ApiService.instance.get(
         '/api/conversations/$conversationId/messages',
@@ -49,15 +83,19 @@ class ChatRepository {
         if (reactions is List) {
           reactionsList = reactions.map((e) => e.toString()).toList();
         } else if (reactions is String) {
-          reactionsList = reactions.split('|').where((e) => e.isNotEmpty).toList();
+          reactionsList =
+              reactions.split('|').where((e) => e.isNotEmpty).toList();
         }
-        
+
         final isRead = json['isRead'] ?? json['is_read'];
         final isReadBool = isRead == true || isRead == 1 || isRead == 'true';
-        
+
         return Message(
           id: json['id']?.toString() ?? '',
-          senderId: json['senderId']?.toString() ?? json['sender_id']?.toString() ?? '',
+          senderId:
+              json['senderId']?.toString() ??
+              json['sender_id']?.toString() ??
+              '',
           content: json['content']?.toString() ?? '',
           type: MessageType.values.firstWhere(
             (e) => e.name == (json['type']?.toString() ?? 'text'),
@@ -67,7 +105,13 @@ class ChatRepository {
           codeSource: json['codeSource']?.toString(),
           reactions: reactionsList,
           isRead: isReadBool,
-          createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? json['created_at']?.toString() ?? '') ?? DateTime.now(),
+          createdAt:
+              DateTime.tryParse(
+                json['createdAt']?.toString() ??
+                    json['created_at']?.toString() ??
+                    '',
+              ) ??
+              DateTime.now(),
         );
       }).toList();
     }
@@ -79,20 +123,30 @@ class ChatRepository {
       orderBy: 'created_at DESC',
       limit: limit,
     );
-    return rows.map((row) => Message(
-      id: row['id']?.toString() ?? '',
-      senderId: row['sender_id']?.toString() ?? '',
-      content: row['content']?.toString() ?? '',
-      type: MessageType.values.firstWhere(
-        (e) => e.name == (row['type']?.toString() ?? 'text'),
-        orElse: () => MessageType.text,
-      ),
-      codeLanguage: row['code_language']?.toString(),
-      codeSource: row['code_source']?.toString(),
-      reactions: (row['reactions']?.toString() ?? '').split('|').where((e) => e.isNotEmpty).toList(),
-      isRead: (row['is_read'] as int?) == 1,
-      createdAt: DateTime.tryParse(row['created_at']?.toString() ?? '') ?? DateTime.now(),
-    )).toList();
+    return rows
+        .map(
+          (row) => Message(
+            id: row['id']?.toString() ?? '',
+            senderId: row['sender_id']?.toString() ?? '',
+            content: row['content']?.toString() ?? '',
+            type: MessageType.values.firstWhere(
+              (e) => e.name == (row['type']?.toString() ?? 'text'),
+              orElse: () => MessageType.text,
+            ),
+            codeLanguage: row['code_language']?.toString(),
+            codeSource: row['code_source']?.toString(),
+            reactions:
+                (row['reactions']?.toString() ?? '')
+                    .split('|')
+                    .where((e) => e.isNotEmpty)
+                    .toList(),
+            isRead: (row['is_read'] as int?) == 1,
+            createdAt:
+                DateTime.tryParse(row['created_at']?.toString() ?? '') ??
+                DateTime.now(),
+          ),
+        )
+        .toList();
   }
 
   Future<Message> sendMessage({
@@ -106,15 +160,13 @@ class ChatRepository {
     if (userId == null) throw Exception('User not logged in');
 
     if (_useApi) {
-      final data = await ApiService.instance.post(
-        '/api/conversations/$conversationId/messages',
-        {
-          'content': content,
-          'type': type.name,
-          if (codeLanguage != null) 'codeLanguage': codeLanguage,
-          if (codeSource != null) 'codeSource': codeSource,
-        },
-      );
+      final data = await ApiService.instance
+          .post('/api/conversations/$conversationId/messages', {
+            'content': content,
+            'type': type.name,
+            if (codeLanguage != null) 'codeLanguage': codeLanguage,
+            if (codeSource != null) 'codeSource': codeSource,
+          });
       return Message(
         id: data['id']?.toString() ?? '',
         senderId: userId,
@@ -164,7 +216,10 @@ class ChatRepository {
 
   Future<void> markAsRead(String conversationId) async {
     if (_useApi) {
-      await ApiService.instance.post('/api/conversations/$conversationId/read', {});
+      await ApiService.instance.patch(
+        '/api/conversations/$conversationId/read',
+        {},
+      );
     }
     final db = await _database.database;
     await db.update(
@@ -196,21 +251,29 @@ class ChatRepository {
     });
   }
 
-  Future<List<Conversation>> _conversationsFromRows(List<Map<String, Object?>> rows) async {
+  Future<List<Conversation>> _conversationsFromRows(
+    List<Map<String, Object?>> rows,
+  ) async {
     // This is a simplified version - in production you'd join with users table
-    return rows.map((row) => Conversation(
-      id: row['id']?.toString() ?? '',
-      otherUser: User(
-        id: row['other_user_id']?.toString() ?? '',
-        username: '',
-        displayName: 'Unknown User',
-        email: '',
-        createdAt: DateTime.now(),
-      ),
-      lastMessage: row['last_message']?.toString() ?? '',
-      unreadCount: row['unread_count'] as int? ?? 0,
-      updatedAt: DateTime.tryParse(row['updated_at']?.toString() ?? '') ?? DateTime.now(),
-    )).toList();
+    return rows
+        .map(
+          (row) => Conversation(
+            id: row['id']?.toString() ?? '',
+            otherUser: User(
+              id: row['other_user_id']?.toString() ?? '',
+              username: '',
+              displayName: 'Unknown User',
+              email: '',
+              createdAt: DateTime.now(),
+            ),
+            lastMessage: row['last_message']?.toString() ?? '',
+            unreadCount: row['unread_count'] as int? ?? 0,
+            updatedAt:
+                DateTime.tryParse(row['updated_at']?.toString() ?? '') ??
+                DateTime.now(),
+          ),
+        )
+        .toList();
   }
 
   // Additional methods used by screens
@@ -218,7 +281,13 @@ class ChatRepository {
   Future<List<User>> getOnlineUsers() async {
     if (_useApi) {
       final data = await ApiService.instance.get('/api/users');
-      final users = data.map((json) => ModelMappers.userFromJson(json as Map<String, dynamic>)).toList();
+      final users =
+          data
+              .map(
+                (json) =>
+                    ModelMappers.userFromJson(json as Map<String, dynamic>),
+              )
+              .toList();
       return users.where((u) => u.isOnline).toList();
     }
     final db = await _database.database;
@@ -233,5 +302,23 @@ class ChatRepository {
 
   Future<void> markConversationRead(String conversationId) async {
     await markAsRead(conversationId);
+  }
+
+  Future<void> deleteConversation(String conversationId) async {
+    if (_useApi) {
+      await ApiService.instance.delete('/api/conversations/$conversationId');
+    }
+
+    final db = await _database.database;
+    await db.delete(
+      'messages',
+      where: 'conversation_id = ?',
+      whereArgs: [conversationId],
+    );
+    await db.delete(
+      'conversations',
+      where: 'id = ?',
+      whereArgs: [conversationId],
+    );
   }
 }

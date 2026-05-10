@@ -32,6 +32,12 @@ class AppRoutes {
   static const String liveCode = '/live-code';
   static const String mentorship = '/mentorship';
   static const String settings = '/settings';
+  static const String search = '/search';
+
+  // Base segments for dynamic route building
+  static const String postBase = '/post';
+  static const String chatBase = '/chat';
+  static const String userBase = '/user';
 
   // Debug Routes
   static const String shotLab = '/shot-lab';
@@ -57,5 +63,6 @@ class AppRoutes {
   static const String nameLiveCode = 'liveCode';
   static const String nameMentorship = 'mentorship';
   static const String nameSettings = 'settings';
+  static const String nameSearch = 'search';
   static const String nameShotLab = 'shotLab';
 }

@@ -1,6 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../constants/routes.dart';
 import '../theme/app_colors.dart';
+
+part 'shared_widgets/bottom_nav.dart';
 
 // ============================================================
 // CONSTANTS - Design System
@@ -39,7 +44,8 @@ class AnimatedCard extends StatefulWidget {
   State<AnimatedCard> createState() => _AnimatedCardState();
 }
 
-class _AnimatedCardState extends State<AnimatedCard> with SingleTickerProviderStateMixin {
+class _AnimatedCardState extends State<AnimatedCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -47,18 +53,16 @@ class _AnimatedCardState extends State<AnimatedCard> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: kAnimationNormal,
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    _controller = AnimationController(vsync: this, duration: kAnimationNormal);
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-    
+
     Future.delayed(widget.delay * widget.index, () {
       if (mounted) _controller.forward();
     });
@@ -74,10 +78,7 @@ class _AnimatedCardState extends State<AnimatedCard> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: widget.child,
-      ),
+      child: SlideTransition(position: _slideAnimation, child: widget.child),
     );
   }
 }
@@ -99,20 +100,19 @@ class PressableScale extends StatefulWidget {
   State<PressableScale> createState() => _PressableScaleState();
 }
 
-class _PressableScaleState extends State<PressableScale> with SingleTickerProviderStateMixin {
+class _PressableScaleState extends State<PressableScale>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: kAnimationFast,
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: widget.scaleFactor).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _controller = AnimationController(vsync: this, duration: kAnimationFast);
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: widget.scaleFactor,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -132,10 +132,7 @@ class _PressableScaleState extends State<PressableScale> with SingleTickerProvid
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
       onTap: widget.onTap,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: widget.child,
-      ),
+      child: ScaleTransition(scale: _scaleAnimation, child: widget.child),
     );
   }
 }
@@ -157,7 +154,8 @@ class AnimatedLikeButton extends StatefulWidget {
   State<AnimatedLikeButton> createState() => _AnimatedLikeButtonState();
 }
 
-class _AnimatedLikeButtonState extends State<AnimatedLikeButton> with SingleTickerProviderStateMixin {
+class _AnimatedLikeButtonState extends State<AnimatedLikeButton>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -217,7 +215,8 @@ class _AnimatedLikeButtonState extends State<AnimatedLikeButton> with SingleTick
     );
   }
 
-  String _formatCount(int n) => n > 999 ? '${(n / 1000).toStringAsFixed(1)}k' : '$n';
+  String _formatCount(int n) =>
+      n > 999 ? '${(n / 1000).toStringAsFixed(1)}k' : '$n';
 }
 
 /// Animated bookmark button
@@ -237,7 +236,8 @@ class AnimatedBookmarkButton extends StatefulWidget {
   State<AnimatedBookmarkButton> createState() => _AnimatedBookmarkButtonState();
 }
 
-class _AnimatedBookmarkButtonState extends State<AnimatedBookmarkButton> with SingleTickerProviderStateMixin {
+class _AnimatedBookmarkButtonState extends State<AnimatedBookmarkButton>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -280,7 +280,10 @@ class _AnimatedBookmarkButtonState extends State<AnimatedBookmarkButton> with Si
             child: Icon(
               widget.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
               size: 20,
-              color: widget.isBookmarked ? AppColors.warning : AppColors.textSecondary,
+              color:
+                  widget.isBookmarked
+                      ? AppColors.warning
+                      : AppColors.textSecondary,
             ),
           ),
           const SizedBox(width: 4),
@@ -288,7 +291,10 @@ class _AnimatedBookmarkButtonState extends State<AnimatedBookmarkButton> with Si
             _formatCount(widget.count),
             style: TextStyle(
               fontSize: 13,
-              color: widget.isBookmarked ? AppColors.warning : AppColors.textSecondary,
+              color:
+                  widget.isBookmarked
+                      ? AppColors.warning
+                      : AppColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -297,7 +303,8 @@ class _AnimatedBookmarkButtonState extends State<AnimatedBookmarkButton> with Si
     );
   }
 
-  String _formatCount(int n) => n > 999 ? '${(n / 1000).toStringAsFixed(1)}k' : '$n';
+  String _formatCount(int n) =>
+      n > 999 ? '${(n / 1000).toStringAsFixed(1)}k' : '$n';
 }
 
 // ============================================================
@@ -326,17 +333,19 @@ class UserAvatar extends StatelessWidget {
         CircleAvatar(
           radius: size / 2,
           backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-          backgroundImage: imageUrl != null ? CachedNetworkImageProvider(imageUrl!) : null,
-          child: imageUrl == null
-              ? Text(
-                  name.isNotEmpty ? name[0].toUpperCase() : '?',
-                  style: TextStyle(
-                    fontSize: size * 0.4,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                )
-              : null,
+          backgroundImage:
+              imageUrl != null ? CachedNetworkImageProvider(imageUrl!) : null,
+          child:
+              imageUrl == null
+                  ? Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : '?',
+                    style: TextStyle(
+                      fontSize: size * 0.4,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  )
+                  : null,
         ),
         if (isOnline)
           Positioned(
@@ -367,7 +376,12 @@ class TechChip extends StatelessWidget {
   final bool selected;
   final VoidCallback? onTap;
 
-  const TechChip({super.key, required this.label, this.selected = false, this.onTap});
+  const TechChip({
+    super.key,
+    required this.label,
+    this.selected = false,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -376,9 +390,15 @@ class TechChip extends StatelessWidget {
       scaleFactor: 0.97,
       child: AnimatedContainer(
         duration: kAnimationFast,
-        padding: const EdgeInsets.symmetric(horizontal: kSpacingMd, vertical: kSpacingSm),
+        padding: const EdgeInsets.symmetric(
+          horizontal: kSpacingMd,
+          vertical: kSpacingSm,
+        ),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surfaceAlt,
+          color:
+              selected
+                  ? AppColors.primary.withValues(alpha: 0.1)
+                  : AppColors.surfaceAlt,
           borderRadius: BorderRadius.circular(kBorderRadiusXl),
           border: Border.all(
             color: selected ? AppColors.primary : AppColors.border,
@@ -444,13 +464,19 @@ class ShimmerBox extends StatefulWidget {
   final double height;
   final double borderRadius;
 
-  const ShimmerBox({super.key, required this.width, required this.height, this.borderRadius = kBorderRadiusSm});
+  const ShimmerBox({
+    super.key,
+    required this.width,
+    required this.height,
+    this.borderRadius = kBorderRadiusSm,
+  });
 
   @override
   State<ShimmerBox> createState() => _ShimmerBoxState();
 }
 
-class _ShimmerBoxState extends State<ShimmerBox> with SingleTickerProviderStateMixin {
+class _ShimmerBoxState extends State<ShimmerBox>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
@@ -461,9 +487,10 @@ class _ShimmerBoxState extends State<ShimmerBox> with SingleTickerProviderStateM
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat();
-    _animation = Tween<double>(begin: -2, end: 2).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: -2,
+      end: 2,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -597,18 +624,15 @@ class EmptyState extends StatelessWidget {
               const SizedBox(height: kSpacingSm),
               Text(
                 subtitle!,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textTertiary,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppColors.textTertiary),
                 textAlign: TextAlign.center,
               ),
             ],
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: kSpacingLg),
-              ElevatedButton(
-                onPressed: onAction,
-                child: Text(actionLabel!),
-              ),
+              ElevatedButton(onPressed: onAction, child: Text(actionLabel!)),
             ],
           ],
         ),
@@ -650,9 +674,9 @@ class ErrorState extends StatelessWidget {
             const SizedBox(height: kSpacingLg),
             Text(
               message,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColors.textPrimary,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(color: AppColors.textPrimary),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[
@@ -698,9 +722,10 @@ class EmptySearchResults extends StatelessWidget {
     return EmptyState(
       icon: Icons.search_off_outlined,
       title: 'Không tìm thấy kết quả',
-      subtitle: query != null 
-          ? 'Không có kết quả cho "$query"'
-          : 'Thử từ khóa khác hoặc kiểm tra chính tả',
+      subtitle:
+          query != null
+              ? 'Không có kết quả cho "$query"'
+              : 'Thử từ khóa khác hoặc kiểm tra chính tả',
     );
   }
 }
@@ -713,7 +738,8 @@ class EmptyNotifications extends StatelessWidget {
     return const EmptyState(
       icon: Icons.notifications_none_outlined,
       title: 'Chưa có thông báo nào',
-      subtitle: 'Các thông báo về likes, comments và followers sẽ xuất hiện ở đây.',
+      subtitle:
+          'Các thông báo về likes, comments và followers sẽ xuất hiện ở đây.',
     );
   }
 }
@@ -783,11 +809,17 @@ class FuturePhaseBanner extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(999),
@@ -862,13 +894,13 @@ class PostActionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        AnimatedLikeButton(
-          isLiked: isLiked,
-          count: likes,
-          onTap: onLike,
-        ),
+        AnimatedLikeButton(isLiked: isLiked, count: likes, onTap: onLike),
         const SizedBox(width: kSpacingLg),
-        _ActionButton(icon: Icons.chat_bubble_outline, label: _format(comments), onTap: onComment),
+        _ActionButton(
+          icon: Icons.chat_bubble_outline,
+          label: _format(comments),
+          onTap: onComment,
+        ),
         const SizedBox(width: kSpacingLg),
         AnimatedBookmarkButton(
           isBookmarked: isBookmarked,
@@ -903,7 +935,14 @@ class _ActionButton extends StatelessWidget {
             Icon(icon, size: 20, color: AppColors.textSecondary),
             if (label.isNotEmpty) ...[
               const SizedBox(width: 4),
-              Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ],
         ),

@@ -10,7 +10,9 @@ void main() {
   const testPassword = 'password123';
 
   group('Luồng 01: Xác thực & Tài khoản (Auth Flow)', () {
-    testWidgets('TC-AUTH-FULL: Luồng từ Login -> Register -> Login -> Logout', (tester) async {
+    testWidgets('TC-AUTH-FULL: Luồng từ Login -> Register -> Login -> Logout', (
+      tester,
+    ) async {
       await app.main();
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
@@ -29,7 +31,10 @@ void main() {
       // 3. Đăng ký Step 1 (Validation email)
       final fields = find.byType(TextFormField);
       await tester.enterText(fields.at(0), 'E2E User');
-      await tester.enterText(fields.at(1), 'e2e_user_${DateTime.now().millisecondsSinceEpoch}');
+      await tester.enterText(
+        fields.at(1),
+        'e2e_user_${DateTime.now().millisecondsSinceEpoch}',
+      );
       await tester.enterText(fields.at(2), 'invalid-email');
       await tester.tap(find.text('Tiếp tục'));
       await tester.pumpAndSettle();
@@ -74,7 +79,7 @@ void main() {
 
       // Quay về màn hình Login
       expect(find.text('Đăng nhập'), findsWidgets);
-      print('✅ TC-AUTH-FULL: Hoàn thành luồng xác thực thành công!');
+      debugPrint('✅ TC-AUTH-FULL: Hoàn thành luồng xác thực thành công!');
     });
   });
 }

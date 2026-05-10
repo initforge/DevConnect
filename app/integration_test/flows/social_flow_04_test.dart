@@ -24,7 +24,9 @@ void main() {
   }
 
   group('Luồng 04: Xã hội & Kết nối (Social Flow)', () {
-    testWidgets('TC-SOCIAL-FULL: Chat -> Notification -> Follow User', (tester) async {
+    testWidgets('TC-SOCIAL-FULL: Chat -> Notification -> Follow User', (
+      tester,
+    ) async {
       await login(tester);
 
       // 1. Vào Tab Chat (tab 3)
@@ -35,12 +37,15 @@ void main() {
       // Mở một hội thoại
       await tester.tap(find.byType(ListTile).first);
       await tester.pumpAndSettle(const Duration(seconds: 2));
-      
+
       // Gửi tin nhắn
-      await tester.enterText(find.byType(TextField), 'Test tin nhắn thời gian thực!');
+      await tester.enterText(
+        find.byType(TextField),
+        'Test tin nhắn thời gian thực!',
+      );
       await tester.tap(find.byIcon(Icons.send));
       await tester.pumpAndSettle(const Duration(seconds: 1));
-      
+
       await tester.pageBack();
       await tester.pumpAndSettle();
 
@@ -48,7 +53,7 @@ void main() {
       await tester.tap(destinations.at(3));
       await tester.pumpAndSettle(const Duration(seconds: 2));
       expect(find.text('Thông báo'), findsWidgets);
-      
+
       // Bấm "Đọc hết"
       final readAll = find.text('Đọc hết');
       if (readAll.evaluate().isNotEmpty) {
@@ -59,11 +64,11 @@ void main() {
       // 3. Vào Profile người khác để Follow
       await tester.tap(destinations.at(0)); // Về feed
       await tester.pumpAndSettle(const Duration(seconds: 1));
-      
+
       // Click avatar tác giả bài viết
-      await tester.tap(find.byType(CircleAvatar).at(1)); 
+      await tester.tap(find.byType(CircleAvatar).at(1));
       await tester.pumpAndSettle(const Duration(seconds: 2));
-      
+
       // Bấm Theo dõi
       final followBtn = find.text('Theo dõi');
       if (followBtn.evaluate().isNotEmpty) {
@@ -71,7 +76,7 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      print('✅ TC-SOCIAL-FULL: Hoàn thành luồng kết nối xã hội!');
+      debugPrint('✅ TC-SOCIAL-FULL: Hoàn thành luồng kết nối xã hội!');
     });
   });
 }

@@ -7,7 +7,9 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('Luồng 06: Các trường hợp ngoại lệ (Edge Cases)', () {
-    testWidgets('TC-EDGE-01: Kiểm tra độ mạnh yếu của mật khẩu trong UI', (tester) async {
+    testWidgets('TC-EDGE-01: Kiểm tra độ mạnh yếu của mật khẩu trong UI', (
+      tester,
+    ) async {
       await app.main();
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
@@ -40,7 +42,9 @@ void main() {
       expect(find.text('Rất mạnh'), findsOneWidget);
     });
 
-    testWidgets('TC-EDGE-02: Lỗi định dạng Email và bỏ trống trường', (tester) async {
+    testWidgets('TC-EDGE-02: Lỗi định dạng Email và bỏ trống trường', (
+      tester,
+    ) async {
       await app.main();
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
@@ -50,7 +54,7 @@ void main() {
       await tester.enterText(loginFields.at(1), 'password123');
       await tester.tap(find.widgetWithText(ElevatedButton, 'Đăng nhập'));
       await tester.pumpAndSettle();
-      
+
       expect(find.text('Email không hợp lệ'), findsOneWidget);
 
       // Thử để trống mật khẩu
@@ -58,7 +62,7 @@ void main() {
       await tester.enterText(loginFields.at(1), '');
       await tester.tap(find.widgetWithText(ElevatedButton, 'Đăng nhập'));
       await tester.pumpAndSettle();
-      
+
       expect(find.text('Vui lòng nhập mật khẩu'), findsOneWidget);
     });
   });

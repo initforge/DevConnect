@@ -3,6 +3,7 @@ const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('node:crypto');
+const { handleExtendedRoutes } = require('./route_modules/extended_routes');
 
 const PORT = Number(process.env.PORT || 8080);
 const WS_PORT = Number(process.env.WS_PORT || 8081);
@@ -15,8 +16,8 @@ const pool = new Pool({ connectionString: DATABASE_URL });
 
 // Rate limiting: Map<ip, {count, resetTime}>
 const rateLimitMap = new Map();
-const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const RATE_LIMIT_MAX = 60; // max 60 requests per minute (generous for normal use)
+const RATE_LIMIT_WINDOW = Number(process.env.RATE_LIMIT_WINDOW_MS || 60000);
+const RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_MAX || 2000);
 
 function rateLimit(ip) {
   const now = Date.now();
@@ -332,6 +333,42 @@ async function route(req, res) {
     }
   }
 
+  // POST /auth/forgot-password - Request password reset
+  if (req.method === 'POST' && pathname === '/auth/forgot-password') {
+    try {
+      const body = await readBody(req);
+      const email = String(body.email || '').trim().toLowerCase();
+      if (!email) {
+        return badRequest(res, 'Email is required');
+      }
+
+      const { rows } = await query('SELECT id FROM users WHERE LOWER(email) = $1', [email]);
+      if (rows.length > 0) {
+        const notificationId = createdId('n');
+        await query(
+          'INSERT INTO notifications (id, type, title, body, from_user_id, is_read, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+          [
+            notificationId,
+            'SECURITY',
+            'Password recovery requested',
+            'A password recovery request was received for your account. Use the latest recovery email to continue.',
+            rows[0].id,
+            0,
+            new Date().toISOString(),
+          ],
+        );
+      }
+
+      return json(res, 200, {
+        success: true,
+        message: 'If an account exists for that email, recovery instructions have been queued.',
+      });
+    } catch (e) {
+      console.error('Forgot password error:', e);
+      return badRequest(res, 'Failed to start password recovery');
+    }
+  }
+
   // POST /auth/change-password - Change password
   if (req.method === 'POST' && pathname === '/auth/change-password') {
     if (!user) return unauthorized(res, 'Not authenticated');
@@ -568,7 +605,11 @@ async function route(req, res) {
 
   // ========== USERS ==========
 
-  if (req.method === 'GET' && pathname.startsWith('/api/users/')) {
+  if (
+    req.method === 'GET' &&
+    pathname.startsWith('/api/users/') &&
+    pathname.split('/').length === 4
+  ) {
     const id = decodeURIComponent(pathname.split('/').at(-1));
     // Handle /api/users/search
     if (id === 'search') {
@@ -609,7 +650,7 @@ async function route(req, res) {
 
     try {
       const body = await readBody(req);
-      const { displayName, bio, skills } = body;
+      const { displayName, bio, skills, isOnline } = body;
 
       let sql = 'UPDATE users SET';
       const params = [];
@@ -630,6 +671,11 @@ async function route(req, res) {
         params.push(Array.isArray(skills) ? skills.join('|') : skills);
         paramIndex++;
       }
+      if (isOnline !== undefined) {
+        sql += ` is_online = $${paramIndex},`;
+        params.push(isOnline ? 1 : 0);
+        paramIndex++;
+      }
 
       // Remove trailing comma
       sql = sql.replace(/,$/, '');
@@ -644,6 +690,23 @@ async function route(req, res) {
     } catch (e) {
       console.error('Update user error:', e);
       return badRequest(res, 'Update failed');
+    }
+  }
+
+  // DELETE /api/users/:id - Delete current user account
+  if (req.method === 'DELETE' && /^\/api\/users\/[^/]+$/.test(pathname)) {
+    const id = decodeURIComponent(pathname.split('/').at(-1));
+    if (!user || user.userId !== id) {
+      return unauthorized(res, 'Not authorized to delete this user');
+    }
+
+    try {
+      const { rowCount } = await query('DELETE FROM users WHERE id = $1', [id]);
+      if (!rowCount) return notFound(res);
+      return json(res, 200, { success: true, deletedId: id });
+    } catch (e) {
+      console.error('Delete user error:', e);
+      return badRequest(res, 'Failed to delete account');
     }
   }
 
@@ -1017,6 +1080,61 @@ async function route(req, res) {
     return json(res, 200, { data: projects, page, limit, total: rowCount });
   }
 
+  // POST /api/projects - Create project
+  if (req.method === 'POST' && pathname === '/api/projects') {
+    if (!user) return unauthorized(res, 'Not authenticated');
+
+    try {
+      const body = await readBody(req);
+      const title = String(body.title || '').trim();
+      const description = String(body.description || '').trim();
+      const techStack = Array.isArray(body.techStack)
+        ? body.techStack.map((item) => String(item).trim()).filter(Boolean)
+        : [];
+      const maxMembers = Math.min(20, Math.max(2, Number(body.maxMembers || 5)));
+
+      if (!title || !description) {
+        return badRequest(res, 'Title and description are required');
+      }
+
+      const id = createdId('proj');
+      const now = new Date().toISOString();
+      await query(
+        `INSERT INTO projects (id, owner_id, title, description, tech_stack, status, member_count, max_members, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [
+          id,
+          user.userId,
+          title,
+          description,
+          techStack.join('|'),
+          'LOOKING_FOR_MEMBERS',
+          1,
+          maxMembers,
+          now,
+        ],
+      );
+
+      const { rows } = await query(`
+        SELECT p.*,
+          u.id AS owner_id, u.username AS owner_username, u.display_name AS owner_display_name,
+          u.email AS owner_email, u.avatar_url AS owner_avatar_url, u.bio AS owner_bio,
+          u.skills AS owner_skills, u.follower_count AS owner_follower_count,
+          u.following_count AS owner_following_count, u.post_count AS owner_post_count,
+          u.reputation AS owner_reputation, u.is_online AS owner_is_online,
+          u.is_mentor AS owner_is_mentor, u.created_at AS owner_created_at
+        FROM projects p JOIN users u ON u.id = p.owner_id
+        WHERE p.id = $1
+      `, [id]);
+
+      const project = await mapProject(rows[0]);
+      return json(res, 201, project);
+    } catch (e) {
+      console.error('Create project error:', e);
+      return badRequest(res, 'Failed to create project');
+    }
+  }
+
   // ========== JOBS ==========
 
   if (req.method === 'GET' && pathname === '/api/jobs') {
@@ -1050,12 +1168,21 @@ async function route(req, res) {
       projectCountResult,
       jobCountResult,
       activeUsersResult,
+      totalViewsResult,
+      topPostsResult,
     ] = await Promise.all([
       query('SELECT COUNT(*) as count FROM users'),
       query('SELECT COUNT(*) as count FROM posts'),
       query('SELECT COUNT(*) as count FROM projects'),
       query('SELECT COUNT(*) as count FROM jobs'),
-      query("SELECT COUNT(*) as count FROM users WHERE updated_at > NOW() - INTERVAL '7 days'"),
+      query('SELECT COUNT(*) as count FROM users WHERE is_online = 1'),
+      query('SELECT COALESCE(SUM(view_count), 0) as total FROM posts'),
+      query(`
+        SELECT title, view_count AS views, like_count AS likes
+        FROM posts
+        ORDER BY view_count DESC, like_count DESC
+        LIMIT 3
+      `),
     ]);
     return json(res, 200, {
       totalUsers: Number(userCountResult.rows[0]?.count ?? 0),
@@ -1063,6 +1190,17 @@ async function route(req, res) {
       totalProjects: Number(projectCountResult.rows[0]?.count ?? 0),
       totalJobs: Number(jobCountResult.rows[0]?.count ?? 0),
       activeUsersThisWeek: Number(activeUsersResult.rows[0]?.count ?? 0),
+      totalViews: Number(totalViewsResult.rows[0]?.total ?? 0),
+      topPosts: topPostsResult.rows.map((row) => ({
+        title: row.title,
+        views: Number(row.views ?? 0),
+        likes: Number(row.likes ?? 0),
+      })),
+      readerStats: [
+        { label: 'Mobile', pct: 0.52 },
+        { label: 'Web', pct: 0.31 },
+        { label: 'Backend', pct: 0.17 },
+      ],
     });
   }
 
@@ -1095,10 +1233,79 @@ async function route(req, res) {
     return json(res, 200, { data: convs, page, limit, total: rowCount });
   }
 
+  if (req.method === 'GET' && /^\/api\/conversations\/[^/]+$/.test(pathname)) {
+    const conversationId = decodeURIComponent(pathname.split('/')[3]);
+    const { rows } = await query(`
+      SELECT c.id AS conversation_id, c.last_message, c.unread_count, c.updated_at,
+        u.id AS user_id, u.username AS user_username, u.display_name AS user_display_name,
+        u.email AS user_email, u.avatar_url AS user_avatar_url, u.bio AS user_bio,
+        u.skills AS user_skills, u.follower_count AS user_follower_count,
+        u.following_count AS user_following_count, u.post_count AS user_post_count,
+        u.reputation AS user_reputation, u.is_online AS user_is_online,
+        u.is_mentor AS user_is_mentor, u.created_at AS user_created_at
+      FROM conversations c
+      JOIN users u ON u.id = c.other_user_id
+      WHERE c.id = $1
+      LIMIT 1`,
+      [conversationId]
+    );
+    if (!rows.length) return notFound(res);
+    const row = rows[0];
+    return json(res, 200, {
+      id: row.conversation_id,
+      otherUser: await mapUser({
+        id: row.user_id,
+        username: row.user_username,
+        display_name: row.user_display_name,
+        email: row.user_email,
+        avatar_url: row.user_avatar_url,
+        bio: row.user_bio,
+        skills: row.user_skills,
+        follower_count: row.user_follower_count,
+        following_count: row.user_following_count,
+        post_count: row.user_post_count,
+        reputation: row.user_reputation,
+        is_online: row.user_is_online,
+        is_mentor: row.user_is_mentor,
+        created_at: row.user_created_at,
+      }),
+      lastMessage: row.last_message,
+      unreadCount: row.unread_count,
+      updatedAt: row.updated_at,
+    });
+  }
+
+  if (req.method === 'DELETE' && /^\/api\/conversations\/[^/]+$/.test(pathname)) {
+    if (!user) return unauthorized(res, 'Not authenticated');
+    const conversationId = decodeURIComponent(pathname.split('/')[3]);
+    const { rowCount } = await query(
+      'DELETE FROM conversations WHERE id = $1',
+      [conversationId],
+    );
+    if (!rowCount) return notFound(res);
+    return json(res, 200, { success: true, conversationId });
+  }
+
   if (req.method === 'GET' && /^\/api\/conversations\/[^/]+\/messages$/.test(pathname)) {
     const conversationId = decodeURIComponent(pathname.split('/')[3]);
     const { rows } = await query('SELECT * FROM messages WHERE conversation_id = $1 ORDER BY created_at ASC', [conversationId]);
     return json(res, 200, rows.map((r) => ({ id: r.id, conversationId: r.conversation_id, senderId: r.sender_id, content: r.content, type: r.type, createdAt: r.created_at })));
+  }
+
+  // PATCH /api/conversations/:id/read - Mark conversation as read
+  if (req.method === 'PATCH' && /^\/api\/conversations\/[^/]+\/read$/.test(pathname)) {
+    if (!user) return unauthorized(res, 'Not authenticated');
+    const conversationId = decodeURIComponent(pathname.split('/')[3]);
+
+    await query(
+      'UPDATE messages SET is_read = 1 WHERE conversation_id = $1 AND sender_id <> $2',
+      [conversationId, user.userId],
+    );
+    await query(
+      'UPDATE conversations SET unread_count = 0 WHERE id = $1',
+      [conversationId],
+    );
+    return json(res, 200, { success: true, conversationId });
   }
 
   // POST /api/conversations/:id/messages - Send message
@@ -1132,10 +1339,51 @@ async function route(req, res) {
   // ========== NOTIFICATIONS ==========
 
   if (req.method === 'GET' && pathname === '/api/notifications') {
-    const { rows } = await query('SELECT * FROM notifications ORDER BY created_at DESC');
-    return json(res, 200, rows.map((r) => ({
-      id: r.id, type: r.type, title: r.title, body: r.body, fromUserId: r.from_user_id, isRead: r.is_read === 1, createdAt: r.created_at
+    const { rows } = await query(`
+      SELECT n.*,
+        u.id AS from_user_id_joined,
+        u.username AS from_user_username,
+        u.display_name AS from_user_display_name,
+        u.email AS from_user_email,
+        u.avatar_url AS from_user_avatar_url,
+        u.bio AS from_user_bio,
+        u.skills AS from_user_skills,
+        u.follower_count AS from_user_follower_count,
+        u.following_count AS from_user_following_count,
+        u.post_count AS from_user_post_count,
+        u.reputation AS from_user_reputation,
+        u.is_online AS from_user_is_online,
+        u.is_mentor AS from_user_is_mentor,
+        u.created_at AS from_user_created_at
+      FROM notifications n
+      LEFT JOIN users u ON u.id = n.from_user_id
+      ORDER BY n.created_at DESC
+    `);
+    const items = await Promise.all(rows.map(async (r) => ({
+      id: r.id,
+      type: r.type,
+      title: r.title,
+      body: r.body,
+      isRead: r.is_read === 1,
+      createdAt: r.created_at,
+      fromUser: r.from_user_id_joined ? await mapUser({
+        id: r.from_user_id_joined,
+        username: r.from_user_username,
+        display_name: r.from_user_display_name,
+        email: r.from_user_email,
+        avatar_url: r.from_user_avatar_url,
+        bio: r.from_user_bio,
+        skills: r.from_user_skills,
+        follower_count: r.from_user_follower_count,
+        following_count: r.from_user_following_count,
+        post_count: r.from_user_post_count,
+        reputation: r.from_user_reputation,
+        is_online: r.from_user_is_online,
+        is_mentor: r.from_user_is_mentor,
+        created_at: r.from_user_created_at,
+      }) : null,
     })));
+    return json(res, 200, items);
   }
 
   // PATCH /api/notifications/:id/read - Mark notification as read
@@ -1341,123 +1589,20 @@ async function route(req, res) {
     return json(res, 200, project);
   }
 
-  // ========== CODE RUN (MOCK) ==========
-
-  if (req.method === 'POST' && pathname === '/api/code/run') {
-    try {
-      const body = await readBody(req);
-      const { code, language } = body;
-      // Mock execution - in production this would call a sandbox service
-      const lang = (language || 'python').toLowerCase();
-      let output = '';
-      if (code && code.includes('print')) {
-        const matches = code.match(/print\s*\(\s*["'](.+?)["']\s*\)/g);
-        if (matches) {
-          output = matches.map(m => m.match(/["'](.+?)["']/)?.[1] || '').join('\n');
-        } else {
-          output = `[Mock ${lang} output] Code executed successfully (${code.length} chars)`;
-        }
-      } else {
-        output = `[Mock ${lang} output] Code executed (${code?.length || 0} chars)\nNo stdout produced.`;
-      }
-      return json(res, 200, { output, language: lang, executionTime: Math.floor(Math.random() * 100) + 10 });
-    } catch (e) {
-      return badRequest(res, 'Failed to execute code');
-    }
-  }
-
-  // ========== APPLY FOR JOB ==========
-
-  if (req.method === 'POST' && pathname.startsWith('/api/jobs/') && pathname.endsWith('/apply')) {
-    if (!user) return unauthorized(res, 'Not authenticated');
-    const jobId = decodeURIComponent(pathname.split('/')[3]);
-    return json(res, 200, { success: true, jobId, appliedAt: new Date().toISOString() });
-  }
-
-  // ========== JOIN PROJECT ==========
-
-  if (req.method === 'POST' && pathname.startsWith('/api/projects/') && pathname.endsWith('/join')) {
-    if (!user) return unauthorized(res, 'Not authenticated');
-    const projectId = decodeURIComponent(pathname.split('/')[3]);
-    return json(res, 200, { success: true, projectId, joinedAt: new Date().toISOString() });
-  }
-
-  // ========== NOTIFICATIONS - filter by user ==========
-
-  if (req.method === 'GET' && pathname === '/api/notifications') {
-    if (!user) return unauthorized(res, 'Not authenticated');
-    const { rows } = await query(
-      'SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC',
-      [user.userId]
-    );
-    const notifications = rows.map((r) => ({
-      id: r.id, type: r.type, title: r.title, body: r.body, fromUserId: r.from_user_id, isRead: r.is_read === 1, createdAt: r.created_at
-    }));
-    return json(res, 200, notifications);
-  }
-
-  // ========== USER REPOS ==========
-
-  if (req.method === 'GET' && pathname.startsWith('/api/users/') && pathname.endsWith('/repos')) {
-    const id = decodeURIComponent(pathname.split('/')[3]);
-    // Mock repos for now - in production this would call GitHub API
-    const { rows } = await query('SELECT username FROM users WHERE id = $1', [id]);
-    if (rows.length === 0) return notFound(res);
-    const username = rows[0].username;
-    return json(res, 200, [
-      { id: `${id}-r1`, name: `${username}_portfolio`, description: 'Personal portfolio and projects', stars: Math.floor(Math.random() * 100), language: 'Dart', url: '#' },
-      { id: `${id}-r2`, name: `devconnect-${username}`, description: 'DevConnect related project', stars: Math.floor(Math.random() * 50), language: 'Dart', url: '#' },
-    ]);
-  }
-
-  // ========== COMMENT UPVOTE ==========
-
-  if (req.method === 'POST' && pathname.startsWith('/api/comments/') && pathname.endsWith('/vote')) {
-    if (!user) return unauthorized(res, 'Not authenticated');
-    const commentId = decodeURIComponent(pathname.split('/')[3]);
-    await query('UPDATE comments SET upvotes = upvotes + 1 WHERE id = $1', [commentId]);
-    return json(res, 200, { success: true, commentId });
-  }
-
-  // ========== DELETE POST ==========
-
-  if (req.method === 'DELETE' && /^\/api\/posts\/[^/]+$/.test(pathname)) {
-    const id = decodeURIComponent(pathname.split('/').at(-1));
-    if (!user) return unauthorized(res, 'Not authenticated');
-    const { rows } = await query('SELECT author_id FROM posts WHERE id = $1', [id]);
-    if (rows.length === 0) return notFound(res);
-    if (rows[0].author_id !== user.userId) return unauthorized(res, 'Not authorized');
-    await query('DELETE FROM posts WHERE id = $1', [id]);
-    return json(res, 200, { success: true, deletedId: id });
-  }
-
-  // ========== EDIT POST ==========
-
-  if (req.method === 'PATCH' && /^\/api\/posts\/[^/]+$/.test(pathname)) {
-    const id = decodeURIComponent(pathname.split('/').at(-1));
-    if (!user) return unauthorized(res, 'Not authenticated');
-    const { rows } = await query('SELECT author_id FROM posts WHERE id = $1', [id]);
-    if (rows.length === 0) return notFound(res);
-    if (rows[0].author_id !== user.userId) return unauthorized(res, 'Not authorized');
-    try {
-      const body = await readBody(req);
-      const { title, content, type, tags } = body;
-      let sql = 'UPDATE posts SET';
-      const params = [];
-      let i = 1;
-      if (title !== undefined) { sql += ` title = $${i},`; params.push(title); i++; }
-      if (content !== undefined) { sql += ` content = $${i},`; params.push(content); i++; }
-      if (type !== undefined) { sql += ` type = $${i},`; params.push(type); i++; }
-      if (tags !== undefined) { sql += ` tags = $${i},`; params.push(Array.isArray(tags) ? tags.join('|') : tags); i++; }
-      if (params.length === 0) return badRequest(res, 'No fields to update');
-      sql = sql.replace(/,$/, '');
-      sql += ` WHERE id = $${i}`; params.push(id);
-      await query(sql, params);
-      return json(res, 200, { success: true, id });
-    } catch (e) {
-      return badRequest(res, 'Failed to update post');
-    }
-  }
+  const handledByExtendedRoutes = await handleExtendedRoutes({
+    req,
+    res,
+    pathname,
+    user,
+    readBody,
+    query,
+    json,
+    badRequest,
+    unauthorized,
+    notFound,
+    parseSkills,
+  });
+  if (handledByExtendedRoutes) return;
 
   return notFound(res);
 }

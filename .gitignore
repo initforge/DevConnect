@@ -26,3 +26,9 @@ redisdata/
 
 # Misc
 .gitnexus/
+.playwright-cli/
+output/
+app/build/
+app/.dart_tool/
+app/web/sqlite3.wasm
+app/web/sqflite_sw.js

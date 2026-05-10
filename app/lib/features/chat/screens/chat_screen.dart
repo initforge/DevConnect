@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../core/models/models.dart';
 import '../../../core/services/app_preferences.dart';
@@ -8,9 +7,9 @@ import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/chat_repository.dart';
 
 class ChatScreen extends StatefulWidget {
-  final String conversationId;
-
   const ChatScreen({super.key, required this.conversationId});
+
+  final String conversationId;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -19,66 +18,42 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final _repository = ChatRepository();
   final _msgCtrl = TextEditingController();
-  final _scrollCtrl = ScrollController();
   late Future<List<Object?>> _loader;
   bool _isSending = false;
 
   @override
   void initState() {
     super.initState();
-    _loadFeeds();
+    _load();
   }
 
-  void _loadFeeds() {
+  void _load() {
     _loader = Future.wait([
       _repository.getConversationOtherUser(widget.conversationId),
       _repository.getMessages(widget.conversationId),
     ]);
   }
 
-  Future<void> _refresh() async {
-    HapticFeedback.mediumImpact();
-    await _repository.markConversationRead(widget.conversationId);
-    _loadFeeds();
-    if (!mounted) return;
-    setState(() {});
-    await _loader;
-  }
-
   @override
   void dispose() {
     _msgCtrl.dispose();
-    _scrollCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _send() async {
-    if (_isSending) return;
-    final content = _msgCtrl.text.trim();
-    if (content.isEmpty) return;
+    final text = _msgCtrl.text.trim();
+    if (text.isEmpty || _isSending) return;
 
     setState(() => _isSending = true);
     try {
-      await _repository.sendMessage(conversationId: widget.conversationId, content: content);
+      await _repository.sendMessage(
+        conversationId: widget.conversationId,
+        content: text,
+      );
       _msgCtrl.clear();
       await _repository.markConversationRead(widget.conversationId);
-      _loadFeeds();
-      if (!mounted) return;
-      setState(() {});
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollCtrl.hasClients) {
-          _scrollCtrl.animateTo(
-            _scrollCtrl.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOut,
-          );
-        }
-      });
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Không thể gửi tin nhắn. Vui lòng thử lại.')),
-      );
+      _load();
+      if (mounted) setState(() {});
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
@@ -86,135 +61,370 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Tin nhắn')),
-      body: FutureBuilder<List<Object?>>(
-        future: _loader,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    return FutureBuilder<List<Object?>>(
+      future: _loader,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-          if (snapshot.hasError) {
-            return ErrorState(
-              message: 'Đã xảy ra lỗi khi tải tin nhắn.\nVui lòng thử lại.',
-              onRetry: _refresh,
-            );
-          }
+        final data = snapshot.data ?? const <Object?>[];
+        final otherUser = data.isNotEmpty ? data[0] as User? : null;
+        final messages =
+            data.length > 1 ? data[1] as List<Message> : const <Message>[];
 
-          final data = snapshot.data ?? const <Object?>[];
-          final otherUser = data.isNotEmpty ? data[0] as User? : null;
-          final messages = data.length > 1 ? (data[1] as List<Message>) : const <Message>[];
-
-          if (otherUser == null) {
-            return const EmptyState(
+        if (otherUser == null) {
+          return const Scaffold(
+            body: EmptyState(
               icon: Icons.chat_bubble_outline,
-              title: 'Không tìm thấy hội thoại',
-              subtitle: 'Hội thoại có thể đã bị xóa.',
-            );
-          }
+              title: 'Conversation not found',
+            ),
+          );
+        }
 
-          return RefreshIndicator(
-            onRefresh: _refresh,
-            child: Column(
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            titleSpacing: 0,
+            title: Row(
               children: [
-                Expanded(
-                  child: ListView.builder(
-                    controller: _scrollCtrl,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: messages.length,
-                    itemBuilder: (_, index) {
-                      final message = messages[index];
-                      final currentUserId = AppPreferences.instance.user?['id'] ?? 'u1';
-                      final isMe = message.senderId == currentUserId;
-                      return _MessageBubble(msg: message, isMe: isMe);
-                    },
-                  ),
+                UserAvatar(
+                  name: otherUser.displayName,
+                  size: 36,
+                  isOnline: otherUser.isOnline,
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).scaffoldBackgroundColor,
-                    border: const Border(top: BorderSide(color: AppColors.border)),
-                  ),
-                  child: SafeArea(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _msgCtrl,
-                            decoration: InputDecoration(
-                              hintText: 'Nhắn tin...',
-                              filled: true,
-                              fillColor: AppColors.surfaceAlt,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(24),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                            ),
-                            onSubmitted: (_) => _send(),
-                          ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        otherUser.displayName,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
                         ),
-                        const SizedBox(width: 8),
-                        _isSending
-                            ? const Padding(
-                                padding: EdgeInsets.all(12),
-                                child: SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                ),
-                              )
-                            : IconButton(
-                                icon: const Icon(Icons.send, color: AppColors.primary),
-                                onPressed: _send,
-                              ),
-                      ],
-                    ),
+                      ),
+                      Text(
+                        otherUser.isOnline ? 'Online' : 'Offline',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color:
+                              otherUser.isOnline
+                                  ? AppColors.success
+                                  : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          );
-        },
-      ),
+            actions: const [
+              Icon(Icons.videocam_outlined, size: 20),
+              SizedBox(width: 16),
+              Icon(Icons.call_outlined, size: 20),
+              SizedBox(width: 12),
+            ],
+          ),
+          body: Column(
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF4F6FA),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Text(
+                  'TODAY, 2:30 PM',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+                  itemCount: messages.length + 2,
+                  itemBuilder: (_, index) {
+                    if (index == 1) {
+                      return const _CodePreviewBubble();
+                    }
+                    if (index == messages.length + 1) {
+                      return const _LinkPreviewBubble(
+                        isMe: false,
+                        title: 'React Performance Guide',
+                        subtitle: 'devconnect.io/blog/recursive-ui',
+                      );
+                    }
+
+                    final currentUserId =
+                        AppPreferences.instance.user?['id'] ?? 'u1';
+                    final adjustedIndex = index > 1 ? index - 1 : index;
+                    final message = messages[adjustedIndex];
+                    return _MessageBubble(
+                      msg: message,
+                      isMe: message.senderId == currentUserId,
+                    );
+                  },
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 14),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(top: BorderSide(color: Color(0xFFE8EAF2))),
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF4F6FA),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.add,
+                          size: 18,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF4F6FA),
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: TextField(
+                            controller: _msgCtrl,
+                            decoration: const InputDecoration(
+                              hintText: 'Type a message...',
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                            ),
+                            onSubmitted: (_) => _send(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF5B53F6),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          onPressed: _isSending ? null : _send,
+                          icon:
+                              _isSending
+                                  ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                  : const Icon(
+                                    Icons.send_rounded,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
 class _MessageBubble extends StatelessWidget {
+  const _MessageBubble({required this.msg, required this.isMe});
+
   final Message msg;
   final bool isMe;
-
-  const _MessageBubble({required this.msg, required this.isMe});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
-        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment:
+            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
           Container(
-            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.72,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: isMe ? AppColors.primary : Colors.white,
+              color: isMe ? const Color(0xFF6E59F7) : const Color(0xFFF3F5F9),
               borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(16),
-                topRight: const Radius.circular(16),
-                bottomLeft: Radius.circular(isMe ? 16 : 4),
-                bottomRight: Radius.circular(isMe ? 4 : 16),
+                topLeft: const Radius.circular(18),
+                topRight: const Radius.circular(18),
+                bottomLeft: Radius.circular(isMe ? 18 : 6),
+                bottomRight: Radius.circular(isMe ? 6 : 18),
               ),
-              border: isMe ? null : Border.all(color: AppColors.border),
             ),
             child: Text(
               msg.content,
-              style: TextStyle(fontSize: 14, color: isMe ? Colors.white : AppColors.textPrimary),
+              style: TextStyle(
+                fontSize: 13.5,
+                height: 1.45,
+                color: isMe ? Colors.white : AppColors.textPrimary,
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CodePreviewBubble extends StatelessWidget {
+  const _CodePreviewBubble();
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.74,
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7F8FC),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFE8EAF2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Row(
+              children: [
+                Text(
+                  'REACT COMPONENT',
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: AppColors.textTertiary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Spacer(),
+                Icon(
+                  Icons.copy_outlined,
+                  size: 12,
+                  color: AppColors.textTertiary,
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Text(
+              'const TreeView = ({ data }) => {\n  return (\n    <div>\n      {data.map(item => (\n        <Node key={item.id} {...item} />\n      ))}\n    </div>\n  );\n};',
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.45,
+                color: Color(0xFF6E59F7),
+                fontFamily: 'monospace',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LinkPreviewBubble extends StatelessWidget {
+  const _LinkPreviewBubble({
+    required this.isMe,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final bool isMe;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.64,
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFE8EAF2)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F2FF),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.description_outlined,
+                color: Color(0xFF5B53F6),
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

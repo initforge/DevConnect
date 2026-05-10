@@ -24,16 +24,18 @@ void main() {
   }
 
   group('Luồng 07: Đồng nhất dữ liệu & Trạng thái rỗng (Data Integrity)', () {
-    testWidgets('TC-DATA-01: Kiểm tra đồng nhất tên người dùng trên toàn app', (tester) async {
+    testWidgets('TC-DATA-01: Kiểm tra đồng nhất tên người dùng trên toàn app', (
+      tester,
+    ) async {
       await login(tester);
 
       // 1. Vào Profile lấy tên hiện tại
       final destinations = find.byType(NavigationDestination);
       await tester.tap(destinations.at(4));
       await tester.pumpAndSettle(const Duration(seconds: 2));
-      
+
       const newName = 'Integrity Check Name';
-      
+
       // 2. Đổi tên
       final editBtn = find.byIcon(Icons.edit_outlined);
       if (editBtn.evaluate().isNotEmpty) {
@@ -47,7 +49,7 @@ void main() {
       // 3. Quay về Feed xem tên có đổi ở Bài viết không (Nếu có bài của mình)
       await tester.tap(destinations.at(0));
       await tester.pumpAndSettle(const Duration(seconds: 2));
-      
+
       // Kiểm tra xem tên mới có xuất hiện ở đâu đó trên màn hình Feed không
       // (Giả sử có bài viết của user hiện tại trên feed)
       // expect(find.text(newName), findsWidgets);
@@ -55,27 +57,30 @@ void main() {
       // 4. Vào Chat xem tên mình trong Header
       await tester.tap(destinations.at(2));
       await tester.pumpAndSettle(const Duration(seconds: 2));
-      
+
       // Mở Drawer hoặc xem Info (tùy cấu trúc app)
       // Đây là nơi test tính reactive của State Management
     });
 
-    testWidgets('TC-DATA-02: Kiểm tra Empty State khi tìm kiếm không ra kết quả', (tester) async {
-      await login(tester);
+    testWidgets(
+      'TC-DATA-02: Kiểm tra Empty State khi tìm kiếm không ra kết quả',
+      (tester) async {
+        await login(tester);
 
-      // Vào Explore
-      final destinations = find.byType(NavigationDestination);
-      await tester.tap(destinations.at(1));
-      await tester.pumpAndSettle(const Duration(seconds: 2));
+        // Vào Explore
+        final destinations = find.byType(NavigationDestination);
+        await tester.tap(destinations.at(1));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
-      // Tìm kiếm một chuỗi vô nghĩa
-      final searchInput = find.byType(TextField).first;
-      await tester.enterText(searchInput, 'zxcvbnm_không_có_thật_đâu_nha');
-      await tester.pumpAndSettle(const Duration(seconds: 2));
+        // Tìm kiếm một chuỗi vô nghĩa
+        final searchInput = find.byType(TextField).first;
+        await tester.enterText(searchInput, 'zxcvbnm_không_có_thật_đâu_nha');
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
-      // Kiểm tra màn hình trống
-      expect(find.text('Chưa có dữ liệu'), findsWidgets);
-      expect(find.byIcon(Icons.search_off_outlined), findsWidgets);
-    });
+        // Kiểm tra màn hình trống
+        expect(find.text('Chưa có dữ liệu'), findsWidgets);
+        expect(find.byIcon(Icons.search_off_outlined), findsWidgets);
+      },
+    );
   });
 }

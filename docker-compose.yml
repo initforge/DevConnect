@@ -9,6 +9,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+      - "8081:8081"
     environment:
       - DATABASE_URL=postgresql://devconnect:devconnect123@postgres:5432/devconnect
       - REDIS_URL=redis://redis:6379
@@ -68,7 +69,7 @@ services:
     container_name: devconnect_flutter_test
     environment:
       - API_BASE_URL=http://backend:8080
-      - WS_BASE_URL=ws://backend:8080
+      - WS_BASE_URL=ws://backend:8081
     volumes:
       - ./app:/app
     working_dir: /app

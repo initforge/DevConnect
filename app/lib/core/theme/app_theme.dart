@@ -72,6 +72,28 @@ class AppTheme {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       side: const BorderSide(color: AppColors.border),
     ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: AppColors.surface,
+      indicatorColor: AppColors.primary.withValues(alpha: 0.12),
+      labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        final selected = states.contains(WidgetState.selected);
+        return GoogleFonts.inter(
+          fontSize: 11,
+          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          color: selected ? AppColors.primary : AppColors.textTertiary,
+        );
+      }),
+      iconTheme: WidgetStateProperty.resolveWith((states) {
+        final selected = states.contains(WidgetState.selected);
+        return IconThemeData(
+          size: 20,
+          color: selected ? AppColors.primary : AppColors.textTertiary,
+        );
+      }),
+      height: 74,
+      elevation: 0,
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+    ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: AppColors.surface,
       selectedItemColor: AppColors.primary,
@@ -129,6 +151,30 @@ class AppTheme {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: AppColors.darkSurface,
+      indicatorColor: AppColors.primary.withValues(alpha: 0.18),
+      labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        final selected = states.contains(WidgetState.selected);
+        return GoogleFonts.inter(
+          fontSize: 11,
+          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          color:
+              selected ? AppColors.primaryLight : AppColors.darkTextSecondary,
+        );
+      }),
+      iconTheme: WidgetStateProperty.resolveWith((states) {
+        final selected = states.contains(WidgetState.selected);
+        return IconThemeData(
+          size: 20,
+          color:
+              selected ? AppColors.primaryLight : AppColors.darkTextSecondary,
+        );
+      }),
+      height: 74,
+      elevation: 0,
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: AppColors.darkSurface,

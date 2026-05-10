@@ -322,8 +322,4 @@ cd backend
 npm run seed:users
 ```
 
----
 
-## 📄 License
-
-Dự án phục vụ mục đích học tập — Midterm PRM393 @ FPT University.
