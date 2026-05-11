@@ -1,4 +1,11 @@
 {
+  "scripts": {
+    "ci:hygiene": "node scripts/maintenance/repo_hygiene_check.cjs",
+    "inventory": "node scripts/maintenance/repo_inventory.cjs",
+    "smoke:responsive": "node scripts/responsive_smoke.cjs",
+    "ci:coverage:flutter": "node scripts/coverage/check_lcov.cjs app/coverage/lcov.info",
+    "ci:ai-worker": "cd ai-worker && npm test && npm run check"
+  },
   "devDependencies": {
     "@wdio/cli": "^9.27.1",
     "appium": "^3.3.1",

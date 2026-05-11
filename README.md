@@ -152,6 +152,24 @@ flutter run
 | Auth | `bcrypt`, `jsonwebtoken` | Hash password & JWT tokens |
 | Realtime | `ws` | WebSocket server |
 
+### 🤖 AI Cloudflare Workers Proxy
+
+Một Cloudflare Worker cung cấp AI features (code review, explain code, mentorship match) qua Workers AI binding:
+
+```powershell
+cd ai-worker
+npm install
+npm test         # Unit tests
+npm run check    # Syntax check
+```
+
+Cấu hình: `ai-worker/wrangler.toml`
+
+Env variables cần thiết (xem `ai-worker/.env.example`):
+- `AI_WORKER_SECRET` — secret cho backend-to-worker auth
+
+Backend proxy tự động fallback sang rule-based responses nếu Worker không khả dụng.
+
 ---
 
 ## 🗄️ Database Schema
@@ -175,6 +193,31 @@ flutter run
 
 ## 🧪 Testing
 
+### CI Coverage Gate (Automated)
+
+Th project chạy CI tự động qua GitHub Actions (`.github/workflows/ci.yml`):
+
+```powershell
+# Flutter: static check + unit tests + coverage
+cd app
+flutter analyze
+flutter test --coverage
+
+# Backend: install + syntax check + API tests (requires Docker Postgres)
+cd backend
+npm ci
+node --check src/server.js
+node --check src/app.js
+# ... route module syntax checks
+# Run API tests: scripts/e2e_api_check.cjs (requires Docker)
+
+# AI Worker: unit tests
+cd ai-worker
+npm test && npm run check
+```
+
+Coverage thresholds: **10% total**, **80% core/repositories**.
+
 ### API Testing
 
 ```powershell
@@ -182,6 +225,8 @@ cd backend
 npm run test:api        # Kiểm tra tất cả API endpoints
 npm run test:login      # Test luồng đăng nhập
 ```
+
+> **E2E & Visual Tests** là manual — Playwright screenshots (`scripts/responsive_smoke.cjs`) không nằm trong CI gate bắt buộc. Chạy thủ công khi cần.
 
 ### Flutter Integration Tests (8 luồng E2E)
 

@@ -1,0 +1,11 @@
+name = "devconnect-ai-worker"
+main = "src/worker.js"
+compatibility_date = "2026-05-11"
+
+[ai]
+binding = "AI"
+
+[vars]
+AI_MODEL_CODE_REVIEW = "@cf/meta/llama-3.1-8b-instruct"
+AI_MODEL_EXPLAIN = "@cf/meta/llama-3.1-8b-instruct"
+AI_MODEL_MENTORSHIP = "@cf/meta/llama-3.1-8b-instruct"

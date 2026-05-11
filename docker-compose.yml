@@ -1,4 +1,4 @@
-# DevConnect Full Stack (Backend + Postgres + Redis + Flutter)
+# DevConnect Full Stack (Backend + Postgres by default)
 services:
   # ========== BACKEND (Node.js API) ==========
   backend:
@@ -12,15 +12,15 @@ services:
       - "8081:8081"
     environment:
       - DATABASE_URL=postgresql://devconnect:devconnect123@postgres:5432/devconnect
-      - REDIS_URL=redis://redis:6379
       - NODE_ENV=development
       - PORT=8080
       - JWT_SECRET=devconnect-secret-key-2024
+      - AI_WORKER_URL=${AI_WORKER_URL:-}
+      - AI_WORKER_SECRET=${AI_WORKER_SECRET:-}
+      - AI_TIMEOUT_MS=${AI_TIMEOUT_MS:-10000}
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_started
     restart: unless-stopped
     networks:
       - devconnect_network
@@ -50,6 +50,7 @@ services:
 
   # ========== REDIS ==========
   redis:
+    profiles: ["cache"]
     image: redis:7-alpine
     container_name: devconnect_redis
     ports:
@@ -63,6 +64,7 @@ services:
   # ========== FLUTTER TEST ENVIRONMENT ==========
   # Dùng để chạy integration tests hoặc build trong môi trường sạch
   flutter-test:
+    profiles: ["tools"]
     build:
       context: .
       dockerfile: docker/flutter/Dockerfile

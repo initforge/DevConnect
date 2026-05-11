@@ -6,22 +6,15 @@ class AppConstants {
   static const appName = 'DevConnect';
   static const appVersion = '1.0.0';
 
-  // API Configuration
-  // For Android Emulator: 10.0.2.2 is the alias for host machine's localhost
-  // For iOS Simulator: use localhost (127.0.0.1)
-  // For real device on same WiFi: use host machine's LAN IP (e.g., 192.168.x.x)
-  // For web/Chrome: use localhost
-  //
-  // Backend runs on port 8080 (Docker) or 3000 (local Node.js)
-  // For production, set this to your server's public URL
+  // API Configuration. Override per target with --dart-define.
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8080',
+    defaultValue: 'http://localhost:8080',
   );
 
   static const String wsBaseUrl = String.fromEnvironment(
     'WS_BASE_URL',
-    defaultValue: 'ws://10.0.2.2:8081',
+    defaultValue: 'ws://localhost:8081',
   );
 
   // Connection timeouts

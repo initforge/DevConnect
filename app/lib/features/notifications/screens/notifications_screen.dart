@@ -6,6 +6,7 @@ import '../../../core/constants/routes.dart';
 import '../../../core/models/models.dart';
 import '../../../core/services/app_preferences.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/responsive_utils.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/notification_repository.dart';
 
@@ -116,37 +117,41 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
             ],
           ),
-          body:
-              items.isEmpty
-                  ? const EmptyNotifications()
-                  : ListView(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
-                    children: [
-                      _FilterTabs(
-                        selected: _selectedTab,
-                        onSelected:
-                            (value) => setState(() => _selectedTab = value),
-                      ),
-                      const SizedBox(height: 10),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton(
-                          onPressed: _markAllRead,
-                          child: const Text(
-                            'Mark all as read',
-                            style: TextStyle(fontSize: 12),
+          body: items.isEmpty
+              ? const EmptyNotifications()
+              : Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: ResponsiveUtils.getContentMaxWidth(context),
+                    ),
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+                      children: [
+                        _FilterTabs(
+                          selected: _selectedTab,
+                          onSelected:
+                              (value) => setState(() => _selectedTab = value),
+                        ),
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                            onPressed: _markAllRead,
+                            child: const Text(
+                              'Mark all as read',
+                              style: TextStyle(fontSize: 12),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Today',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Today',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
+                        const SizedBox(height: 8),
                       ...today.map(
                         (item) => _NotificationTile(
                           item: item,
@@ -229,6 +234,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       ],
                     ],
                   ),
+                ),
+              ),
         );
       },
     );

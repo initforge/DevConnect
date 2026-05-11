@@ -37,6 +37,12 @@ class AppBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Navigation is now owned by ResponsiveScaffold. Keep this legacy widget as
+    // a no-op so older feature screens do not render a second bottom bar.
+    return const SizedBox.shrink();
+  }
+
+  Widget buildLegacy(BuildContext context) {
     void navigate(String route) {
       if (_isCurrentRoute(context, route)) return;
       context.go(route);

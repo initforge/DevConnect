@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../core/constants/routes.dart';
 import '../../../core/models/models.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/responsive_utils.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/user_repository.dart';
 
@@ -40,37 +40,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FC),
-      bottomNavigationBar: AppBottomNavBar(
-        items: [
-          AppBottomNavItem(
-            icon: Icons.home_outlined,
-            selectedIcon: Icons.home,
-            label: 'Home',
-            route: AppRoutes.home,
-          ),
-          AppBottomNavItem(
-            icon: Icons.explore_outlined,
-            selectedIcon: Icons.explore,
-            label: 'Explore',
-            route: AppRoutes.explore,
-          ),
-          AppBottomNavItem(
-            icon: Icons.leaderboard_outlined,
-            selectedIcon: Icons.leaderboard,
-            label: 'Leaderboard',
-            route: AppRoutes.leaderboard,
-          ),
-          AppBottomNavItem(
-            icon: Icons.person_outline,
-            selectedIcon: Icons.person,
-            label: 'Profile',
-            route: AppRoutes.profile,
-          ),
-        ],
-        selectedIndex: 2,
-        currentRoute: AppRoutes.leaderboard,
-        centerCreate: true,
-      ),
       appBar: AppBar(
         title: const Text(
           'Leaderboard',
@@ -114,36 +83,43 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
           return RefreshIndicator(
             onRefresh: _refresh,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 40),
-              children: [
-                const _LeaderboardHero(),
-                const SizedBox(height: 14),
-                _Podium(topThree: topThree),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: const Color(0xFFE8EAF2)),
-                  ),
-                  child: Column(
-                    children:
-                        rest
-                            .asMap()
-                            .entries
-                            .map(
-                              (entry) => _RankRow(
-                                rank: entry.key + 4,
-                                user: entry.value,
-                              ),
-                            )
-                            .toList(),
-                  ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: ResponsiveUtils.getContentMaxWidth(context),
                 ),
-              ],
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 40),
+                  children: [
+                    const _LeaderboardHero(),
+                    const SizedBox(height: 14),
+                    _Podium(topThree: topThree),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: const Color(0xFFE8EAF2)),
+                      ),
+                      child: Column(
+                        children:
+                            rest
+                                .asMap()
+                                .entries
+                                .map(
+                                  (entry) => _RankRow(
+                                    rank: entry.key + 4,
+                                    user: entry.value,
+                                  ),
+                                )
+                                .toList(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           );
         },

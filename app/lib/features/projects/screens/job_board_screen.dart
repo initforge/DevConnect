@@ -4,6 +4,7 @@ import '../../../core/constants/routes.dart';
 import '../../../core/models/models.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/responsive_utils.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/job_repository.dart';
 
@@ -149,15 +150,20 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
 
           return RefreshIndicator(
             onRefresh: _refresh,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 90),
-              children: [
-                _JobsSummary(
-                  totalJobs: jobs.length,
-                  remoteJobs: remoteJobs,
-                  avgMatch: avgMatch,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: ResponsiveUtils.getContentMaxWidth(context),
                 ),
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 90),
+                  children: [
+                    _JobsSummary(
+                      totalJobs: jobs.length,
+                      remoteJobs: remoteJobs,
+                      avgMatch: avgMatch,
+                    ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -208,6 +214,8 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
                   ),
                 ),
               ],
+              ),
+              ),
             ),
           );
         },

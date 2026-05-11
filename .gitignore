@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 package-lock.json
+!backend/package-lock.json
 
 # Flutter
 .dart_tool/
@@ -30,5 +31,16 @@ redisdata/
 output/
 app/build/
 app/.dart_tool/
+app/coverage/
 app/web/sqlite3.wasm
 app/web/sqflite_sw.js
+app/screenshot.png
+app/screenshots/
+deliverables/assets/
+docs/showcase/screenshots/
+.env
+.env.*
+!.env.example
+
+# Gradle
+.gradle/

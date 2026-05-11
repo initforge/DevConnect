@@ -7,9 +7,6 @@ import '../theme/app_colors.dart';
 
 part 'shared_widgets/bottom_nav.dart';
 
-// ============================================================
-// CONSTANTS - Design System
-// ============================================================
 const double kBorderRadiusSm = 8.0;
 const double kBorderRadiusMd = 12.0;
 const double kBorderRadiusLg = 16.0;
@@ -27,7 +24,6 @@ const Duration kAnimationSlow = Duration(milliseconds: 500);
 // ANIMATED WIDGETS
 // ============================================================
 
-/// Card appear animation wrapper with staggered entrance
 class AnimatedCard extends StatefulWidget {
   final Widget child;
   final int index;
@@ -54,14 +50,10 @@ class _AnimatedCardState extends State<AnimatedCard>
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: kAnimationNormal);
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     Future.delayed(widget.delay * widget.index, () {
       if (mounted) _controller.forward();
@@ -83,7 +75,6 @@ class _AnimatedCardState extends State<AnimatedCard>
   }
 }
 
-/// Button press scale animation wrapper for tactile feedback
 class PressableScale extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -109,10 +100,8 @@ class _PressableScaleState extends State<PressableScale>
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: kAnimationFast);
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: widget.scaleFactor,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: widget.scaleFactor)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -137,7 +126,6 @@ class _PressableScaleState extends State<PressableScale>
   }
 }
 
-/// Animated like button with bounce effect
 class AnimatedLikeButton extends StatefulWidget {
   final bool isLiked;
   final int count;
@@ -219,7 +207,6 @@ class _AnimatedLikeButtonState extends State<AnimatedLikeButton>
       n > 999 ? '${(n / 1000).toStringAsFixed(1)}k' : '$n';
 }
 
-/// Animated bookmark button
 class AnimatedBookmarkButton extends StatefulWidget {
   final bool isBookmarked;
   final int count;
@@ -280,10 +267,7 @@ class _AnimatedBookmarkButtonState extends State<AnimatedBookmarkButton>
             child: Icon(
               widget.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
               size: 20,
-              color:
-                  widget.isBookmarked
-                      ? AppColors.warning
-                      : AppColors.textSecondary,
+              color: widget.isBookmarked ? AppColors.warning : AppColors.textSecondary,
             ),
           ),
           const SizedBox(width: 4),
@@ -291,10 +275,7 @@ class _AnimatedBookmarkButtonState extends State<AnimatedBookmarkButton>
             _formatCount(widget.count),
             style: TextStyle(
               fontSize: 13,
-              color:
-                  widget.isBookmarked
-                      ? AppColors.warning
-                      : AppColors.textSecondary,
+              color: widget.isBookmarked ? AppColors.warning : AppColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -311,7 +292,6 @@ class _AnimatedBookmarkButtonState extends State<AnimatedBookmarkButton>
 // AVATAR WIDGETS
 // ============================================================
 
-/// Avatar tròn — có viền xanh nếu online
 class UserAvatar extends StatelessWidget {
   final String? imageUrl;
   final String name;
@@ -338,13 +318,13 @@ class UserAvatar extends StatelessWidget {
           child:
               imageUrl == null
                   ? Text(
-                    name.isNotEmpty ? name[0].toUpperCase() : '?',
-                    style: TextStyle(
-                      fontSize: size * 0.4,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
-                    ),
-                  )
+                      name.isNotEmpty ? name[0].toUpperCase() : '?',
+                      style: TextStyle(
+                        fontSize: size * 0.4,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    )
                   : null,
         ),
         if (isOnline)
@@ -370,7 +350,6 @@ class UserAvatar extends StatelessWidget {
 // CHIPS & TAGS
 // ============================================================
 
-/// Chip công nghệ — Flutter, Python, Docker...
 class TechChip extends StatelessWidget {
   final String label;
   final bool selected;
@@ -417,7 +396,6 @@ class TechChip extends StatelessWidget {
   }
 }
 
-/// Tag chip với màu sắc tùy chỉnh
 class ColoredTagChip extends StatelessWidget {
   final String label;
   final Color color;
@@ -458,7 +436,6 @@ class ColoredTagChip extends StatelessWidget {
 // LOADING STATES
 // ============================================================
 
-/// Loading shimmer effect with animation
 class ShimmerBox extends StatefulWidget {
   final double width;
   final double height;
@@ -487,10 +464,8 @@ class _ShimmerBoxState extends State<ShimmerBox>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat();
-    _animation = Tween<double>(
-      begin: -2,
-      end: 2,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _animation = Tween<double>(begin: -2, end: 2)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -526,7 +501,6 @@ class _ShimmerBoxState extends State<ShimmerBox>
   }
 }
 
-/// Skeleton loading placeholder for PostCard
 class PostCardSkeleton extends StatelessWidget {
   const PostCardSkeleton({super.key});
 
@@ -577,7 +551,6 @@ class PostCardSkeleton extends StatelessWidget {
 // EMPTY STATES
 // ============================================================
 
-/// Màn hình trống với icon, title, subtitle và optional action button
 class EmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -624,9 +597,9 @@ class EmptyState extends StatelessWidget {
               const SizedBox(height: kSpacingSm),
               Text(
                 subtitle!,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: AppColors.textTertiary),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textTertiary,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -641,7 +614,6 @@ class EmptyState extends StatelessWidget {
   }
 }
 
-/// Màn hình lỗi với nút thử lại
 class ErrorState extends StatelessWidget {
   final String message;
   final VoidCallback? onRetry;
@@ -674,9 +646,9 @@ class ErrorState extends StatelessWidget {
             const SizedBox(height: kSpacingLg),
             Text(
               message,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(color: AppColors.textPrimary),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: AppColors.textPrimary,
+              ),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[
@@ -684,7 +656,7 @@ class ErrorState extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Thử lại'),
+                label: const Text('Thu lai'),
               ),
             ],
           ],
@@ -694,7 +666,6 @@ class ErrorState extends StatelessWidget {
   }
 }
 
-/// Empty state variants for different contexts
 class EmptyPostFeed extends StatelessWidget {
   final VoidCallback? onCreatePost;
 
@@ -704,9 +675,9 @@ class EmptyPostFeed extends StatelessWidget {
   Widget build(BuildContext context) {
     return EmptyState(
       icon: Icons.article_outlined,
-      title: 'Chưa có bài viết nào',
-      subtitle: 'Hãy là người đầu tiên chia sẻ kiến thức với cộng đồng!',
-      actionLabel: onCreatePost != null ? 'Tạo bài viết' : null,
+      title: 'Chua co bai viet nao',
+      subtitle: 'Hay la nguoi dau tien chia se kien thuc voi cong dong!',
+      actionLabel: onCreatePost != null ? 'Tao bai viet' : null,
       onAction: onCreatePost,
     );
   }
@@ -721,11 +692,11 @@ class EmptySearchResults extends StatelessWidget {
   Widget build(BuildContext context) {
     return EmptyState(
       icon: Icons.search_off_outlined,
-      title: 'Không tìm thấy kết quả',
+      title: 'Khong tim thay ket qua',
       subtitle:
           query != null
-              ? 'Không có kết quả cho "$query"'
-              : 'Thử từ khóa khác hoặc kiểm tra chính tả',
+              ? 'Khong co ket qua cho "$query"'
+              : 'Thu tu khoa khac hoac kiem tra chinh ta',
     );
   }
 }
@@ -737,9 +708,8 @@ class EmptyNotifications extends StatelessWidget {
   Widget build(BuildContext context) {
     return const EmptyState(
       icon: Icons.notifications_none_outlined,
-      title: 'Chưa có thông báo nào',
-      subtitle:
-          'Các thông báo về likes, comments và followers sẽ xuất hiện ở đây.',
+      title: 'Chua co thong bao nao',
+      subtitle: 'Cac thong bao ve likes, comments va followers se xuat hien o day.',
     );
   }
 }
@@ -753,9 +723,9 @@ class EmptyMessages extends StatelessWidget {
   Widget build(BuildContext context) {
     return EmptyState(
       icon: Icons.chat_bubble_outline_outlined,
-      title: 'Chưa có tin nhắn nào',
-      subtitle: 'Bắt đầu cuộc trò chuyện với bạn bè và đồng nghiệp!',
-      actionLabel: onNewMessage != null ? 'Tin nhắn mới' : null,
+      title: 'Chua co tin nhan nao',
+      subtitle: 'Bat dau cuoc tro chuyen voi ban be va dong nghiep!',
+      actionLabel: onNewMessage != null ? 'Tin nhan moi' : null,
       onAction: onNewMessage,
     );
   }
@@ -816,10 +786,7 @@ class FuturePhaseBanner extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(999),
@@ -848,7 +815,7 @@ class FuturePhaseBanner extends StatelessWidget {
           if (showActionHint) ...[
             const SizedBox(height: 10),
             const Text(
-              'Giao diện được giữ lại để minh họa roadmap. CRUD, realtime hoặc backend sẽ được bổ sung ở giai đoạn sau.',
+              'Giao dien duoc giu lai de minh hoa roadmap. CRUD, realtime hoac backend se duoc bo sung o giai doan sau.',
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.textTertiary,

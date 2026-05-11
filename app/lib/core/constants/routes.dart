@@ -33,6 +33,7 @@ class AppRoutes {
   static const String mentorship = '/mentorship';
   static const String settings = '/settings';
   static const String search = '/search';
+  static const String more = '/more';
 
   // Base segments for dynamic route building
   static const String postBase = '/post';
@@ -64,5 +65,6 @@ class AppRoutes {
   static const String nameMentorship = 'mentorship';
   static const String nameSettings = 'settings';
   static const String nameSearch = 'search';
+  static const String nameMore = 'more';
   static const String nameShotLab = 'shotLab';
 }

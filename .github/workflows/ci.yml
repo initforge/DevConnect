@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/maintenance/repo_hygiene_check.cjs
+
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - working-directory: app
+        run: flutter pub get
+      - working-directory: app
+        run: flutter analyze
+      - working-directory: app
+        run: flutter test --coverage
+      - run: node scripts/coverage/check_lcov.cjs app/coverage/lcov.info
+        env:
+          MIN_FLUTTER_COVERAGE: 10
+          MIN_CORE_COVERAGE: 80
+      - working-directory: app
+        run: flutter build web
+      - working-directory: app
+        run: flutter build web --dart-define=SCREENSHOT_MODE=true
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run smoke:responsive
+
+  backend-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - working-directory: backend
+        run: npm ci
+      - working-directory: backend
+        run: node --check src/server.js && node --check src/app.js && node --check src/route_modules/auth_routes.js && node --check src/route_modules/user_routes.js && node --check src/route_modules/post_routes.js && node --check src/route_modules/project_routes.js && node --check src/route_modules/job_routes.js && node --check src/route_modules/social_routes.js && node --check src/route_modules/analytics_routes.js && node --check src/route_modules/media_routes.js && node --check src/route_modules/extended_routes.js
+      - run: docker compose up -d --build backend postgres
+      - run: |
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:8080/health && exit 0
+            sleep 2
+          done
+          docker compose logs backend
+          exit 1
+      - working-directory: backend
+        run: npm run seed:users
+      - run: node scripts/e2e_api_check.cjs
+
+  ai-worker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - working-directory: ai-worker
+        run: npm test && npm run check

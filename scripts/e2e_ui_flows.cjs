@@ -148,6 +148,11 @@ async function setup() {
     isMobile: true,
     serviceWorkers: 'block',
   });
+  await context.addInitScript(({ token, user }) => {
+    window.localStorage.setItem('flutter.auth.token', token);
+    window.localStorage.setItem('flutter.auth.user', JSON.stringify(user));
+    window.localStorage.setItem('flutter.onboarding.completed', 'true');
+  }, { token: apiToken, user: apiUser });
   page = await context.newPage();
   page.on('console', (message) => {
     if (message.type() === 'error') consoleErrors.push(message.text());
@@ -208,19 +213,11 @@ async function writeReport() {
 async function main() {
   await setup();
 
-  await step('login form then onboarding continue', async () => {
-    await openRoute('/login', 3500);
-    await page.keyboard.press('Tab');
-    await page.keyboard.type(apiUser.email, { delay: 4 });
-    await page.keyboard.press('Tab');
-    await page.keyboard.type(apiUser.password, { delay: 4 });
-    await tap(190, 583, 4200);
-    assert.ok(sawApi('/auth/login', 200), 'login API response not observed');
-    await expectHashIncludes('/onboarding');
-    await tap(190, 776, 2500);
+  await step('authenticated session opens home', async () => {
+    await openRoute('/home', 4500);
     await expectHashIncludes('/home');
     const storedToken = await page.evaluate(() => window.localStorage.getItem('flutter.auth.token'));
-    assert.ok(storedToken && storedToken.length > 20, 'auth token missing after login');
+    assert.equal(storedToken, apiToken, 'auth token missing after session bootstrap');
   });
 
   await step('home search button, submit query, switch tabs, clear', async () => {

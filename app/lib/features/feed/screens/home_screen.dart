@@ -6,6 +6,7 @@ import '../../../core/constants/routes.dart';
 import '../../../core/models/models.dart';
 import '../../../core/state/feed_refresh_bus.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/responsive_utils.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/post_repository.dart';
 import '../widgets/post_card.dart';
@@ -149,14 +150,21 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         ),
       ),
-      body: TabBarView(
-        controller: _tabCtrl,
-        children: [
-          _buildFeed(_forYouPosts, highlightAi: true),
-          _buildFeed(_followingPosts),
-          _buildFeed(_trendingPosts),
-        ],
-      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: ResponsiveUtils.getContentMaxWidth(context),
+          ),
+          child: TabBarView(
+            controller: _tabCtrl,
+            children: [
+              _buildFeed(_forYouPosts, highlightAi: true),
+              _buildFeed(_followingPosts),
+              _buildFeed(_trendingPosts),
+            ],
+          ),
+        ),
+     ),
     );
   }
 
@@ -206,7 +214,9 @@ class _HomeScreenState extends State<HomeScreen>
         return RefreshIndicator(
           onRefresh: _refresh,
           child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(0, 8, 0, 80),
+            padding: ResponsiveUtils.isDesktop(context)
+                ? const EdgeInsets.fromLTRB(0, 8, 0, 80)
+                : const EdgeInsets.fromLTRB(0, 8, 0, 80),
             itemCount: posts.length,
             itemBuilder: (context, index) {
               final post = posts[index];
@@ -246,11 +256,14 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                     ),
-                  PostCard(
-                    post: post,
-                    index: index,
-                    onTap:
-                        () => context.push('${AppRoutes.postBase}/${post.id}'),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 680),
+                    child: PostCard(
+                      post: post,
+                      index: index,
+                      onTap:
+                          () => context.push('${AppRoutes.postBase}/${post.id}'),
+                    ),
                   ),
                   if (index != posts.length - 1)
                     const Divider(height: 1, indent: 16, endIndent: 16),

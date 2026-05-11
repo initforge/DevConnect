@@ -1,3 +1,56 @@
+const AI_WORKER_URL = process.env.AI_WORKER_URL || '';
+const AI_WORKER_SECRET = process.env.AI_WORKER_SECRET || '';
+const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 10000);
+
+async function callAiWorker(route, payload, normalize) {
+  if (!AI_WORKER_URL) return null;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${AI_WORKER_URL.replace(/\/$/, '')}/v1/${route}`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(AI_WORKER_SECRET ? { 'x-devconnect-ai-key': AI_WORKER_SECRET } : {}),
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return { ...normalize(data), source: 'workers-ai' };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function normalizeCodeReview(data) {
+  return {
+    score: Number(data.score || 7),
+    summary: String(data.summary || 'Smart review completed.'),
+    issues: Array.isArray(data.issues) ? data.issues : [],
+  };
+}
+
+function normalizeCodeExplanation(data) {
+  return {
+    level: String(data.level || 'intermediate'),
+    explanation: String(data.explanation || data.summary || 'This snippet executes a focused workflow.'),
+    concepts: Array.isArray(data.concepts) ? data.concepts : ['Control flow'],
+    complexity: String(data.complexity || 'Linear in the number of processed lines.'),
+    alternatives: Array.isArray(data.alternatives) ? data.alternatives : [],
+  };
+}
+
+function normalizeMentorMatches(data) {
+  return {
+    matches: Array.isArray(data.matches) ? data.matches : [],
+  };
+}
+
 async function handleExtendedRoutes(ctx) {
   const {
     req,
@@ -16,6 +69,12 @@ async function handleExtendedRoutes(ctx) {
   if (req.method === 'POST' && pathname === '/api/ai/code-review') {
     try {
       const body = await readBody(req);
+      const proxied = await callAiWorker('code-review', body, normalizeCodeReview);
+      if (proxied) {
+        json(res, 200, proxied);
+        return true;
+      }
+
       const code = String(body.code || '');
       const language = String(body.language || 'text').toLowerCase();
       const issues = [];
@@ -67,9 +126,10 @@ async function handleExtendedRoutes(ctx) {
       json(res, 200, {
         score,
         summary: issues.length === 0
-          ? `This ${language} snippet looks clean and ready to demo.`
+          ? `This ${language} snippet looks clean and ready to share.`
           : `This ${language} snippet is close, but a few issues should be cleaned up first.`,
         issues,
+        source: 'fallback',
       });
       return true;
     } catch (e) {
@@ -81,6 +141,12 @@ async function handleExtendedRoutes(ctx) {
   if (req.method === 'POST' && pathname === '/api/ai/explain') {
     try {
       const body = await readBody(req);
+      const proxied = await callAiWorker('explain', body, normalizeCodeExplanation);
+      if (proxied) {
+        json(res, 200, proxied);
+        return true;
+      }
+
       const code = String(body.code || '');
       const language = String(body.language || 'text');
       const level = String(body.level || 'intermediate');
@@ -108,6 +174,7 @@ async function handleExtendedRoutes(ctx) {
           'Extract reusable logic into named helpers if the snippet keeps growing.',
           'Add validation and typed guards when the input can vary at runtime.',
         ],
+        source: 'fallback',
       });
       return true;
     } catch (e) {
@@ -119,6 +186,12 @@ async function handleExtendedRoutes(ctx) {
   if (req.method === 'POST' && pathname === '/api/ai/mentorship-match') {
     try {
       const body = await readBody(req);
+      const proxied = await callAiWorker('mentorship-match', body, normalizeMentorMatches);
+      if (proxied) {
+        json(res, 200, proxied);
+        return true;
+      }
+
       const requestedUser = body.user || {};
       const skills = new Set([
         ...(requestedUser.skills || []),
@@ -150,7 +223,7 @@ async function handleExtendedRoutes(ctx) {
         };
       }).sort((a, b) => b.score - a.score);
 
-      json(res, 200, { matches });
+      json(res, 200, { matches, source: 'fallback' });
       return true;
     } catch (e) {
       badRequest(res, 'Failed to score mentorship matches');
@@ -169,10 +242,10 @@ async function handleExtendedRoutes(ctx) {
         if (matches) {
           output = matches.map((m) => m.match(/["'](.+?)["']/)?.[1] || '').join('\n');
         } else {
-          output = `[Mock ${lang} output] Code executed successfully (${code.length} chars)`;
+          output = `[Safe ${lang} runner] Parsed snippet successfully (${code.length} chars)`;
         }
       } else {
-        output = `[Mock ${lang} output] Code executed (${code?.length || 0} chars)\nNo stdout produced.`;
+        output = `[Safe ${lang} runner] Parsed snippet (${code?.length || 0} chars)\nNo stdout produced.`;
       }
       json(res, 200, {
         output,
