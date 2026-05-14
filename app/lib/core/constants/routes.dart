@@ -9,6 +9,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String onboarding = '/onboarding';
+  static const String oauthCallback = '/auth/callback';
 
   // Main Tab Routes
   static const String home = '/home';
@@ -21,6 +22,8 @@ class AppRoutes {
   static const String postDetail = '/post/:id';
   static const String chatDetail = '/chat/:id';
   static const String userProfile = '/user/:id';
+  static const String projectDetail = '/projects/:id';
+  static const String myApplications = '/my-applications';
 
   // Feature Routes
   static const String createPost = '/create-post';
@@ -30,7 +33,6 @@ class AppRoutes {
   static const String analytics = '/analytics';
   static const String playground = '/playground';
   static const String liveCode = '/live-code';
-  static const String mentorship = '/mentorship';
   static const String settings = '/settings';
   static const String search = '/search';
   static const String more = '/more';
@@ -39,6 +41,7 @@ class AppRoutes {
   static const String postBase = '/post';
   static const String chatBase = '/chat';
   static const String userBase = '/user';
+  static const String projectBase = '/projects';
 
   // Debug Routes
   static const String shotLab = '/shot-lab';
@@ -47,6 +50,7 @@ class AppRoutes {
   static const String nameLogin = 'login';
   static const String nameRegister = 'register';
   static const String nameOnboarding = 'onboarding';
+  static const String nameOauthCallback = 'oauthCallback';
   static const String nameHome = 'home';
   static const String nameExplore = 'explore';
   static const String nameChatList = 'chatList';
@@ -57,14 +61,15 @@ class AppRoutes {
   static const String nameChatScreen = 'chatScreen';
   static const String nameUserProfile = 'userProfile';
   static const String nameProjects = 'projects';
+  static const String nameProjectDetail = 'projectDetail';
   static const String nameJobs = 'jobs';
   static const String nameLeaderboard = 'leaderboard';
   static const String nameAnalytics = 'analytics';
   static const String namePlayground = 'playground';
   static const String nameLiveCode = 'liveCode';
-  static const String nameMentorship = 'mentorship';
   static const String nameSettings = 'settings';
   static const String nameSearch = 'search';
   static const String nameMore = 'more';
+  static const String nameMyApplications = 'myApplications';
   static const String nameShotLab = 'shotLab';
 }

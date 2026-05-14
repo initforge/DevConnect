@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import '../../core/database/app_database.dart';
 import '../../core/models/models.dart';
 import '../../core/services/api_service.dart';
+import '../../core/services/app_preferences.dart';
 import '../mappers/model_mapper.dart';
 
 class JobRepository {
@@ -14,8 +15,13 @@ class JobRepository {
 
   Future<List<Job>> getJobs({int limit = 50}) async {
     if (_useApi) {
-      final data = await ApiService.instance.get('/api/jobs', queryParams: {'limit': limit});
-      final jobs = data.map((json) => ModelMappers.jobFromJson(json as Map<String, dynamic>)).toList();
+      final data = await ApiService.instance.get('/jobs', queryParams: {'limit': limit});
+      final jobs = data.map((json) {
+        final job = ModelMappers.jobFromJson(json as Map<String, dynamic>);
+        final currentUser = _getCurrentUser();
+        final computedMatch = currentUser != null ? _computeMatchPercent(job, currentUser) : job.matchPercent;
+        return job.copyWith(matchPercent: computedMatch);
+      }).toList();
       await _saveJobsToDb(jobs);
       return jobs;
     }
@@ -26,7 +32,7 @@ class JobRepository {
 
   Future<Job?> getJobById(String id) async {
     if (_useApi) {
-      final data = await ApiService.instance.getObject('/api/jobs/$id');
+      final data = await ApiService.instance.getObject('/jobs/$id');
       return ModelMappers.jobFromJson(data);
     }
     final db = await _database.database;
@@ -45,7 +51,7 @@ class JobRepository {
       if (query != null) params['q'] = query;
       if (techStack != null && techStack.isNotEmpty) params['tech'] = techStack.join(',');
       if (remote != null) params['remote'] = remote;
-      final data = await ApiService.instance.get('/api/jobs/search', queryParams: params);
+      final data = await ApiService.instance.get('/jobs/search', queryParams: params);
       return data.map((json) => ModelMappers.jobFromJson(json as Map<String, dynamic>)).toList();
     }
     final db = await _database.database;
@@ -59,12 +65,61 @@ class JobRepository {
     return _jobsFromRows(rows);
   }
 
+  Future<Job> createJob({
+    required String title,
+    required String company,
+    required String location,
+    required bool remote,
+    required String salaryRange,
+    required List<String> techStack,
+    required String experience,
+  }) async {
+    if (_useApi) {
+      final data = await ApiService.instance.post('/jobs', {
+        'title': title,
+        'company': company,
+        'location': location,
+        'remote': remote,
+        'salaryRange': salaryRange,
+        'techStack': techStack,
+        'experience': experience,
+      });
+      final job = ModelMappers.jobFromJson(data);
+      await _saveJobsToDb([job]);
+      return job;
+    }
+    throw UnsupportedError('Job creation requires API mode');
+  }
+
   Future<bool> applyForJob(String jobId) async {
     if (_useApi) {
-      await ApiService.instance.post('/api/jobs/$jobId/apply', {});
+      await ApiService.instance.post('/jobs/$jobId/apply', {});
       return true;
     }
     return true;
+  }
+
+  Future<List<Application>> getMyApplications() async {
+    final data = await ApiService.instance.get('/users/me/applications');
+    return data.map((json) => Application.fromJson(json as Map<String, dynamic>)).toList();
+  }
+
+  int _computeMatchPercent(Job job, User currentUser) {
+    if (currentUser.skills.isEmpty || job.techStack.isEmpty) return 0;
+    final userSkills = currentUser.skills.map((s) => s.toLowerCase()).toSet();
+    final jobSkills = job.techStack.map((s) => s.toLowerCase()).toSet();
+    final overlap = userSkills.intersection(jobSkills);
+    return jobSkills.isNotEmpty ? ((overlap.length / jobSkills.length) * 100).round() : 0;
+  }
+
+  User? _getCurrentUser() {
+    try {
+      final userData = AppPreferences.instance.user;
+      if (userData == null) return null;
+      return User.fromJson(userData);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> _saveJobsToDb(List<Job> jobs) async {

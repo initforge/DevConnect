@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../core/database/app_database.dart';
 import '../../core/models/models.dart';
@@ -16,17 +15,21 @@ class ChatRepository {
 
   Future<List<Conversation>> getConversations() async {
     if (_useApi) {
-      final data = await ApiService.instance.get('/api/conversations');
-      final conversations =
-          data
-              .map(
-                (json) => ModelMappers.conversationFromJson(
-                  json as Map<String, dynamic>,
-                ),
-              )
-              .toList();
-      await _saveConversationsToDb(conversations);
-      return conversations;
+      try {
+        final data = await ApiService.instance.get('/chat/conversations');
+        final conversations =
+            data
+                .map(
+                  (json) => ModelMappers.conversationFromJson(
+                    json as Map<String, dynamic>,
+                  ),
+                )
+                .toList();
+        await _saveConversationsToDb(conversations);
+        return conversations;
+      } catch (_) {
+        rethrow;
+      }
     }
     final db = await _database.database;
     final rows = await db.query('conversations', orderBy: 'updated_at DESC');
@@ -37,24 +40,14 @@ class ChatRepository {
     if (_useApi) {
       try {
         final data = await ApiService.instance.getObject(
-          '/api/conversations/$id',
+          '/chat/conversations/$id',
         );
         if (data.isNotEmpty) {
           return ModelMappers.conversationFromJson(data);
         }
-      } catch (error) {
-        debugPrint('ChatRepository.getConversationById API fallback: $error');
-        // Fall back to the conversations collection when the backend does not
-        // expose a dedicated detail endpoint for a single conversation.
+      } catch (_) {
+        rethrow;
       }
-
-      final conversations = await getConversations();
-      for (final conversation in conversations) {
-        if (conversation.id == id) {
-          return conversation;
-        }
-      }
-      return null;
     }
     final db = await _database.database;
     final rows = await db.query(
@@ -73,47 +66,51 @@ class ChatRepository {
     int limit = 50,
   }) async {
     if (_useApi) {
-      final data = await ApiService.instance.get(
-        '/api/conversations/$conversationId/messages',
-        queryParams: {'limit': limit},
-      );
-      return data.map((json) {
-        final reactions = json['reactions'];
-        List<String> reactionsList = [];
-        if (reactions is List) {
-          reactionsList = reactions.map((e) => e.toString()).toList();
-        } else if (reactions is String) {
-          reactionsList =
-              reactions.split('|').where((e) => e.isNotEmpty).toList();
-        }
-
-        final isRead = json['isRead'] ?? json['is_read'];
-        final isReadBool = isRead == true || isRead == 1 || isRead == 'true';
-
-        return Message(
-          id: json['id']?.toString() ?? '',
-          senderId:
-              json['senderId']?.toString() ??
-              json['sender_id']?.toString() ??
-              '',
-          content: json['content']?.toString() ?? '',
-          type: MessageType.values.firstWhere(
-            (e) => e.name == (json['type']?.toString() ?? 'text'),
-            orElse: () => MessageType.text,
-          ),
-          codeLanguage: json['codeLanguage']?.toString(),
-          codeSource: json['codeSource']?.toString(),
-          reactions: reactionsList,
-          isRead: isReadBool,
-          createdAt:
-              DateTime.tryParse(
-                json['createdAt']?.toString() ??
-                    json['created_at']?.toString() ??
-                    '',
-              ) ??
-              DateTime.now(),
+      try {
+        final data = await ApiService.instance.get(
+          '/chat/conversations/$conversationId/messages',
+          queryParams: {'limit': limit},
         );
-      }).toList();
+        return data.map((json) {
+          final reactions = json['reactions'];
+          List<String> reactionsList = [];
+          if (reactions is List) {
+            reactionsList = reactions.map((e) => e.toString()).toList();
+          } else if (reactions is String) {
+            reactionsList =
+                reactions.split('|').where((e) => e.isNotEmpty).toList();
+          }
+
+          final isRead = json['isRead'] ?? json['is_read'];
+          final isReadBool = isRead == true || isRead == 1 || isRead == 'true';
+
+          return Message(
+            id: json['id']?.toString() ?? '',
+            senderId:
+                json['senderId']?.toString() ??
+                json['sender_id']?.toString() ??
+                '',
+            content: json['content']?.toString() ?? '',
+            type: MessageType.values.firstWhere(
+              (e) => e.name == (json['type']?.toString() ?? 'text'),
+              orElse: () => MessageType.text,
+            ),
+            codeLanguage: json['codeLanguage']?.toString(),
+            codeSource: json['codeSource']?.toString(),
+            reactions: reactionsList,
+            isRead: isReadBool,
+            createdAt:
+                DateTime.tryParse(
+                  json['createdAt']?.toString() ??
+                      json['created_at']?.toString() ??
+                      '',
+                ) ??
+                DateTime.now(),
+          );
+        }).toList();
+      } catch (_) {
+        rethrow;
+      }
     }
     final db = await _database.database;
     final rows = await db.query(
@@ -156,12 +153,12 @@ class ChatRepository {
     String? codeLanguage,
     String? codeSource,
   }) async {
-    final userId = AppPreferences.instance.user?['id'];
+    final userId = AppPreferences.instance.userId;
     if (userId == null) throw Exception('User not logged in');
 
     if (_useApi) {
       final data = await ApiService.instance
-          .post('/api/conversations/$conversationId/messages', {
+          .post('/chat/conversations/$conversationId/messages', {
             'content': content,
             'type': type.name,
             if (codeLanguage != null) 'codeLanguage': codeLanguage,
@@ -214,10 +211,87 @@ class ChatRepository {
     return message;
   }
 
+  Future<Message> addReaction({
+    required String conversationId,
+    required String messageId,
+    required String reaction,
+  }) async {
+    if (_useApi) {
+      final data = await ApiService.instance.post(
+        '/chat/conversations/$conversationId/messages/$messageId/reactions',
+        {'reaction': reaction},
+      );
+      if (data.isNotEmpty) {
+        final reactions = data['reactions'];
+        final parsedReactions =
+            reactions is List
+                ? reactions.map((e) => e.toString()).toList()
+                : reactions
+                        ?.toString()
+                        .split('|')
+                        .where((e) => e.isNotEmpty)
+                        .toList() ??
+                    const <String>[];
+        return Message(
+          id: data['id']?.toString() ?? messageId,
+          senderId:
+              data['senderId']?.toString() ??
+              data['sender_id']?.toString() ??
+              '',
+          content: data['content']?.toString() ?? '',
+          type: MessageType.values.firstWhere(
+            (e) => e.name == (data['type']?.toString() ?? 'text'),
+            orElse: () => MessageType.text,
+          ),
+          codeLanguage: data['codeLanguage']?.toString(),
+          codeSource: data['codeSource']?.toString(),
+          reactions: parsedReactions,
+          isRead: data['isRead'] == true || data['is_read'] == 1,
+          createdAt:
+              DateTime.tryParse(
+                data['createdAt']?.toString() ??
+                    data['created_at']?.toString() ??
+                    '',
+              ) ??
+              DateTime.now(),
+        );
+      }
+      throw const FormatException('Invalid reaction response shape.');
+    }
+
+    final db = await _database.database;
+    final rows = await db.query(
+      'messages',
+      where: 'id = ?',
+      whereArgs: [messageId],
+      limit: 1,
+    );
+    final current =
+        rows.isNotEmpty
+            ? (rows.first['reactions']?.toString() ?? '')
+                .split('|')
+                .where((e) => e.isNotEmpty)
+                .toSet()
+            : <String>{};
+    if (current.contains(reaction)) {
+      current.remove(reaction);
+    } else {
+      current.add(reaction);
+    }
+    await db.update(
+      'messages',
+      {'reactions': current.join('|')},
+      where: 'id = ?',
+      whereArgs: [messageId],
+    );
+    final messages = await getMessages(conversationId);
+    return messages.firstWhere((message) => message.id == messageId);
+  }
+
   Future<void> markAsRead(String conversationId) async {
     if (_useApi) {
       await ApiService.instance.patch(
-        '/api/conversations/$conversationId/read',
+        '/chat/conversations/$conversationId/read',
         {},
       );
     }
@@ -280,15 +354,19 @@ class ChatRepository {
 
   Future<List<User>> getOnlineUsers() async {
     if (_useApi) {
-      final data = await ApiService.instance.get('/api/users');
-      final users =
-          data
-              .map(
-                (json) =>
-                    ModelMappers.userFromJson(json as Map<String, dynamic>),
-              )
-              .toList();
-      return users.where((u) => u.isOnline).toList();
+      try {
+        final data = await ApiService.instance.get('/users');
+        final users =
+            data
+                .map(
+                  (json) =>
+                      ModelMappers.userFromJson(json as Map<String, dynamic>),
+                )
+                .toList();
+        return users.where((u) => u.isOnline).toList();
+      } catch (_) {
+        rethrow;
+      }
     }
     final db = await _database.database;
     final rows = await db.query('users', where: 'is_online = 1');
@@ -306,7 +384,7 @@ class ChatRepository {
 
   Future<void> deleteConversation(String conversationId) async {
     if (_useApi) {
-      await ApiService.instance.delete('/api/conversations/$conversationId');
+      await ApiService.instance.delete('/chat/conversations/$conversationId');
     }
 
     final db = await _database.database;

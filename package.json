@@ -1,10 +1,13 @@
 {
   "scripts": {
-    "ci:hygiene": "node scripts/maintenance/repo_hygiene_check.cjs",
-    "inventory": "node scripts/maintenance/repo_inventory.cjs",
-    "smoke:responsive": "node scripts/responsive_smoke.cjs",
-    "ci:coverage:flutter": "node scripts/coverage/check_lcov.cjs app/coverage/lcov.info",
-    "ci:ai-worker": "cd ai-worker && npm test && npm run check"
+    "ci:hygiene": "node scripts/ci/repo-hygiene.cjs",
+    "ci:coverage:flutter": "node scripts/ci/check-lcov.cjs app/coverage/lcov.info",
+    "ci:e2e-api": "node scripts/ci/e2e-api.cjs",
+    "ci:ai-worker": "cd ai-worker && npm test && npm run check",
+    "smoke:responsive": "node scripts/e2e/responsive-smoke.cjs",
+    "test:e2e:full": "node scripts/e2e/full-suite.cjs",
+    "parity:screenshots": "node scripts/e2e/full-suite.cjs && python scripts/parity/visual-diff.py",
+    "inventory": "node scripts/maintenance/repo-inventory.cjs"
   },
   "devDependencies": {
     "@wdio/cli": "^9.27.1",

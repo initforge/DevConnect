@@ -6,7 +6,7 @@ class _ShowcaseProjectMarketplaceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       bottomNavigationBar: AppBottomNavBar(
         items: [
           AppBottomNavItem(
@@ -123,7 +123,6 @@ class _ShowcaseProjectCard extends StatefulWidget {
 
 class _ShowcaseProjectCardState extends State<_ShowcaseProjectCard> {
   bool _joined = false;
-  bool _saved = false;
 
   @override
   Widget build(BuildContext context) {
@@ -131,9 +130,9 @@ class _ShowcaseProjectCardState extends State<_ShowcaseProjectCard> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE8EAF2)),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,16 +155,6 @@ class _ShowcaseProjectCardState extends State<_ShowcaseProjectCard> {
                 ),
               ),
               const Spacer(),
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                tooltip: _saved ? 'Saved' : 'Save project',
-                onPressed: () => setState(() => _saved = !_saved),
-                icon: Icon(
-                  _saved ? Icons.bookmark : Icons.bookmark_border,
-                  size: 18,
-                  color: _saved ? AppColors.primary : AppColors.textSecondary,
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -216,7 +205,7 @@ class _ShowcaseProjectCardState extends State<_ShowcaseProjectCard> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFF4EEDF),
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
+                          border: Border.all(color: Theme.of(context).colorScheme.surface, width: 2),
                         ),
                         alignment: Alignment.center,
                         child: Text(
@@ -250,7 +239,7 @@ class _ShowcaseProjectCardState extends State<_ShowcaseProjectCard> {
                             setState(() => _joined = true);
                           },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
+                    backgroundColor: Theme.of(context).colorScheme.surface,
                     foregroundColor: AppColors.primary,
                     disabledForegroundColor: AppColors.success,
                     side: const BorderSide(color: Color(0xFFD9D6FF)),
@@ -307,10 +296,10 @@ class _ShowcaseFilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.white,
+          color: selected ? AppColors.primary : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? AppColors.primary : const Color(0xFFE8EAF2),
+            color: selected ? AppColors.primary : Theme.of(context).dividerColor,
           ),
         ),
         child: Text(
@@ -340,17 +329,21 @@ class _ProjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isOpen = project.status == 'LOOKING_FOR_MEMBERS';
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EAF2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return GestureDetector(
+      onTap: () {
+        context.pushNamed(AppRoutes.nameProjectDetail, pathParameters: {'id': project.id});
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Theme.of(context).dividerColor),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -380,48 +373,29 @@ class _ProjectCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF4F6FA),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.bookmark_border,
-                      size: 17,
-                      color: AppColors.textSecondary,
-                    ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      isOpen
+                          ? const Color(0xFFF3F0FF)
+                          : const Color(0xFFEFF7FF),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  isOpen ? 'Open' : 'Active',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color:
+                        isOpen
+                            ? const Color(0xFF5B53F6)
+                            : const Color(0xFF2279FF),
                   ),
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color:
-                          isOpen
-                              ? const Color(0xFFF3F0FF)
-                              : const Color(0xFFEFF7FF),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      isOpen ? 'Open' : 'Active',
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color:
-                            isOpen
-                                ? const Color(0xFF5B53F6)
-                                : const Color(0xFF2279FF),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
@@ -468,6 +442,7 @@ class _ProjectCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
@@ -499,7 +474,7 @@ class _MiniMembers extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFFECEEFF),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(color: Theme.of(context).colorScheme.surface, width: 2),
                   ),
                   alignment: Alignment.center,
                   child: Text(

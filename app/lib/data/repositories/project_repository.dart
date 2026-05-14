@@ -15,7 +15,7 @@ class ProjectRepository {
   Future<List<Project>> getProjects({int limit = 50}) async {
     if (_useApi) {
       final data = await ApiService.instance.get(
-        '/api/projects',
+        '/projects',
         queryParams: {'limit': limit},
       );
       final projects =
@@ -39,7 +39,7 @@ class ProjectRepository {
 
   Future<Project?> getProjectById(String id) async {
     if (_useApi) {
-      final data = await ApiService.instance.getObject('/api/projects/$id');
+      final data = await ApiService.instance.getObject('/projects/$id');
       return ModelMappers.projectFromJson(data);
     }
     final db = await _database.database;
@@ -56,7 +56,7 @@ class ProjectRepository {
   Future<List<Project>> searchProjects(String query) async {
     if (_useApi) {
       final data = await ApiService.instance.get(
-        '/api/projects/search',
+        '/projects/search',
         queryParams: {'q': query},
       );
       return data
@@ -80,7 +80,7 @@ class ProjectRepository {
   Future<bool> joinProject(String projectId) async {
     if (_useApi) {
       final result = await ApiService.instance.post(
-        '/api/projects/$projectId/join',
+        '/projects/$projectId/join',
         {},
       );
       return result['joined'] == true || result['success'] == true;
@@ -100,7 +100,7 @@ class ProjectRepository {
     required int maxMembers,
   }) async {
     if (_useApi) {
-      final data = await ApiService.instance.post('/api/projects', {
+      final data = await ApiService.instance.post('/projects', {
         'title': title,
         'description': description,
         'techStack': techStack,
@@ -112,6 +112,81 @@ class ProjectRepository {
     }
 
     throw UnsupportedError('Project creation requires API mode');
+  }
+
+  Future<bool> leaveProject(String projectId) async {
+    if (_useApi) {
+      final result = await ApiService.instance.post(
+        '/projects/$projectId/leave',
+        {},
+      );
+      return result['success'] == true || result.isNotEmpty;
+    }
+    final db = await _database.database;
+    await db.rawUpdate(
+      'UPDATE projects SET member_count = member_count - 1 WHERE id = ?',
+      [projectId],
+    );
+    return true;
+  }
+
+  Future<Project> updateProject({
+    required String projectId,
+    required String title,
+    required String description,
+    required List<String> techStack,
+  }) async {
+    if (_useApi) {
+      final data = await ApiService.instance.patch(
+        '/projects/$projectId',
+        {
+          'title': title,
+          'description': description,
+          'techStack': techStack,
+        },
+      );
+      final project = ModelMappers.projectFromJson(data);
+      await _saveProjectsToDb([project]);
+      return project;
+    }
+
+    throw UnsupportedError('Project update requires API mode');
+  }
+
+  Future<bool> deleteProject(String projectId) async {
+    if (_useApi) {
+      final result = await ApiService.instance.delete(
+        '/projects/$projectId',
+      );
+      return result['success'] == true;
+    }
+
+    throw UnsupportedError('Project deletion requires API mode');
+  }
+
+  Future<List<Map<String, dynamic>>> getProjectMembers(String projectId) async {
+    if (_useApi) {
+      final data = await ApiService.instance.get(
+        '/projects/$projectId/members',
+      );
+      return List<Map<String, dynamic>>.from(data);
+    }
+    final db = await _database.database;
+    final rows = await db.query(
+      'project_members',
+      where: 'project_id = ?',
+      whereArgs: [projectId],
+    );
+    return rows
+        .map(
+          (row) => {
+            'displayName': row['display_name']?.toString() ?? 'Unknown',
+            'role': row['role']?.toString() ?? 'Member',
+            'status': row['status']?.toString() ?? 'PENDING',
+            'joinedAt': row['joined_at']?.toString() ?? '',
+          },
+        )
+        .toList();
   }
 
   Future<void> _saveProjectsToDb(List<Project> projects) async {

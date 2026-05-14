@@ -36,6 +36,32 @@ class Job extends Equatable {
   factory Job.fromJson(Map<String, dynamic> json) => _$JobFromJson(json);
   Map<String, dynamic> toJson() => _$JobToJson(this);
 
+  Job copyWith({
+    String? id,
+    String? company,
+    String? title,
+    String? location,
+    bool? remote,
+    String? salaryRange,
+    List<String>? techStack,
+    String? experience,
+    int? matchPercent,
+    DateTime? createdAt,
+  }) {
+    return Job(
+      id: id ?? this.id,
+      company: company ?? this.company,
+      title: title ?? this.title,
+      location: location ?? this.location,
+      remote: remote ?? this.remote,
+      salaryRange: salaryRange ?? this.salaryRange,
+      techStack: techStack ?? this.techStack,
+      experience: experience ?? this.experience,
+      matchPercent: matchPercent ?? this.matchPercent,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
   @override
   List<Object?> get props => [id];
 }

@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node scripts/maintenance/repo_hygiene_check.cjs
+      - run: node scripts/ci/repo-hygiene.cjs
 
   flutter:
     runs-on: ubuntu-latest
@@ -30,7 +30,7 @@ jobs:
         run: flutter analyze
       - working-directory: app
         run: flutter test --coverage
-      - run: node scripts/coverage/check_lcov.cjs app/coverage/lcov.info
+      - run: node scripts/ci/check-lcov.cjs app/coverage/lcov.info
         env:
           MIN_FLUTTER_COVERAGE: 10
           MIN_CORE_COVERAGE: 80
@@ -63,7 +63,7 @@ jobs:
           exit 1
       - working-directory: backend
         run: npm run seed:users
-      - run: node scripts/e2e_api_check.cjs
+      - run: node scripts/ci/e2e-api.cjs
 
   ai-worker:
     runs-on: ubuntu-latest

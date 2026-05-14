@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/repositories/chat_repository.dart';
@@ -31,6 +32,19 @@ class ThemeModeNotifier extends _$ThemeModeNotifier {
 final themeModeProvider = Provider<ThemeMode>((ref) {
   return ref.watch(themeModeNotifierProvider);
 });
+
+class LocaleNotifier extends StateNotifier<Locale> {
+  LocaleNotifier() : super(Locale(AppPreferences.instance.languageCode));
+
+  Future<void> setLocale(Locale locale) async {
+    state = locale;
+    await AppPreferences.instance.setLanguageCode(locale.languageCode);
+  }
+}
+
+final appLocaleProvider = StateNotifierProvider<LocaleNotifier, Locale>(
+  (ref) => LocaleNotifier(),
+);
 
 final apiServiceProvider = Provider<ApiService>((ref) => ApiService.instance);
 

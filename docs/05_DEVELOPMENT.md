@@ -1,148 +1,113 @@
-# 05 — Hướng dẫn phát triển (Development Guide)
+# 05. Development
 
-> **Đọc sau 04_API.** File này hướng dẫn cách cài đặt, chạy, và làm việc với dự án trên máy local.
+## 1. Cần cài gì
 
----
+1. Flutter SDK để chạy app mobile/web.
+2. Node.js để chạy NestJS backend và Playwright scripts.
+3. Docker Desktop để chạy PostgreSQL, Redis, MinIO, Nginx, backend container.
 
-## Yêu cầu hệ thống
+Không cần MongoDB nữa vì stack runtime hiện tại không dùng MongoDB.
 
-| Phần mềm | Phiên bản | Kiểm tra |
-|----------|----------|---------|
-| Node.js | v20+ | `node --version` |
-| Docker & Docker Compose | Latest | `docker --version` |
-| Flutter SDK | v3.29+ | `flutter --version` |
-| Android Emulator hoặc iOS Simulator | — | `flutter devices` |
+## 2. Chạy bằng Docker
 
----
-
-## Khởi chạy nhanh (Quick Start)
-
-Toàn bộ quy trình chỉ cần 3 bước:
-
-```mermaid
-graph LR
-    A["1️⃣ Docker Up<br/>(Backend + DB)"] --> B["2️⃣ Seed Data<br/>(Tạo user test)"] --> C["3️⃣ Flutter Run<br/>(Mở app)"]
-```
-
-### Bước 1: Khởi động Backend
+Từ root repo:
 
 ```powershell
-docker-compose up -d
+docker compose up --build
 ```
 
-Lệnh này sẽ khởi động 3 container:
-- `api-server` → `http://localhost:8080`
-- `postgres` → `localhost:5432`
-- `redis` → `localhost:6379`
+Các service chính:
 
-> **Kiểm tra**: Mở trình duyệt tới `http://localhost:8080/health` — phải thấy `{"status":"ok"}`
+1. Nginx: `http://localhost`
+2. Backend nội bộ: `backend:8080`
+3. PostgreSQL: `postgres:5432`
+4. Redis: `redis:6379`
+5. MinIO API: `minio:9000`
+6. MinIO console: `http://localhost:9001`
 
-### Bước 2: Tạo dữ liệu test
+Flutter app mặc định gọi `http://localhost/api`, tức là đi qua Nginx.
+
+## 3. Chạy app Flutter local
+
+Từ `app/`:
 
 ```powershell
-cd backend
+flutter pub get
+flutter run -d chrome
+```
+
+Build web:
+
+```powershell
+flutter build web
+```
+
+Nếu chạy Android emulator, API host thường là `10.0.2.2` thay vì `localhost`. Code đã có nhánh xử lý trong constants/config.
+
+## 4. Chạy backend local
+
+Từ `backend/`:
+
+```powershell
 npm install
-npm run seed:users
+npm run build
+npm run start
 ```
 
-Lệnh này tạo 3 tài khoản test sẵn:
+Backend cần:
 
-| Email | Mật khẩu | Vai trò |
-|-------|---------|--------|
-| `minh@dev.com` | `password123` | User chính để demo |
-| `anh@dev.com` | `password123` | User phụ (test follow, chat) |
-| `test@test.com` | `password123` | User dự phòng |
+1. `DATABASE_URL`
+2. `REDIS_HOST`
+3. `REDIS_PORT`
+4. `JWT_SECRET`
+5. MinIO env nếu test upload.
 
-### Bước 3: Chạy Flutter App
+Khi chạy ngoài Docker, `DATABASE_URL` phải trỏ tới Postgres mà máy host truy cập được, không dùng hostname `postgres` trừ khi đang ở trong Docker network.
 
-```powershell
-cd app
-flutter run
-```
+## 5. Nginx proxy hoạt động thế nào
 
-> **Lưu ý**: Nếu chạy trên thiết bị thật (không phải emulator), cần sửa IP trong `app/lib/core/constants/app_constants.dart` từ `localhost` sang IP máy tính của bạn.
+`nginx.conf` nhận request ở port `80`.
 
----
+1. `/api/...` đi vào backend `8080`.
+2. `/chat` và Socket.IO cũng đi qua backend vì location `/` proxy websocket upgrade.
+3. `/storage/...` đi vào MinIO port `9000`.
+4. `/minio-console/...` đi vào MinIO console port `9001`.
 
-## Các lệnh hữu ích
+Lợi ích: frontend không cần biết từng service nằm cổng nào. Nó chỉ gọi một origin.
 
-### Backend Scripts
+## 6. Khi thêm feature mới
 
-Tất cả script nằm trong `backend/scripts/`:
+Quy trình đúng:
 
-| Lệnh | Tác dụng |
-|-------|---------|
-| `npm run test:api` | Chạy bộ kiểm tra API tự động (test tất cả endpoint) |
-| `npm run seed:users` | Tạo user test qua API |
-| `npm run update:passwords` | Reset tất cả mật khẩu về `password123` |
+1. Tìm màn trong `docs/showcase`.
+2. Map route runtime trong `app/lib/routing/app_router.dart`.
+3. Tìm repository/API client trong `app/lib/data/repositories`.
+4. Tìm controller/service backend tương ứng trong `backend/src`.
+5. Kiểm tra response shape: UI đang đọc field nào, backend có trả field đó không.
+6. Sửa code.
+7. Chạy verification trong `06_TESTING.md`.
+8. Cập nhật docs nếu contract hoặc behavior đổi.
 
-### Database Management
+## 7. Khi sửa realtime
 
-| Lệnh | Tác dụng |
-|-------|---------|
-| `psql $DATABASE_URL -f init.sql` | Khởi tạo schema từ đầu |
-| `psql $DATABASE_URL -f seed.sql` | Seed dữ liệu mẫu |
+Không được chỉ sửa client hoặc chỉ sửa backend.
 
-### Docker Commands
+Checklist:
 
-| Lệnh | Tác dụng |
-|-------|---------|
-| `docker-compose up -d` | Khởi động tất cả container (chạy nền) |
-| `docker-compose down` | Tắt tất cả container |
-| `docker-compose logs -f api-server` | Xem log backend real-time |
-| `docker-compose up --build -d` | Rebuild image rồi khởi động |
+1. Client dùng đúng namespace (`/chat`, `/live`, `/notifications` nếu có).
+2. Client gửi token qua đúng chỗ (`handshake.auth.token`).
+3. Backend verify token cùng secret với HTTP JWT.
+4. Event name giống nhau 100%.
+5. Backend lưu DB trước rồi mới broadcast event.
+6. UI có local update khi user đang nhìn màn đó.
+7. Reload lại vẫn thấy đúng state từ DB, không phụ thuộc state tạm.
 
----
+## 8. Dọn file
 
-## Cấu hình môi trường
+Không dùng `git clean` bừa vì worktree có nhiều file người dùng/agent khác tạo sẵn. Chỉ xóa file đã xác nhận:
 
-### Biến môi trường Backend
+1. Build artifact sinh ra và ignore đúng.
+2. Dump/tạm không được route/code/docs tham chiếu.
+3. Output test cũ nếu không còn cần làm bằng chứng.
 
-Các biến này được cấu hình trong `docker-compose.yml`:
-
-| Biến | Giá trị mặc định | Mô tả |
-|------|-----------------|-------|
-| `PORT` | `8080` | Port của API server |
-| `DATABASE_URL` | `postgres://devconnect:devconnect@postgres:5432/devconnect` | Connection string PostgreSQL |
-| `JWT_SECRET` | `devconnect-jwt-secret-key` | Secret key để ký JWT token |
-| `REDIS_URL` | `redis://redis:6379` | Connection string Redis |
-
-### Cấu hình Flutter
-
-File `app/lib/core/constants/app_constants.dart`:
-
-| Constant | Giá trị | Mô tả |
-|---------|---------|-------|
-| `apiBaseUrl` | `http://localhost:8080` | URL của Backend API |
-
----
-
-## Quy ước code (Conventions)
-
-### Backend
-
-- Sử dụng **Vanilla Node.js** `http` module (không dùng Express)
-- Entry point duy nhất: `src/server.js`
-- Tách logic thành module khi file lớn hơn 300 dòng
-
-### Frontend
-
-- **Riverpod** cho state management — không dùng `setState` cho business logic
-- **GoRouter** cho navigation — khai báo routes tập trung
-- Tách UI và Business Logic: Widget chỉ chứa UI, logic nằm trong Provider
-
-### Cấu trúc file trong `features/`
-
-```
-features/
-└── feature_name/
-    ├── screens/        # Các màn hình (StatefulWidget)
-    ├── widgets/        # Widget con tái sử dụng
-    └── providers/      # Riverpod providers (nếu cần)
-```
-
----
-
-## Tiếp theo
-
-Đọc **[06_TESTING.md](06_TESTING.md)** để hiểu cách chạy bộ test tự động.
+`docs/showcase` không phải file rác. Nó là benchmark.

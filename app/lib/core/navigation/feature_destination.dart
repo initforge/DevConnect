@@ -109,14 +109,6 @@ class FeatureDestinations {
     group: FeatureDestinationGroup.opportunities,
   );
 
-  static const mentorship = FeatureDestination(
-    id: 'mentorship',
-    label: 'Mentorship',
-    icon: Icons.school_outlined,
-    activeIcon: Icons.school,
-    route: AppRoutes.mentorship,
-    group: FeatureDestinationGroup.opportunities,
-  );
 
   static const playground = FeatureDestination(
     id: 'playground',
@@ -179,7 +171,6 @@ class FeatureDestinations {
     profile,
     projects,
     jobs,
-    mentorship,
     playground,
     analytics,
     leaderboard,
@@ -195,7 +186,6 @@ class FeatureDestinations {
     leaderboard,
     analytics,
     playground,
-    mentorship,
     liveCode,
     settings,
   ];

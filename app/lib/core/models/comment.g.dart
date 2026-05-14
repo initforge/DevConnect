@@ -8,6 +8,7 @@ part of 'comment.dart';
 
 Comment _$CommentFromJson(Map<String, dynamic> json) => Comment(
   id: json['id'] as String,
+  parentId: json['parentId'] as String?,
   author: User.fromJson(json['author'] as Map<String, dynamic>),
   content: json['content'] as String,
   depth: (json['depth'] as num?)?.toInt() ?? 0,
@@ -19,6 +20,7 @@ Comment _$CommentFromJson(Map<String, dynamic> json) => Comment(
 
 Map<String, dynamic> _$CommentToJson(Comment instance) => <String, dynamic>{
   'id': instance.id,
+  'parentId': instance.parentId,
   'author': instance.author,
   'content': instance.content,
   'depth': instance.depth,

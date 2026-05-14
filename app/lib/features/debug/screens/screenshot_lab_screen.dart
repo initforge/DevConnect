@@ -21,7 +21,7 @@ class ScreenshotLabScreen extends StatelessWidget {
       const _ShotRoute('Analytics', '/analytics'),
       const _ShotRoute('Playground', '/playground'),
       const _ShotRoute('Live Code', '/live-code'),
-      const _ShotRoute('Mentorship', '/mentorship'),
+
       const _ShotRoute('Cài đặt', '/settings'),
     ];
 

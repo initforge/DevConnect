@@ -8,3 +8,5 @@ export 'notification.dart';
 export 'project.dart';
 export 'job.dart';
 export 'leaderboard.dart';
+export 'application.dart';
+

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/routes.dart';
+import '../../../core/localization/app_strings.dart';
 import '../../../core/models/models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/shared_widgets.dart';
@@ -86,14 +89,30 @@ class _PostCardState extends State<PostCard> {
     if (!mounted) return;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Post link copied')));
+    ).showSnackBar(SnackBar(content: Text(AppStrings.of(context).t('feed.linkCopied'))));
   }
 
   Future<void> _toggleBookmark() async {
     HapticFeedback.lightImpact();
-    final bookmarked = await _repository.toggleBookmark(widget.post.id);
-    if (!mounted) return;
-    setState(() => _bookmarked = bookmarked);
+    final oldBookmarked = _bookmarked;
+
+    // Optimistic Update
+    setState(() => _bookmarked = !oldBookmarked);
+
+    try {
+      final success = await _repository.toggleBookmark(widget.post.id);
+      if (!mounted) return;
+      if (success != _bookmarked) {
+        setState(() => _bookmarked = success);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      // Rollback
+      setState(() => _bookmarked = oldBookmarked);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(context).t('feed.bookmarkFailed'))),
+      );
+    }
   }
 
   Future<void> _showPostActions() async {
@@ -108,7 +127,7 @@ class _PostCardState extends State<PostCard> {
             children: [
               ListTile(
                 leading: const Icon(Icons.link_outlined),
-                title: const Text('Copy link'),
+                title: Text(AppStrings.of(context).t('feed.copyLink')),
                 onTap: () async {
                   Navigator.of(sheetContext).pop();
                   await _copyLink();
@@ -120,7 +139,7 @@ class _PostCardState extends State<PostCard> {
                       ? Icons.bookmark_remove_outlined
                       : Icons.bookmark_border,
                 ),
-                title: Text(_bookmarked ? 'Remove bookmark' : 'Save post'),
+                title: Text(_bookmarked ? AppStrings.of(context).t('feed.removeBookmark') : AppStrings.of(context).t('feed.savePost')),
                 onTap: () async {
                   Navigator.of(sheetContext).pop();
                   await _toggleBookmark();
@@ -128,15 +147,11 @@ class _PostCardState extends State<PostCard> {
               ),
               ListTile(
                 leading: const Icon(Icons.flag_outlined),
-                title: const Text('Report post'),
+                title: Text(AppStrings.of(context).t('feed.reportPost')),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Report noted. Our moderation queue has it.',
-                      ),
-                    ),
+                    SnackBar(content: Text(AppStrings.of(context).t('feed.reportNoted'))),
                   );
                 },
               ),
@@ -144,6 +159,47 @@ class _PostCardState extends State<PostCard> {
           ),
         );
       },
+    );
+  }
+
+  void _openPostDetail() {
+    if (!mounted) return;
+    context.push('${AppRoutes.postBase}/${widget.post.id}');
+  }
+
+  Widget _buildHighlightedText(String? text, String fallback, TextStyle style, {int maxLines = 2}) {
+    if (text == null || text.isEmpty) {
+      return Text(
+        fallback,
+        style: style,
+        maxLines: maxLines,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    final List<TextSpan> spans = [];
+    final regex = RegExp(r'<b>(.*?)</b>', caseSensitive: false);
+    int lastMatchEnd = 0;
+
+    for (final match in regex.allMatches(text)) {
+      if (match.start > lastMatchEnd) {
+        spans.add(TextSpan(text: text.substring(lastMatchEnd, match.start)));
+      }
+      spans.add(TextSpan(
+        text: match.group(1),
+        style: style.copyWith(fontWeight: FontWeight.w900, color: const Color(0xFF4F46E5)),
+      ));
+      lastMatchEnd = match.end;
+    }
+
+    if (lastMatchEnd < text.length) {
+      spans.add(TextSpan(text: text.substring(lastMatchEnd)));
+    }
+
+    return Text.rich(
+      TextSpan(children: spans, style: style),
+      maxLines: maxLines,
+      overflow: TextOverflow.ellipsis,
     );
   }
 
@@ -158,31 +214,51 @@ class _PostCardState extends State<PostCard> {
       index: widget.index,
       child: InkWell(
         onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          margin: const EdgeInsets.fromLTRB(12, 4, 12, 10),
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+          margin: const EdgeInsets.fromLTRB(12, 4, 12, 12),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFE7EAF3)),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFECEFF5)),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x10111827),
-                blurRadius: 18,
-                offset: Offset(0, 8),
+                color: Color(0x0A111827),
+                blurRadius: 24,
+                offset: Offset(0, 6),
+              ),
+              BoxShadow(
+                color: Color(0x06111827),
+                blurRadius: 8,
+                offset: Offset(0, 2),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Gradient accent strip
+              Container(
+                height: 3,
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  gradient: LinearGradient(
+                    colors: _accentGradient(post.type),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Author row
               Row(
                 children: [
                   UserAvatar(
                     name: post.author.displayName,
                     imageUrl: post.author.avatarUrl,
-                    size: 38,
+                    size: 40,
                     isOnline: post.author.isOnline,
                   ),
                   const SizedBox(width: 10),
@@ -190,12 +266,36 @@ class _PostCardState extends State<PostCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          post.author.displayName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                          ),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                post.author.displayName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13.5,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _typeColor(post.type).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                _typeName(post.type),
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  color: _typeColor(post.type),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -221,54 +321,57 @@ class _PostCardState extends State<PostCard> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              Text(
+              const SizedBox(height: 12),
+              // Title
+              _buildHighlightedText(
+                post.highlightedTitle,
                 post.title,
-                style: const TextStyle(
-                  fontSize: 16.5,
+                const TextStyle(
+                  fontSize: 16,
                   fontWeight: FontWeight.w800,
                   height: 1.3,
+                  letterSpacing: -0.2,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 6),
-              Text(
+              // Preview
+              _buildHighlightedText(
+                post.highlightedContent,
                 preview,
-                style: const TextStyle(
+                const TextStyle(
                   fontSize: 13,
                   color: AppColors.textSecondary,
-                  height: 1.5,
+                  height: 1.55,
                 ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
               ),
+
               if (hasCode) ...[
                 const SizedBox(height: 12),
                 _CodePreviewSurface(content: post.content),
               ],
               if (post.tags.isNotEmpty) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
                   children:
                       post.tags
-                          .take(3)
+                          .take(4)
                           .map(
                             (tag) => Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 9,
-                                vertical: 4,
+                                horizontal: 10,
+                                vertical: 5,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF3F1FF),
-                                borderRadius: BorderRadius.circular(999),
+                                color: const Color(0xFFF5F3FF),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 '#$tag',
                                 style: const TextStyle(
-                                  fontSize: 10.5,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: Color(0xFF5B53F6),
                                 ),
@@ -278,48 +381,137 @@ class _PostCardState extends State<PostCard> {
                           .toList(),
                 ),
               ],
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  if (post.type == PostType.article ||
-                      post.type == PostType.til) ...[
-                    _MetaBadge(
-                      icon: Icons.schedule,
-                      text: '$readingTime min read',
+              const SizedBox(height: 14),
+              // Engagement bar
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8F9FC),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    _EngagementChip(
+                      icon: _liked ? Icons.favorite : Icons.favorite_border,
+                      label: _formatViews(_likeCount),
+                      color: _liked ? const Color(0xFFEF4444) : AppColors.textSecondary,
+                      onTap: () async {
+                        HapticFeedback.lightImpact();
+                        final oldLiked = _liked;
+                        final oldLikeCount = _likeCount;
+                        setState(() {
+                          _liked = !oldLiked;
+                          _likeCount += _liked ? 1 : -1;
+                        });
+                        try {
+                          final success = await _repository.toggleLike(post.id);
+                          if (!mounted) return;
+                          if (success != _liked) {
+                            setState(() {
+                              _liked = success;
+                              _likeCount = oldLikeCount + (success ? 1 : -1);
+                            });
+                          }
+                        } catch (e) {
+                          if (!mounted) return;
+                          setState(() {
+                            _liked = oldLiked;
+                            _likeCount = oldLikeCount;
+                          });
+                        }
+                      },
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
+                    _EngagementChip(
+                      icon: Icons.chat_bubble_outline,
+                      label: _formatViews(post.commentCount),
+                      color: AppColors.textSecondary,
+                      onTap: _openPostDetail,
+                    ),
+                    const SizedBox(width: 16),
+                    _EngagementChip(
+                      icon: _bookmarked ? Icons.bookmark : Icons.bookmark_border,
+                      label: _formatViews(post.bookmarkCount),
+                      color: _bookmarked ? const Color(0xFF5B53F6) : AppColors.textSecondary,
+                      onTap: () async { await _toggleBookmark(); },
+                    ),
+                    const Spacer(),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.visibility_outlined, size: 13, color: AppColors.textTertiary),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatViews(post.viewCount),
+                          style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                        ),
+                        if (post.type == PostType.article || post.type == PostType.til) ...[
+                          const SizedBox(width: 10),
+                          Icon(Icons.schedule, size: 13, color: AppColors.textTertiary),
+                          const SizedBox(width: 3),
+                          Text(
+                            '${readingTime}m',
+                            style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                          ),
+                        ],
+                      ],
+                    ),
                   ],
-                  _MetaBadge(
-                    icon: Icons.visibility_outlined,
-                    text: _formatViews(post.viewCount),
-                  ),
-                ],
+                ),
               ),
-              const SizedBox(height: 10),
-              PostActionBar(
-                likes: _likeCount,
-                comments: post.commentCount,
-                bookmarks: post.bookmarkCount,
-                isLiked: _liked,
-                isBookmarked: _bookmarked,
-                onLike: () async {
-                  HapticFeedback.lightImpact();
-                  final liked = await _repository.toggleLike(post.id);
-                  if (!mounted) return;
-                  setState(() {
-                    _liked = liked;
-                    _likeCount += liked ? 1 : -1;
-                  });
-                },
-                onBookmark: () async {
-                  await _toggleBookmark();
-                },
+            ],
+          ),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  List<Color> _accentGradient(PostType type) {
+    switch (type) {
+      case PostType.article:
+        return [const Color(0xFF6366F1), const Color(0xFF8B5CF6)];
+      case PostType.snippet:
+        return [const Color(0xFF10B981), const Color(0xFF06D6A0)];
+      case PostType.til:
+        return [const Color(0xFFF59E0B), const Color(0xFFFBBF24)];
+      case PostType.question:
+        return [const Color(0xFFEF4444), const Color(0xFFF97316)];
+      default:
+        return [const Color(0xFF6366F1), const Color(0xFF06B6D4)];
+    }
+  }
+
+  Color _typeColor(PostType type) {
+    switch (type) {
+      case PostType.article:
+        return const Color(0xFF6366F1);
+      case PostType.snippet:
+        return const Color(0xFF10B981);
+      case PostType.til:
+        return const Color(0xFFD97706);
+      case PostType.question:
+        return const Color(0xFFEF4444);
+      default:
+        return const Color(0xFF6366F1);
+    }
+  }
+
+  String _typeName(PostType type) {
+    switch (type) {
+      case PostType.article:
+        return 'Article';
+      case PostType.snippet:
+        return 'Snippet';
+      case PostType.til:
+        return 'TIL';
+      case PostType.question:
+        return 'Q&A';
+      default:
+        return 'Post';
+    }
   }
 }
 
@@ -427,28 +619,38 @@ class _Dot extends StatelessWidget {
   }
 }
 
-class _MetaBadge extends StatelessWidget {
-  const _MetaBadge({required this.icon, required this.text});
+class _EngagementChip extends StatelessWidget {
+  const _EngagementChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.onTap,
+  });
 
   final IconData icon;
-  final String text;
+  final String label;
+  final Color color;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: AppColors.textTertiary),
-        const SizedBox(width: 4),
-        Text(
-          text,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textTertiary,
-            fontWeight: FontWeight.w500,
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

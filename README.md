@@ -29,14 +29,14 @@ midterm-mobile/
 │   │   │   └── debug/            #     Debug tools
 │   │   └── routing/              #   GoRouter navigation
 │   └── integration_test/flows/   #   E2E Integration Tests (8 luồng)
-├── backend/                      # ☁️ Node.js API Server
-│   ├── src/server.js             #   Entry point (Express-like HTTP + WebSocket)
-│   ├── scripts/                  #   Utility scripts (test, seed, password reset)
-│   ├── init.sql                  #   Database schema + seed data
+├── backend/                      # ☁️ NestJS API Server
+│   ├── src/                      #   Source code (NestJS Modules, Services, Controllers)
+│   ├── prisma/                   #   Prisma ORM schema & migrations
+│   ├── scripts/                  #   Utility scripts (seed, password reset)
 │   └── Dockerfile                #   Container build config
 ├── docs/                         # 📖 Tài liệu kỹ thuật (7 files)
 ├── deliverables/                 # 📦 Report PDF + Presentation PPTX
-└── docker-compose.yml            # 🐳 Docker orchestration (4 services)
+└── docker-compose.yml            # 🐳 Docker orchestration (3 services)
 ```
 
 ---
@@ -165,7 +165,7 @@ npm run check    # Syntax check
 
 Cấu hình: `ai-worker/wrangler.toml`
 
-Env variables cần thiết (xem `ai-worker/.env.example`):
+Env variables cần thiết (xem `.env.example` tại root):
 - `AI_WORKER_SECRET` — secret cho backend-to-worker auth
 
 Backend proxy tự động fallback sang rule-based responses nếu Worker không khả dụng.
@@ -203,13 +203,11 @@ cd app
 flutter analyze
 flutter test --coverage
 
-# Backend: install + syntax check + API tests (requires Docker Postgres)
+# Backend: install + build check + API tests (requires Docker Postgres)
 cd backend
 npm ci
-node --check src/server.js
-node --check src/app.js
-# ... route module syntax checks
-# Run API tests: scripts/e2e_api_check.cjs (requires Docker)
+npm run build
+# Run API tests: scripts/ci/e2e-api.cjs (requires Docker)
 
 # AI Worker: unit tests
 cd ai-worker
@@ -226,7 +224,7 @@ npm run test:api        # Kiểm tra tất cả API endpoints
 npm run test:login      # Test luồng đăng nhập
 ```
 
-> **E2E & Visual Tests** là manual — Playwright screenshots (`scripts/responsive_smoke.cjs`) không nằm trong CI gate bắt buộc. Chạy thủ công khi cần.
+> **E2E & Visual Tests** là manual — Playwright screenshots (`scripts/e2e/responsive-smoke.cjs`) không nằm trong CI gate bắt buộc. Chạy thủ công khi cần.
 
 ### Flutter Integration Tests (8 luồng E2E)
 

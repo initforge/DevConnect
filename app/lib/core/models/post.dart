@@ -45,6 +45,8 @@ class Post extends Equatable {
   final bool isBookmarkedByMe;
   @JsonKey(name: 'createdAt')
   final DateTime createdAt;
+  final String? highlightedTitle;
+  final String? highlightedContent;
 
   const Post({
     required this.id,
@@ -61,7 +63,10 @@ class Post extends Equatable {
     this.isLikedByMe = false,
     this.isBookmarkedByMe = false,
     required this.createdAt,
+    this.highlightedTitle,
+    this.highlightedContent,
   });
+
 
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);
   Map<String, dynamic> toJson() => _$PostToJson(this);

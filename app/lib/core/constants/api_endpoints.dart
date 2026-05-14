@@ -9,66 +9,75 @@ class ApiEndpoints {
   static const String authLogout = '/auth/logout';
 
   // Users
-  static const String users = '/api/users';
-  static const String usersSearch = '/api/users/search';
-  static const String userById = '/api/users/:id';
-  static const String userFollow = '/api/users/:id/follow';
-  static const String userRepos = '/api/users/:id/repos';
+  static const String users = '/users';
+  static const String usersMe = '/users/me';
+  static const String usersSearch = '/users/search';
+  static const String userById = '/users/:id';
+  static const String userFollow = '/users/:id/follow';
+  static const String userRepos = '/users/:id/repos';
 
   // Posts
-  static const String posts = '/api/posts';
-  static const String postById = '/api/posts/:id';
-  static const String postLike = '/api/posts/:id/like';
-  static const String postBookmark = '/api/posts/:id/bookmark';
-  static const String postView = '/api/posts/:id/view';
-  static const String postComments = '/api/posts/:id/comments';
-  static const String postBookmarked = '/api/posts/bookmarked';
+  static const String posts = '/posts';
+  static const String postById = '/posts/:id';
+  static const String postLike = '/posts/:id/like';
+  static const String postBookmark = '/posts/:id/bookmark';
+  static const String postView = '/posts/:id/view';
+  static const String postComments = '/posts/:id/comments';
+  static const String postBookmarked = '/posts/bookmarked';
 
   // Feed types
-  static const String feedForYou = '/api/posts?type=foryou';
-  static const String feedFollowing = '/api/posts?type=following';
-  static const String feedTrending = '/api/posts?type=trending';
+  static const String feedForYou = '/posts?type=foryou';
+  static const String feedFollowing = '/posts?type=following';
+  static const String feedTrending = '/posts?type=trending';
 
   // Comments
-  static const String commentById = '/api/posts/:postId/comments/:id';
-  static const String commentVote = '/api/comments/:id/vote';
+  static const String commentById = '/posts/:postId/comments/:id';
+  static const String commentVote = '/comments/:id/vote';
 
   // Chat
-  static const String conversations = '/api/conversations';
-  static const String conversationMessages = '/api/conversations/:id/messages';
-  static const String conversationRead = '/api/conversations/:id/read';
+  static const String conversations = '/conversations';
+  static const String conversationMessages = '/conversations/:id/messages';
+  static const String conversationRead = '/conversations/:id/read';
 
   // Notifications
-  static const String notifications = '/api/notifications';
-  static const String notificationsReadAll = '/api/notifications/read-all';
-  static const String notificationRead = '/api/notifications/:id/read';
+  static const String notifications = '/notifications';
+  static const String notificationsReadAll = '/notifications/read-all';
+  static const String notificationRead = '/notifications/:id/read';
 
   // Projects
-  static const String projects = '/api/projects';
-  static const String projectById = '/api/projects/:id';
-  static const String projectJoin = '/api/projects/:id/join';
+  static const String projects = '/projects';
+  static const String projectById = '/projects/:id';
+  static const String projectJoin = '/projects/:id/join';
 
   // Jobs
-  static const String jobs = '/api/jobs';
-  static const String jobById = '/api/jobs/:id';
-  static const String jobApply = '/api/jobs/:id/apply';
+  static const String jobs = '/jobs';
+  static const String jobById = '/jobs/:id';
+  static const String jobApply = '/jobs/:id/apply';
 
   // Leaderboard
-  static const String leaderboard = '/api/leaderboard';
+  static const String leaderboard = '/leaderboard';
+  static const String leaderboardScoring = '/leaderboard/scoring';
 
   // Analytics
-  static const String analytics = '/api/analytics';
-  static const String analyticsMe = '/api/analytics/me';
+  static const String analytics = '/analytics';
+  static const String analyticsMe = '/analytics/me';
 
   // AI Features
-  static const String aiCodeReview = '/api/ai/code-review';
-  static const String aiExplain = '/api/ai/explain';
-  static const String aiMentorshipMatch = '/api/ai/mentorship-match';
+  static const String aiCodeReview = '/ai/code-review';
+  static const String aiCodeReviewStream = '/ai/code-review/stream';
+  static const String aiExplain = '/ai/explain';
+  static const String aiExplainStream = '/ai/explain/stream';
+  static const String aiMentorshipMatch = '/ai/mentorship-match';
+  static const String aiMentorshipMatchStream = '/ai/mentorship-match/stream';
+
+  // User interactions
+  static const String userInteractions = '/users/me/interactions';
 
   // Playground
-  static const String codeRun = '/api/code/run';
+  static const String codeRun = '/code/run';
 
   // Media
-  static const String mediaUpload = '/api/media/upload';
-  static const String mediaById = '/api/media/:id';
+  static const String mediaUpload = '/media/upload';
+  static const String mediaById = '/media/:id';
+
 }

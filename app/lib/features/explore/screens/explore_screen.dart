@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/routes.dart';
+import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_utils.dart';
+import '../../../core/widgets/decorative_widgets.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/post_repository.dart';
 import '../../../data/repositories/user_repository.dart';
@@ -37,9 +39,21 @@ class _ExploreScreenState extends State<ExploreScreen> {
         final posts = snapshot.data?[1] as List? ?? const [];
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
             titleSpacing: 10,
+            flexibleSpace: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withOpacity(0.06),
+                    Colors.transparent,
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
             title: const Text(
               'Explore',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
@@ -73,20 +87,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           height: 40,
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF4F6FA),
+                            color:
+                                Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Row(
+                          child: Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.search,
                                 size: 18,
                                 color: AppColors.textTertiary,
                               ),
-                              SizedBox(width: 8),
+                              const SizedBox(width: 8),
                               Text(
-                                'Search posts, devs, projects...',
-                                style: TextStyle(
+                                AppStrings.of(context).t('explore.searchPlaceholder'),
+                                style: const TextStyle(
                                   fontSize: 12,
                                   color: AppColors.textTertiary,
                                 ),
@@ -101,7 +118,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF4F46E5),
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: IconButton(
@@ -118,7 +135,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
             ),
           ),
-          body: Center(
+          body: DecorativeBackground(
+            child: Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: ResponsiveUtils.getContentMaxWidth(context),
@@ -169,9 +187,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     ),
                     const SizedBox(height: 18),
                     _SectionHeader(
-                      title: 'AI Picks for You',
-                      action: 'See all',
-                      onTap: () => context.push('${AppRoutes.search}?q=flutter'),
+                      title: AppStrings.of(context).t('explore.aiPicks'),
+                      action: AppStrings.of(context).t('explore.seeAll'),
+                      onTap:
+                          () => context.push('${AppRoutes.search}?q=flutter'),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -182,7 +201,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         separatorBuilder: (_, __) => const SizedBox(width: 12),
                         itemBuilder: (_, index) {
                           final post = posts[index];
-                          final cardWidth = ResponsiveUtils.isDesktop(context) ? 160.0 : 138.0;
+                          final cardWidth =
+                              ResponsiveUtils.isDesktop(context)
+                                  ? 160.0
+                                  : 138.0;
                           return InkWell(
                             borderRadius: BorderRadius.circular(18),
                             onTap:
@@ -193,9 +215,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               width: cardWidth,
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.surface,
                                 borderRadius: BorderRadius.circular(18),
-                                border: Border.all(color: const Color(0xFFE7EAF2)),
+                                border: Border.all(
+                                  color: Theme.of(context).dividerColor,
+                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,7 +246,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                       index.isEven
                                           ? Icons.code
                                           : Icons.auto_awesome,
-                                      color: Colors.white.withValues(alpha: 0.88),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.88,
+                                      ),
                                       size: 28,
                                     ),
                                   ),
@@ -244,20 +270,24 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       ),
                     ),
                     const SizedBox(height: 22),
-                    const Text(
-                      'Top Developers',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    Text(
+                      AppStrings.of(context).t('explore.topDevelopers'),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     SizedBox(
-                      height: 102,
+                      height: 125,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: users.length,
                         separatorBuilder: (_, __) => const SizedBox(width: 10),
                         itemBuilder: (_, index) {
                           final user = users[index];
-                          final tileWidth = ResponsiveUtils.isDesktop(context) ? 92.0 : 82.0;
+                          final tileWidth =
+                              ResponsiveUtils.isDesktop(context) ? 92.0 : 82.0;
                           return Container(
                             width: tileWidth,
                             padding: const EdgeInsets.symmetric(
@@ -265,9 +295,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               vertical: 10,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.surface,
                               borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: const Color(0xFFE7EAF2)),
+                              border: Border.all(
+                                color: Theme.of(context).dividerColor,
+                              ),
                             ),
                             child: Column(
                               children: [
@@ -297,7 +329,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                     style: OutlinedButton.styleFrom(
                                       padding: EdgeInsets.zero,
                                       side: const BorderSide(
-                                        color: Color(0xFF4F46E5),
+                                        color: AppColors.primary,
                                       ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -316,9 +348,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       ),
                     ),
                     const SizedBox(height: 22),
-                    const Text(
-                      'Popular Topics',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    Text(
+                      AppStrings.of(context).t('explore.popularTopics'),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _TopicsGrid(),
@@ -326,6 +361,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 ),
               ),
             ),
+          ),
           ),
         );
       },
@@ -338,36 +374,55 @@ class _TopicsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final columns = ResponsiveUtils.getGridCrossAxisCount(context);
-    return GridView.count(
-      crossAxisCount: columns,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.2,
-      children: const [
-        _TopicCard(
-          title: 'Web Dev',
-          subtitle: '1.2k posts today',
-          icon: Icons.web,
-        ),
-        _TopicCard(
-          title: 'System Design',
-          subtitle: '856 posts today',
-          icon: Icons.architecture,
-        ),
-        _TopicCard(
-          title: 'Mobile Apps',
-          subtitle: '412 posts today',
-          icon: Icons.phone_iphone,
-        ),
-        _TopicCard(
-          title: 'AI & ML',
-          subtitle: '244 posts today',
-          icon: Icons.psychology_alt_outlined,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = ResponsiveUtils.isDesktop(context);
+        final full = constraints.maxWidth;
+        final half = (full - 12) / 2;
+        final third = (full - 24) / 3;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            SizedBox(
+              width: wide ? (third * 2) + 12 : full,
+              height: 132,
+              child: const _TopicCard(
+                title: 'Web Dev',
+                subtitle: '1.2k posts today',
+                icon: Icons.web,
+              ),
+            ),
+            SizedBox(
+              width: wide ? third : half,
+              height: 132,
+              child: const _TopicCard(
+                title: 'AI & ML',
+                subtitle: '244 posts today',
+                icon: Icons.psychology_alt_outlined,
+              ),
+            ),
+            SizedBox(
+              width: wide ? third : half,
+              height: 116,
+              child: const _TopicCard(
+                title: 'Mobile Apps',
+                subtitle: '412 posts today',
+                icon: Icons.phone_iphone,
+              ),
+            ),
+            SizedBox(
+              width: wide ? (third * 2) + 12 : full,
+              height: 116,
+              child: const _TopicCard(
+                title: 'System Design',
+                subtitle: '856 posts today',
+                icon: Icons.architecture,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -395,7 +450,7 @@ class _SectionHeader extends StatelessWidget {
             action,
             style: const TextStyle(
               fontSize: 11,
-              color: Color(0xFF4F46E5),
+              color: AppColors.primary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -421,7 +476,7 @@ class _TopicCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F8FC),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -431,7 +486,7 @@ class _TopicCard extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, size: 18, color: const Color(0xFF4F46E5)),

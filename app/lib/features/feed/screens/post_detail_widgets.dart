@@ -73,52 +73,112 @@ class _CodeSnippetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final snippet = _buildSnippet(post);
+    final snippet = _extractCodeSnippet(post);
+    if (snippet.isEmpty) return const SizedBox.shrink();
+    final lines = snippet.split('\n');
+    final lang = _detectLanguage(post);
+
     return Container(
-      padding: const EdgeInsets.all(14),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F8FC),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE8EAF2)),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x18000000),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Text(
-                'CODE BLOCK',
-                style: TextStyle(
-                  fontSize: 9.5,
-                  letterSpacing: 0,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textTertiary,
+          // Title bar
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: const BoxDecoration(
+              color: Color(0xFF1E1E2E),
+            ),
+            child: Row(
+              children: [
+                const Row(
+                  children: [
+                    _Dot2(Color(0xFFFF5F56)),
+                    SizedBox(width: 6),
+                    _Dot2(Color(0xFFFFBD2E)),
+                    SizedBox(width: 6),
+                    _Dot2(Color(0xFF27C93F)),
+                  ],
                 ),
-              ),
-              const Spacer(),
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF313244),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    lang.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF89B4FA),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                 ),
-                child: const Icon(
-                  Icons.copy_outlined,
-                  size: 15,
-                  color: AppColors.textSecondary,
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: snippet));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Code copied')),
+                    );
+                  },
+                  child: const Icon(Icons.copy_outlined, size: 14, color: Color(0xFF6C7086)),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            snippet,
-            style: const TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 12.5,
-              height: 1.55,
-              color: Color(0xFF6E59F7),
+          // Code body
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            color: const Color(0xFF1E1E2E),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: List.generate(lines.length.clamp(0, 12), (i) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        child: Text(
+                          '${i + 1}',
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            color: Color(0xFF585B70),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          lines[i],
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 12,
+                            height: 1.5,
+                            color: Color(0xFFCDD6F4),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
             ),
           ),
         ],
@@ -126,18 +186,44 @@ class _CodeSnippetCard extends StatelessWidget {
     );
   }
 
-  String _buildSnippet(Post post) {
+  String _extractCodeSnippet(Post post) {
+    // Try to extract fenced code block
+    final fencedMatch = RegExp(r'```\w*\n?(.*?)```', dotAll: true).firstMatch(post.content);
+    if (fencedMatch != null) return fencedMatch.group(1)?.trim() ?? '';
+
+    // Fallback: generate a representative snippet from post metadata
     final normalizedTitle = post.title
         .toLowerCase()
         .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
         .replaceAll(RegExp(r'_+'), '_')
-        .replaceAll(RegExp(r'^_|_$'), '');
+        .replaceAll(RegExp(r'^_|_\$'), '');
     final firstTag = post.tags.isNotEmpty ? post.tags.first : 'snippet';
     return "const ${normalizedTitle.isEmpty ? 'postDetail' : normalizedTitle} = {\n"
         "  topic: '${post.title}',\n"
         "  tag: '$firstTag',\n"
         "  status: 'ready for review',\n"
         "};";
+  }
+
+  String _detectLanguage(Post post) {
+    final content = post.content.toLowerCase();
+    final tags = post.tags.map((t) => t.toLowerCase()).toList();
+    if (tags.contains('python') || content.contains('def ') || content.contains('import ')) return 'python';
+    if (tags.contains('typescript') || tags.contains('nestjs')) return 'typescript';
+    if (tags.contains('javascript') || tags.contains('react')) return 'javascript';
+    if (tags.contains('dart') || tags.contains('flutter')) return 'dart';
+    if (tags.contains('go') || tags.contains('golang')) return 'go';
+    if (tags.contains('rust')) return 'rust';
+    return 'code';
+  }
+}
+
+class _Dot2 extends StatelessWidget {
+  const _Dot2(this.color);
+  final Color color;
+  @override
+  Widget build(BuildContext context) {
+    return Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle));
   }
 }
 
@@ -146,31 +232,45 @@ class _MetaRow extends StatelessWidget {
 
   final Post post;
 
+  String _fmt(int n) => n >= 1000 ? '${(n / 1000).toStringAsFixed(1)}K' : '$n';
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFEEF0F6)),
+      ),
+      child: Row(
+        children: [
+          _MetaChip(icon: Icons.visibility_outlined, label: '${_fmt(post.viewCount)} views', color: const Color(0xFF6366F1)),
+          const SizedBox(width: 16),
+          _MetaChip(icon: Icons.chat_bubble_outline, label: '${_fmt(post.commentCount)} comments', color: const Color(0xFF10B981)),
+          const SizedBox(width: 16),
+          _MetaChip(icon: Icons.favorite_border, label: '${_fmt(post.likeCount)} likes', color: const Color(0xFFEF4444)),
+          const Spacer(),
+          _MetaChip(icon: Icons.bookmark_border, label: _fmt(post.bookmarkCount), color: const Color(0xFFF59E0B)),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({required this.icon, required this.label, required this.color});
+  final IconData icon;
+  final String label;
+  final Color color;
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(
-          Icons.visibility_outlined,
-          size: 16,
-          color: AppColors.textSecondary,
-        ),
-        const SizedBox(width: 6),
-        Text(
-          '${post.viewCount} views',
-          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-        ),
-        const SizedBox(width: 14),
-        const Icon(
-          Icons.chat_bubble_outline,
-          size: 16,
-          color: AppColors.textSecondary,
-        ),
-        const SizedBox(width: 6),
-        Text(
-          '${post.commentCount} comments',
-          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-        ),
+        Icon(icon, size: 15, color: color),
+        const SizedBox(width: 4),
+        Text(label, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: color)),
       ],
     );
   }
@@ -212,9 +312,24 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _CommentCard extends StatefulWidget {
-  const _CommentCard({required this.comment, this.onUpvote});
+  const _CommentCard({
+    required this.comment,
+    this.replyCount,
+    this.repliesExpanded = false,
+    this.canMarkBest = false,
+    this.onToggleReplies,
+    this.onReply,
+    this.onMarkBest,
+    this.onUpvote,
+  });
 
   final Comment comment;
+  final int? replyCount;
+  final bool repliesExpanded;
+  final bool canMarkBest;
+  final VoidCallback? onToggleReplies;
+  final VoidCallback? onReply;
+  final VoidCallback? onMarkBest;
   final VoidCallback? onUpvote;
 
   @override
@@ -232,133 +347,261 @@ class _CommentCardState extends State<_CommentCard> {
   }
 
   @override
+  void didUpdateWidget(covariant _CommentCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.comment.id != widget.comment.id ||
+        oldWidget.comment.upvotes != widget.comment.upvotes) {
+      _upvotes = widget.comment.upvotes;
+      _upvoted = false;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFD),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final double indent = (widget.comment.depth * 16.0).clamp(0.0, 96.0);
+
+    return Padding(
+      padding: EdgeInsets.only(left: indent),
+      child: Stack(
         children: [
-          GestureDetector(
-            onTap:
-                () => context.push(
-                  '${AppRoutes.userBase}/${widget.comment.author.id}',
-                ),
-            child: UserAvatar(
-              name: widget.comment.author.displayName,
-              size: 34,
+          if (widget.comment.depth > 0)
+            Positioned(
+              left: -12,
+              top: 0,
+              bottom: 0,
+              child: Container(width: 2, color: const Color(0xFFE8EAF2)),
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color:
+                  widget.comment.depth > 0
+                      ? Colors.white
+                      : const Color(0xFFF9FAFD),
+              borderRadius: BorderRadius.circular(18),
+              border:
+                  widget.comment.depth > 0
+                      ? Border.all(color: const Color(0xFFE8EAF2))
+                      : null,
+            ),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
+
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        widget.comment.author.displayName,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
+                GestureDetector(
+                  onTap:
+                      () => context.push(
+                        '${AppRoutes.userBase}/${widget.comment.author.id}',
                       ),
-                    ),
-                    Text(
-                      _shortTimeAgo(widget.comment.createdAt),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  widget.comment.content,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    height: 1.45,
-                    color: AppColors.textSecondary,
+                  child: UserAvatar(
+                    name: widget.comment.author.displayName,
+                    size: widget.comment.depth > 0 ? 28 : 34,
                   ),
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    InkWell(
-                      onTap: () {
-                        if (_upvoted) return;
-                        setState(() {
-                          _upvoted = true;
-                          _upvotes += 1;
-                        });
-                        widget.onUpvote?.call();
-                      },
-                      borderRadius: BorderRadius.circular(999),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              _upvoted ? const Color(0xFFF3F0FF) : Colors.white,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _upvoted
-                                  ? Icons.thumb_up
-                                  : Icons.thumb_up_outlined,
-                              size: 13,
-                              color:
-                                  _upvoted
-                                      ? const Color(0xFF5B53F6)
-                                      : AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              '$_upvotes',
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              widget.comment.author.displayName,
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: widget.comment.depth > 0 ? 12 : 13,
                                 fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            _shortTimeAgo(widget.comment.createdAt),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        widget.comment.content,
+                        style: TextStyle(
+                          fontSize: widget.comment.depth > 0 ? 12 : 13,
+                          height: 1.45,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      if (widget.comment.isBest) ...[
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFECFDF5),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.verified,
+                                  size: 12,
+                                  color: AppColors.success,
+                                ),
+                                SizedBox(width: 5),
+                                Text(
+                                  'Best answer',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.success,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              if (_upvoted) return;
+                              setState(() {
+                                _upvoted = true;
+                                _upvotes += 1;
+                              });
+                              widget.onUpvote?.call();
+                            },
+                            borderRadius: BorderRadius.circular(999),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
                                 color:
                                     _upvoted
-                                        ? const Color(0xFF5B53F6)
-                                        : AppColors.textSecondary,
+                                        ? const Color(0xFFF3F0FF)
+                                        : Colors.white,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _upvoted
+                                        ? Icons.thumb_up
+                                        : Icons.thumb_up_outlined,
+                                    size: 12,
+                                    color:
+                                        _upvoted
+                                            ? const Color(0xFF5B53F6)
+                                            : AppColors.textSecondary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '$_upvotes',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color:
+                                          _upvoted
+                                              ? const Color(0xFF5B53F6)
+                                              : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: widget.onReply,
+                            borderRadius: BorderRadius.circular(999),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              child: Row(
+                                children: const [
+                                  Icon(
+                                    Icons.reply_outlined,
+                                    size: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Reply',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (widget.canMarkBest) ...[
+                            const SizedBox(width: 8),
+                            InkWell(
+                              onTap: widget.onMarkBest,
+                              borderRadius: BorderRadius.circular(999),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFECFDF5),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: const Text(
+                                  'Mark best',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.success,
+                                  ),
+                                ),
                               ),
                             ),
                           ],
-                        ),
-                      ),
-                    ),
-                    if (widget.comment.isBest) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFECFDF5),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: const Text(
-                          'Best answer',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.success,
-                          ),
-                        ),
+                          if ((widget.replyCount ?? widget.comment.replyCount) >
+                              0) ...[
+                            const SizedBox(width: 8),
+                            InkWell(
+                              onTap: widget.onToggleReplies,
+                              borderRadius: BorderRadius.circular(999),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 6,
+                                ),
+                                child: Text(
+                                  widget.repliesExpanded
+                                      ? 'Hide replies'
+                                      : 'View ${widget.replyCount ?? widget.comment.replyCount} replies',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -372,18 +615,26 @@ class _CommentCardState extends State<_CommentCard> {
 class _BottomCommentBar extends StatelessWidget {
   const _BottomCommentBar({
     required this.controller,
+    required this.focusNode,
     required this.post,
     required this.isSending,
+    this.replyingToName,
+    required this.onCancelReply,
     required this.onLike,
     required this.onBookmark,
+    required this.onComment,
     required this.onSend,
   });
 
   final TextEditingController controller;
+  final FocusNode focusNode;
   final Post post;
   final bool isSending;
+  final String? replyingToName;
+  final VoidCallback onCancelReply;
   final VoidCallback onLike;
   final VoidCallback onBookmark;
+  final VoidCallback onComment;
   final VoidCallback onSend;
 
   @override
@@ -407,8 +658,44 @@ class _BottomCommentBar extends StatelessWidget {
               isBookmarked: post.isBookmarkedByMe,
               onLike: onLike,
               onBookmark: onBookmark,
+              onComment: onComment,
             ),
             const SizedBox(height: 10),
+            if (replyingToName != null) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F0FF),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Replying to $replyingToName',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: onCancelReply,
+                      child: const Icon(
+                        Icons.close,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             Row(
               children: [
                 Expanded(
@@ -419,6 +706,7 @@ class _BottomCommentBar extends StatelessWidget {
                     ),
                     child: TextField(
                       controller: controller,
+                      focusNode: focusNode,
                       minLines: 1,
                       maxLines: 3,
                       decoration: const InputDecoration(

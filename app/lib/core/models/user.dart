@@ -52,4 +52,41 @@ class User extends Equatable {
 
   @override
   List<Object?> get props => [id];
+
+  User copyWith({
+    String? id,
+    String? username,
+    String? displayName,
+    String? email,
+    String? avatarUrl,
+    String? bio,
+    List<String>? skills,
+    int? followerCount,
+    int? followingCount,
+    int? postCount,
+    int? reputation,
+    bool? isOnline,
+    bool? isMentor,
+    bool? isFollowedByMe,
+    DateTime? createdAt,
+  }) {
+    return User(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      displayName: displayName ?? this.displayName,
+      email: email ?? this.email,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      bio: bio ?? this.bio,
+      skills: skills ?? this.skills,
+      followerCount: followerCount ?? this.followerCount,
+      followingCount: followingCount ?? this.followingCount,
+      postCount: postCount ?? this.postCount,
+      reputation: reputation ?? this.reputation,
+      isOnline: isOnline ?? this.isOnline,
+      isMentor: isMentor ?? this.isMentor,
+      isFollowedByMe: isFollowedByMe ?? this.isFollowedByMe,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }
+

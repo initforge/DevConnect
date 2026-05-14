@@ -334,7 +334,7 @@ class _NewChatAvatar extends StatelessWidget {
           child: const Icon(Icons.add, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 6),
-        const Text('New', style: TextStyle(fontSize: 11)),
+        Text(AppStrings.of(context).t('chat.new'), style: const TextStyle(fontSize: 11)),
       ],
     );
   }
@@ -361,14 +361,22 @@ class _OnlineAvatar extends StatelessWidget {
 }
 
 class _ConversationRow extends StatelessWidget {
-  const _ConversationRow({required this.conversation});
+  const _ConversationRow({
+    required this.conversation,
+    this.isMuted = false,
+    this.onTap,
+  });
 
   final Conversation conversation;
+  final bool isMuted;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => context.push('${AppRoutes.chatBase}/${conversation.id}'),
+      onTap:
+          onTap ??
+          () => context.push('${AppRoutes.chatBase}/${conversation.id}'),
       borderRadius: BorderRadius.circular(18),
       child: Container(
         padding: const EdgeInsets.all(14),
@@ -404,6 +412,14 @@ class _ConversationRow extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (isMuted) ...[
+                        const Icon(
+                          Icons.volume_off_outlined,
+                          size: 14,
+                          color: AppColors.textTertiary,
+                        ),
+                        const SizedBox(width: 6),
+                      ],
                       Text(
                         _timeAgo(conversation.updatedAt),
                         style: const TextStyle(
@@ -468,11 +484,12 @@ class _ConversationRow extends StatelessWidget {
 }
 
 String _timeAgo(DateTime dt) {
+  final strings = AppStrings.current();
   final diff = DateTime.now().difference(dt);
-  if (diff.inMinutes < 5) return 'Now';
+  if (diff.inMinutes < 5) return strings.t('chat.now');
   if (diff.inHours < 24) {
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
-  if (diff.inDays == 1) return 'Yesterday';
-  return 'Monday';
+  if (diff.inDays == 1) return strings.t('chat.yesterday');
+  return strings.t('chat.yesterday');
 }

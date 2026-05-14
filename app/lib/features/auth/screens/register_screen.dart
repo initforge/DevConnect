@@ -6,6 +6,7 @@ import '../../../core/constants/routes.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/app_preferences.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/decorative_widgets.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -22,7 +23,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   int _step = 0;
   bool _obscure = true;
-  bool _agreed = true;
   bool _isLoading = false;
   String? _errorMessage;
   double _passwordStrength = 0;
@@ -66,12 +66,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           _emailCtrl.text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please complete all fields')),
-        );
-        return;
-      }
-      if (!_agreed) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please accept the terms to continue')),
         );
         return;
       }
@@ -128,7 +122,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FC),
-      body: SafeArea(
+      body: DecorativeBackground(
+        child: SafeArea(
         child: Column(
           children: [
             Padding(
@@ -171,6 +166,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -204,49 +200,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Checkbox(
-                  value: _agreed,
-                  onChanged:
-                      (value) => setState(() => _agreed = value ?? false),
-                  visualDensity: VisualDensity.compact,
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: RichText(
-                      text: const TextSpan(
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                        children: [
-                          TextSpan(text: 'I agree to the '),
-                          TextSpan(
-                            text: 'Terms of Service',
-                            style: TextStyle(
-                              color: Color(0xFF5B53F6),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          TextSpan(text: ' and '),
-                          TextSpan(
-                            text: 'Privacy Policy.',
-                            style: TextStyle(
-                              color: Color(0xFF5B53F6),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             _PrimaryPillButton(
               label: 'Continue',
               trailingIcon: Icons.arrow_forward,
@@ -305,6 +259,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 fontSize: 12,
                 color: _strengthColor,
                 fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 10),
+            _PasswordRequirement(
+              label: '8+ characters',
+              met: _passwordCtrl.text.length >= 8,
+            ),
+            _PasswordRequirement(
+              label: 'Uppercase letter',
+              met: _passwordCtrl.text.contains(RegExp(r'[A-Z]')),
+            ),
+            _PasswordRequirement(
+              label: 'Number',
+              met: _passwordCtrl.text.contains(RegExp(r'[0-9]')),
+            ),
+            _PasswordRequirement(
+              label: 'Special character',
+              met: _passwordCtrl.text.contains(
+                RegExp(r'[!@#$%^&*(),.?":{}|<>]'),
               ),
             ),
             if (_errorMessage != null) ...[
@@ -389,6 +362,43 @@ class _ProgressDots extends StatelessWidget {
           ),
         );
       }),
+    );
+  }
+}
+
+class _PasswordRequirement extends StatelessWidget {
+  const _PasswordRequirement({required this.label, required this.met});
+
+  final String label;
+  final bool met;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      margin: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            child: Icon(
+              met ? Icons.check_circle : Icons.radio_button_unchecked,
+              key: ValueKey(met),
+              size: 16,
+              color: met ? AppColors.success : AppColors.textTertiary,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: met ? AppColors.textPrimary : AppColors.textSecondary,
+              fontWeight: met ? FontWeight.w700 : FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

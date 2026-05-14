@@ -3,12 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/routes.dart';
+import '../../../core/localization/app_strings.dart';
 import '../../../core/models/models.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/state/profile_refresh_bus.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/responsive_utils.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/repositories/post_repository.dart';
+import '../../../data/repositories/project_repository.dart';
 import '../../../data/repositories/user_repository.dart';
 import '../../feed/widgets/post_card.dart';
 
@@ -27,14 +31,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _userRepository = UserRepository();
   final _postRepository = PostRepository();
   final _chatRepository = ChatRepository();
+  final _projectRepository = ProjectRepository();
 
   bool _isFollowing = false;
   bool _isFollowingLoading = false;
+  bool _isSyncingGithub = false;
+  late Future<_ProfileData> _loader;
+
+  @override
+  void initState() {
+    super.initState();
+    _loader = _loadProfile();
+    ProfileRefreshBus.instance.addListener(_refreshProfile);
+  }
+
+  @override
+  void didUpdateWidget(covariant ProfileScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userId != widget.userId) {
+      _loader = _loadProfile();
+    }
+  }
+
+  @override
+  void dispose() {
+    ProfileRefreshBus.instance.removeListener(_refreshProfile);
+    super.dispose();
+  }
+
+  void _refreshProfile() {
+    if (!mounted) return;
+    setState(() => _loader = _loadProfile());
+  }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<_ProfileData>(
-      future: _loadProfile(),
+      future: _loader,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Scaffold(
@@ -43,27 +76,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
 
         final data = snapshot.data;
+        final strings = AppStrings.of(context);
         if (data == null || data.user == null) {
-          return const Scaffold(
+          return Scaffold(
             body: EmptyState(
               icon: Icons.person_off_outlined,
-              title: 'User not found',
+              title: strings.t('profile.userNotFound'),
             ),
           );
         }
 
-        final user = data.user!;
         return DefaultTabController(
           length: 3,
           child: Scaffold(
-            backgroundColor: const Color(0xFFFCFCFF),
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: NestedScrollView(
               headerSliverBuilder:
                   (context, _) => [
                     SliverAppBar(
                       pinned: true,
                       expandedHeight: 520,
-                      backgroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.surface,
                       foregroundColor: Colors.white,
                       leading: IconButton(
                         onPressed: () => Navigator.of(context).maybePop(),
@@ -97,48 +130,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(width: 12),
                       ],
                       flexibleSpace: FlexibleSpaceBar(
-                        background: _buildHero(context, user, data.isMe),
+                        background: _buildHero(context, data),
                       ),
                       bottom: PreferredSize(
                         preferredSize: const Size.fromHeight(44),
                         child: Container(
-                          color: Colors.white,
-                          child: const TabBar(
-                            labelColor: Color(0xFF4F46E5),
+                          color: Theme.of(context).colorScheme.surface,
+                          child: TabBar(
+                            labelColor: AppColors.primary,
                             unselectedLabelColor: AppColors.textTertiary,
-                            indicatorColor: Color(0xFF4F46E5),
+                            indicatorColor: AppColors.primary,
                             indicatorSize: TabBarIndicatorSize.label,
-                            labelStyle: TextStyle(
+                            labelStyle: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                             ),
                             tabs: [
-                              Tab(text: 'Posts'),
-                              Tab(text: 'Projects'),
-                              Tab(text: 'About'),
+                              Tab(text: strings.t('profile.posts')),
+                              Tab(text: strings.t('profile.projects')),
+                              Tab(text: strings.t('profile.about')),
                             ],
                           ),
                         ),
                       ),
                     ),
                   ],
-              body: TabBarView(
-                children: [
-                  ListView(
-                    padding: const EdgeInsets.only(top: 12, bottom: 100),
-                    children:
-                        data.posts
-                            .map<Widget>(
-                              (post) => PostCard(
-                                post: post,
-                                onTap: () => context.push('${AppRoutes.postBase}/${post.id}'),
-                              ),
-                            )
-                            .toList(),
-                  ),
-                  _buildProjectsMock(user),
-                  _buildAbout(user),
-                ],
+              body: ResponsiveBuilder(
+                mobile: (_) => TabBarView(children: _buildProfileTabs(data)),
+                tablet: (_) => TabBarView(children: _buildProfileTabs(data)),
+                desktop: (_) => TabBarView(children: _buildProfileTabs(data)),
               ),
             ),
           ),
@@ -147,28 +167,254 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  List<Widget> _buildProfileTabs(_ProfileData data) {
+    final user = data.user!;
+    if (!data.isMe && data.isPrivateProfile) {
+      return [
+        _buildPrivateProfileState(),
+        _buildPrivateProfileState(),
+        _buildPrivateProfileState(),
+      ];
+    }
+
+    return [
+      _buildCenteredPostsList(context, data.posts, isMe: data.isMe),
+      _buildCenteredProjects(context, user, isMe: data.isMe),
+      _buildCenteredAbout(context, user, isMe: data.isMe, githubConnected: data.githubConnected),
+    ];
+  }
+
+  Widget _buildPrivateProfileState() {
+    final strings = AppStrings.of(context);
+    return Center(
+      child: EmptyState(
+        icon: Icons.lock_outline,
+        title: strings.t('profile.privateLockedTitle'),
+        subtitle: strings.t('profile.privateLockedBody'),
+      ),
+    );
+  }
+
+  Widget _buildCenteredPostsList(BuildContext context, List<Post> posts, {bool isMe = false}) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 680),
+        child: ListView(
+          padding: const EdgeInsets.only(top: 12, bottom: 100),
+          children:
+              posts
+                  .map<Widget>(
+                    (post) => Stack(
+                      children: [
+                        PostCard(
+                          post: post,
+                          onTap: () => context.push('${AppRoutes.postBase}/${post.id}'),
+                        ),
+                        if (isMe)
+                          Positioned(
+                            top: 10,
+                            right: 10,
+                            child: PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert, size: 18, color: AppColors.textSecondary),
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  _showEditPostDialog(post);
+                                } else if (value == 'delete') {
+                                  _confirmDeletePost(post);
+                                }
+                              },
+                              itemBuilder: (_) => [
+                                PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.edit, size: 16),
+                                      const SizedBox(width: 8),
+                                      Text(AppStrings.of(context).t('common.edit')),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.delete_outline, size: 16, color: AppColors.error),
+                                      const SizedBox(width: 8),
+                                      Text(AppStrings.of(context).t('common.delete'), style: const TextStyle(color: AppColors.error)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  )
+                  .toList(),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showEditPostDialog(Post post) async {
+    final titleCtrl = TextEditingController(text: post.title);
+    final contentCtrl = TextEditingController(text: post.content);
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(AppStrings.of(context).t('common.edit')),
+        content: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleCtrl,
+                decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: contentCtrl,
+                maxLines: 6,
+                decoration: const InputDecoration(labelText: 'Content', border: OutlineInputBorder()),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(AppStrings.of(context).t('common.cancel'))),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(AppStrings.of(context).t('common.save')),
+          ),
+        ],
+      ),
+    );
+    if (saved != true) return;
+    try {
+      await _postRepository.updatePost(
+        postId: post.id,
+        title: titleCtrl.text.trim(),
+        content: contentCtrl.text.trim(),
+      );
+      if (!mounted) return;
+      setState(() => _loader = _loadProfile());
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Post updated')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(context).t('common.error'))),
+      );
+    }
+  }
+
+  Future<void> _confirmDeletePost(Post post) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(AppStrings.of(context).t('common.delete')),
+        content: Text(AppStrings.of(context).t('feed.deletePostConfirm')),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(AppStrings.of(context).t('common.cancel'))),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(AppStrings.of(context).t('common.delete'), style: const TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await _postRepository.deletePost(post.id);
+      if (!mounted) return;
+      setState(() => _loader = _loadProfile());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(context).t('feed.postDeleted'))),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(context).t('common.error'))),
+      );
+    }
+  }
+
+  Widget _buildCenteredProjects(BuildContext context, User user, {bool isMe = false}) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 680),
+        child: _buildProjectsSection(user, isMe: isMe),
+      ),
+    );
+  }
+
+  Widget _buildCenteredAbout(BuildContext context, User user, {bool isMe = false, bool githubConnected = false}) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 680),
+        child: _buildAbout(user, isMe: isMe, githubConnected: githubConnected),
+      ),
+    );
+  }
+
   Future<_ProfileData> _loadProfile() async {
     final currentUser = await _userRepository.getCurrentUser();
-    final user =
+    var user =
         widget.userId == null
             ? currentUser
             : await _userRepository.getUserById(widget.userId!);
-    final posts =
-        user == null
-            ? <Post>[]
-            : await _postRepository.getPostsByAuthor(user.id);
 
     if (user != null) {
       _isFollowing = user.isFollowedByMe;
     }
 
+    bool isPrivateProfile = false;
+    bool githubConnected = false;
+    final isMe =
+        user != null &&
+        ((currentUser != null && currentUser.id == user.id) ||
+            (currentUser == null && widget.userId == user.id));
+    if (user != null) {
+      try {
+        final settings = await ApiService.instance.getObject(
+          isMe ? '/users/me/settings' : '/users/${user.id}/public-settings',
+        );
+        isPrivateProfile = settings['privateProfile'] == true;
+        githubConnected = settings['githubConnected'] == true;
+        final onlineStatus = settings['onlineStatus'];
+        if (onlineStatus is bool) {
+          user = user.copyWith(isOnline: onlineStatus);
+        }
+      } catch (_) {}
+    }
+
+    final posts =
+        user == null || (!isMe && isPrivateProfile)
+            ? <Post>[]
+            : await _postRepository.getPostsByAuthor(user.id);
+
+    List<dynamic> contributions = [];
+    if (user != null && githubConnected && !(!isMe && isPrivateProfile)) {
+      try {
+        final res = await ApiService.instance.getAny(
+          '/users/${user.id}/github-contributions',
+        );
+        if (res is List) contributions = res;
+      } catch (_) {}
+    }
+
     return _ProfileData(
       user: user,
       posts: posts,
-      isMe:
-          user != null &&
-          ((currentUser != null && currentUser.id == user.id) ||
-              (currentUser == null && widget.userId == user.id)),
+      isMe: isMe,
+      isPrivateProfile: isPrivateProfile,
+      githubConnected: githubConnected,
+      contributions: contributions,
     );
   }
 
@@ -192,36 +438,119 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _handleMessage(User user) async {
-    final conversations = await _chatRepository.getConversations();
-    final existing =
-        conversations.where((c) => c.otherUser.id == user.id).toList();
-    if (!mounted) return;
-    if (existing.isNotEmpty) {
-      context.push('${AppRoutes.chatBase}/${existing.first.id}');
-      return;
+    try {
+      final result = await ApiService.instance.post(
+        '/chat/conversations',
+        {'otherUserId': user.id},
+      );
+      if (!mounted) return;
+      final conversationId = result['id']?.toString();
+      if (conversationId != null && conversationId.isNotEmpty) {
+        context.push('${AppRoutes.chatBase}/$conversationId');
+      }
+    } catch (_) {
+      // Fallback: try to find existing conversation
+      final conversations = await _chatRepository.getConversations();
+      final existing =
+          conversations.where((c) => c.otherUser.id == user.id).toList();
+      if (!mounted) return;
+      if (existing.isNotEmpty) {
+        context.push('${AppRoutes.chatBase}/${existing.first.id}');
+      }
     }
-    context.push(
-      '${AppRoutes.chatBase}/conv_${user.id}_${DateTime.now().millisecondsSinceEpoch}',
-    );
   }
 
-  Widget _buildHero(BuildContext context, User user, bool isMe) {
+  Future<void> _syncGithub(User user) async {
+    if (_isSyncingGithub) return;
+    setState(() => _isSyncingGithub = true);
+    try {
+      await ApiService.instance.post('/users/${user.id}/github-sync', {});
+      if (!mounted) return;
+      setState(() => _loader = _loadProfile());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.current().t('profile.gitHubSynced'))),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.current().t('profile.unableSyncGithub')),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSyncingGithub = false);
+    }
+  }
+
+  Widget _buildHero(BuildContext context, _ProfileData data) {
+    final user = data.user!;
+    final isMe = data.isMe;
+    final contributions = data.contributions;
+    final strings = AppStrings.of(context);
+
     return Column(
       children: [
         Container(
           height: 180,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
               colors: [Color(0xFF7A74FF), Color(0xFFE46EA7)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF7A74FF).withValues(alpha: 0.3),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -20,
+                top: -20,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 30,
+                bottom: -15,
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.06),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 50,
+                top: 40,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.05),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         Expanded(
           child: Container(
             width: double.infinity,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             child: Stack(
               clipBehavior: Clip.none,
               children: [
@@ -230,8 +559,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   top: -34,
                   child: Container(
                     padding: const EdgeInsets.all(3),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
                       shape: BoxShape.circle,
                     ),
                     child: UserAvatar(
@@ -262,9 +591,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _StatusPill(
+                            label:
+                                user.isOnline
+                                    ? strings.t('profile.online')
+                                    : strings.t('profile.offline'),
+                            color:
+                                user.isOnline
+                                    ? AppColors.success
+                                    : AppColors.textSecondary,
+                          ),
+                          if (isMe)
+                            _StatusPill(
+                              label:
+                                  data.isPrivateProfile
+                                      ? strings.t('common.privateProfile')
+                                      : strings.t('common.publicProfile'),
+                              color:
+                                  data.isPrivateProfile
+                                      ? AppColors.warning
+                                      : AppColors.success,
+                            ),
+                        ],
+                      ),
+                      if (isMe) ...[const SizedBox(height: 8)],
                       Text(
                         user.bio ??
-                            'Senior Engineer at Vercel. Building the web, TypeScript & modern systems.',
+                            strings.t('profile.noBio'),
                         style: const TextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,
@@ -277,15 +634,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           _StatBlock(
                             value: '${user.followerCount}',
-                            label: 'FOLLOWERS',
+                            label: strings.t('profile.followers').toUpperCase(),
                           ),
                           _StatBlock(
                             value: '${user.followingCount}',
-                            label: 'FOLLOWING',
+                            label: strings.t('profile.following').toUpperCase(),
                           ),
                           _StatBlock(
                             value: '${user.postCount}',
-                            label: 'POSTS',
+                            label: strings.t('profile.posts').toUpperCase(),
                           ),
                         ],
                       ),
@@ -300,7 +657,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ? null
                                     : () => _handleFollow(user),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF4F46E5),
+                              backgroundColor: AppColors.primary,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(21),
                               ),
@@ -316,7 +673,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     )
                                     : Text(
-                                      _isFollowing ? 'Following' : 'Follow',
+                                      _isFollowing
+                                          ? strings.t('common.following')
+                                          : strings.t('common.follow'),
                                     ),
                           ),
                         ),
@@ -326,8 +685,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           alignment: Alignment.center,
                           child: TextButton(
                             onPressed: () => _handleMessage(user),
-                            child: const Text(
-                              'Message',
+                            child: Text(
+                              strings.t('common.message'),
                               style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                           ),
@@ -336,9 +695,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         margin: const EdgeInsets.only(top: 8),
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: const Color(0xFFE8EAF2)),
+                          border: Border.all(
+                            color: Theme.of(context).dividerColor,
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,57 +708,105 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               children: [
                                 const Icon(Icons.code, size: 16),
                                 const SizedBox(width: 8),
-                                const Expanded(
+                                Expanded(
                                   child: Text(
-                                    'GitHub Connected',
-                                    style: TextStyle(
+                                    data.githubConnected
+                                        ? strings.t('profile.gitHubConnected')
+                                        : strings.t('profile.gitHubNotLinked'),
+                                    style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFECFDF5),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Text(
-                                    'Synced 3h ago',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: AppColors.success,
+                                if (isMe)
+                                  IconButton(
+                                    tooltip: strings.t('common.syncGithub'),
+                                    onPressed:
+                                        _isSyncingGithub ||
+                                                !data.githubConnected
+                                            ? null
+                                            : () => _syncGithub(user),
+                                    icon:
+                                        _isSyncingGithub
+                                            ? const SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                            : const Icon(
+                                              Icons.sync,
+                                              size: 18,
+                                              color: AppColors.primary,
+                                            ),
+                                  )
+                                else
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFECFDF5),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      data.githubConnected
+                                          ? strings.t('common.synced')
+                                          : strings.t('common.notLinked'),
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        color: AppColors.success,
+                                      ),
                                     ),
                                   ),
-                                ),
                               ],
                             ),
                             const SizedBox(height: 10),
-                            Wrap(
-                              spacing: 4,
-                              runSpacing: 4,
-                              children: List.generate(28, (index) {
-                                final active = index % 4 != 0;
-                                return Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color:
-                                        active
-                                            ? const Color(
-                                              0xFF6D63FF,
-                                            ).withValues(
-                                              alpha: 0.35 + (index % 3) * 0.2,
-                                            )
-                                            : const Color(0xFFF0F2F7),
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                );
-                              }),
-                            ),
+                            if (data.githubConnected &&
+                                contributions.isNotEmpty)
+                              Wrap(
+                                spacing: 4,
+                                runSpacing: 4,
+                                children:
+                                    contributions.map<Widget>((day) {
+                                      final active = day['active'] == true;
+                                      final count = day['count'] as int? ?? 0;
+                                      return Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                          color:
+                                              active
+                                                  ? const Color(
+                                                    0xFF6D63FF,
+                                                  ).withValues(
+                                                    alpha:
+                                                        0.35 +
+                                                        (count % 3) * 0.2,
+                                                  )
+                                                  : Theme.of(context)
+                                                      .colorScheme
+                                                      .surfaceContainerHighest,
+                                          borderRadius: BorderRadius.circular(
+                                            2,
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                              )
+                            else
+                              Text(
+                                data.githubConnected
+                                    ? strings.t('profile.noRecentContributions')
+                                    : strings.t('profile.gitHubConnectHint'),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -412,53 +821,174 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProjectsMock(User user) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE8EAF2)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildProjectsSection(User user, {bool isMe = false}) {
+    final strings = AppStrings.of(context);
+    return FutureBuilder<List<Project>>(
+      future: _projectRepository.getProjects(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final allProjects = snapshot.data ?? [];
+        // Show projects the user owns or is a member of
+        final myProjects = allProjects.where((p) => p.owner.id == user.id).toList();
+
+        if (myProjects.isEmpty) {
+          return ListView(
+            padding: const EdgeInsets.all(16),
             children: [
-              const Text(
-                'Featured Project',
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${user.displayName.split(' ').first} DevConnect Studio',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Productized community tooling, knowledge sharing and collaboration for developers.',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children:
-                    user.skills.take(4).map((e) => TechChip(label: e)).toList(),
+              EmptyState(
+                icon: Icons.work_outline,
+                title: strings.t('profile.noProjectsTitle'),
+                subtitle: strings.t('profile.noProjectsBody'),
               ),
             ],
-          ),
-        ),
-      ],
+          );
+        }
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: myProjects.map((project) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Theme.of(context).dividerColor),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          project.title,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: project.status == 'LOOKING_FOR_MEMBERS'
+                              ? const Color(0xFFF3F0FF) : const Color(0xFFEFF7FF),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          project.status == 'LOOKING_FOR_MEMBERS' ? 'Open' : 'Active',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: project.status == 'LOOKING_FOR_MEMBERS'
+                                ? const Color(0xFF5B53F6) : const Color(0xFF2279FF),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    project.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: project.techStack.take(4).map((t) => TechChip(label: t)).toList(),
+                  ),
+                  if (isMe) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Text(
+                          '${project.memberCount}/${project.maxMembers} members',
+                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                        ),
+                        const Spacer(),
+                        if (project.owner.id == user.id)
+                          TextButton.icon(
+                            onPressed: () => _confirmDeleteProject(project),
+                            icon: const Icon(Icons.delete_outline, size: 14, color: AppColors.error),
+                            label: Text(strings.t('common.delete'), style: const TextStyle(fontSize: 11, color: AppColors.error)),
+                          )
+                        else
+                          TextButton.icon(
+                            onPressed: () => _leaveProject(project),
+                            icon: const Icon(Icons.exit_to_app, size: 14, color: AppColors.warning),
+                            label: Text(strings.t('profile.quitProject'), style: const TextStyle(fontSize: 11, color: AppColors.warning)),
+                          ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
+  }
+
+  Future<void> _leaveProject(Project project) async {
+    final strings = AppStrings.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(strings.t('profile.quitProject')),
+        content: Text(strings.t('profile.quitProjectConfirm')),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(strings.t('common.cancel'))),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(strings.t('profile.quitProject'), style: const TextStyle(color: AppColors.warning)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await _projectRepository.leaveProject(project.id);
+      if (!mounted) return;
+      setState(() => _loader = _loadProfile());
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(strings.t('common.error'))),
+      );
+    }
+  }
+
+  Future<void> _confirmDeleteProject(Project project) async {
+    final strings = AppStrings.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(strings.t('common.delete')),
+        content: Text(strings.t('profile.deleteProjectConfirm')),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(strings.t('common.cancel'))),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(strings.t('common.delete'), style: const TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await _projectRepository.deleteProject(project.id);
+      if (!mounted) return;
+      setState(() => _loader = _loadProfile());
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(strings.t('common.error'))),
+      );
+    }
   }
 
   Future<List<dynamic>> _loadRepos() async {
@@ -468,108 +998,198 @@ class _ProfileScreenState extends State<ProfileScreen> {
             : await _userRepository.getUserById(widget.userId!);
     if (user == null) return [];
     try {
-      final data = await ApiService.instance.getAny(
-        '/api/users/${user.id}/repos',
-      );
+      final data = await ApiService.instance.getAny('/users/${user.id}/repos');
       return data is List ? data : [];
     } catch (_) {
       return [];
     }
   }
 
-  Widget _buildAbout(User user) {
+  Widget _buildAbout(User user, {bool isMe = false, bool githubConnected = false}) {
+    final strings = AppStrings.of(context);
     return FutureBuilder<List<dynamic>>(
-      future: _loadRepos(),
+      future: githubConnected ? _loadRepos() : Future.value(<dynamic>[]),
       builder: (context, snapshot) {
         final repos = snapshot.data ?? const [];
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const Text(
-              'Skills',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            Row(
+              children: [
+                Text(
+                  strings.t('common.skills'),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+                const Spacer(),
+                if (isMe)
+                  TextButton.icon(
+                    onPressed: _showEditSkillsDialog,
+                    icon: const Icon(Icons.edit, size: 14),
+                    label: Text(strings.t('common.edit'), style: const TextStyle(fontSize: 12)),
+                  ),
+              ],
             ),
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children:
-                  user.skills.map((skill) => TechChip(label: skill)).toList(),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Repos',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 10),
-            ...repos
-                .take(3)
-                .map(
-                  (repo) => Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE8EAF2)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          repo['name'] ?? '',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF4F46E5),
-                          ),
-                        ),
-                        if (repo['description'] != null) ...[
-                          const SizedBox(height: 6),
+            user.skills.isEmpty
+                ? Text(
+                    isMe ? strings.t('profile.addSkillsHint') : strings.t('profile.noSkills'),
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  )
+                : Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: user.skills.map((skill) => TechChip(label: skill)).toList(),
+                  ),
+            if (repos.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              Text(
+                strings.t('common.repos'),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 10),
+              ...repos
+                  .take(3)
+                  .map(
+                    (repo) => Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Theme.of(context).dividerColor),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            repo['description'],
+                            repo['name'] ?? '',
                             style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
                             ),
                           ),
+                          if (repo['description'] != null) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              repo['description'],
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
+            ],
             const SizedBox(height: 8),
             _AboutInfo(
               icon: Icons.emoji_events_outlined,
               title: '${user.reputation} XP',
-              subtitle: 'Reputation',
+              subtitle: strings.t('common.reputation'),
             ),
             _AboutInfo(
               icon: Icons.calendar_today_outlined,
               title: 'Joined ${user.createdAt.year}',
-              subtitle: 'Member since',
+              subtitle: strings.t('common.memberSince'),
             ),
             if (user.isMentor)
-              const _AboutInfo(
+              _AboutInfo(
                 icon: Icons.school_outlined,
-                title: 'Mentor',
-                subtitle: 'Available for guidance',
+                title: strings.t('common.mentor'),
+                subtitle: strings.t('common.availableForGuidance'),
               ),
           ],
         );
       },
     );
   }
+
+  void _showEditSkillsDialog() async {
+    final strings = AppStrings.of(context);
+    final currentUser = await _userRepository.getCurrentUser();
+    if (currentUser == null) return;
+    final ctrl = TextEditingController(text: currentUser.skills.join(', '));
+    if (!mounted) return;
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(strings.t('profile.editSkills')),
+        content: TextField(
+          controller: ctrl,
+          decoration: InputDecoration(
+            hintText: 'Flutter, React, TypeScript...',
+            border: const OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(strings.t('common.cancel'))),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(ctrl.text),
+            child: Text(strings.t('common.save')),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    if (result == null) return;
+    final skills = result.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    try {
+      await ApiService.instance.patch('/users/me', {'skills': skills});
+      if (!mounted) return;
+      setState(() => _loader = _loadProfile());
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(strings.t('common.error'))),
+      );
+    }
+  }
 }
 
 class _ProfileData {
-  const _ProfileData({
-    required this.user,
-    required this.posts,
-    required this.isMe,
-  });
-
   final User? user;
   final List<Post> posts;
   final bool isMe;
+  final bool isPrivateProfile;
+  final bool githubConnected;
+  final List<dynamic> contributions;
+
+  _ProfileData({
+    required this.user,
+    required this.posts,
+    required this.isMe,
+    required this.isPrivateProfile,
+    required this.githubConnected,
+    required this.contributions,
+  });
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+    );
+  }
 }

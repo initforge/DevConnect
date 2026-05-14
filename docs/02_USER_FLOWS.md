@@ -1,351 +1,95 @@
-# 02 — Luồng người dùng & Business Logic
-
-> **Đọc sau 01_OVERVIEW.** File này mô tả chi tiết **từng hành động** mà người dùng thực hiện trong app, bao gồm cả quy tắc nghiệp vụ và xử lý lỗi.
-
----
-
-## Hành trình tổng thể
-
-```mermaid
-graph TD
-    A["Mở App"] --> B{"Đã đăng nhập?"}
-    B -->|Chưa| C["Màn hình Login"]
-    B -->|Rồi| H["Home Feed"]
-    
-    C --> D["Đăng nhập"]
-    C --> E["Đăng ký mới"]
-    
-    E --> E1["Step 1: Họ tên + Username + Email"]
-    E1 --> E2["Step 2: Mật khẩu"]
-    E2 --> E3["Step 3: Thành công ✅"]
-    E3 --> F["Onboarding"]
-    
-    D --> G{"Onboarding xong?"}
-    G -->|Chưa| F
-    G -->|Rồi| H
-    
-    F --> H
-
-    H --> I["Bảng tin"]
-    H --> J["Khám phá"]
-    H --> K["Chat"]
-    H --> L["Thông báo"]
-    H --> M["Profile"]
-    
-    J --> J1["Việc làm"]
-    J --> J2["Sàn dự án"]
-    J --> J3["Bảng xếp hạng"]
-    J --> J4["Playground"]
-    J --> J5["Mentorship"]
-
-    M --> N["Cài đặt"]
-    N --> O["Đăng xuất → Login"]
-```
-
----
-
-## 1. Xác thực (`auth`)
-
-### 1.1 Đăng ký tài khoản (Multi-step Form)
-
-Quy trình đăng ký chia **3 bước**, có thanh tiến trình ở trên cùng:
-
-```mermaid
-sequenceDiagram
-    participant U as 👤 Người dùng
-    participant App as 📱 App
-    participant API as ☁️ Server
-    participant DB as 🗄️ PostgreSQL
-
-    Note over U,App: === STEP 1: Thông tin cá nhân ===
-    U->>App: Nhập Họ tên, Username, Email
-    App->>App: Validate (không để trống)
-    U->>App: Bấm "Tiếp tục"
-
-    Note over U,App: === STEP 2: Mật khẩu ===
-    U->>App: Nhập mật khẩu
-    App->>App: Tính độ mạnh real-time (xem bảng bên dưới)
-    U->>App: Bấm "Đăng ký"
-    App->>API: POST /auth/register
-    API->>DB: INSERT INTO users
-    DB-->>API: OK
-    API-->>App: {token, user}
-    App->>App: Lưu JWT vào SharedPreferences
-
-    Note over U,App: === STEP 3: Thành công ===
-    App->>App: Hiển thị ✅ "Đăng ký thành công!"
-    App->>App: Tự động chuyển → Onboarding (2 giây)
-```
-
-**Quy tắc độ mạnh mật khẩu:**
-
-Mật khẩu được đánh giá theo 4 tiêu chí, mỗi tiêu chí đạt = +0.25 điểm:
-
-| Tiêu chí | Ví dụ đạt | Điểm |
-|----------|----------|------|
-| Độ dài ≥ 8 ký tự | `password` | +0.25 |
-| Có chữ HOA | `Password` | +0.25 |
-| Có chữ số | `Password1` | +0.25 |
-| Có ký tự đặc biệt `!@#$%^&*` | `Password1!` | +0.25 |
-
-| Tổng điểm | Nhãn hiển thị | Màu thanh |
-|-----------|--------------|----------|
-| 0 – 0.25 | Yếu | 🔴 Đỏ |
-| 0.26 – 0.50 | Trung bình | 🟡 Vàng |
-| 0.51 – 0.75 | Mạnh | 🔵 Xanh dương |
-| 0.76 – 1.00 | Rất mạnh | 🟢 Xanh lá |
-
-### 1.2 Đăng nhập
-
-```mermaid
-sequenceDiagram
-    participant U as 👤 Người dùng
-    participant App as 📱 App
-    participant API as ☁️ Server
-
-    U->>App: Nhập Email + Mật khẩu
-    App->>App: Validate form
-
-    alt ❌ Email không hợp lệ
-        App-->>U: "Email không hợp lệ"
-    else ❌ Mật khẩu < 8 ký tự
-        App-->>U: "Mật khẩu tối thiểu 8 ký tự"
-    else ❌ Để trống
-        App-->>U: "Vui lòng nhập email / mật khẩu"
-    else ✅ Hợp lệ
-        App->>API: POST /auth/login
-        alt Sai thông tin
-            API-->>App: 401
-            App-->>U: Snackbar "Sai email hoặc mật khẩu"
-        else Đúng
-            API-->>App: {token, user}
-            App->>App: Lưu JWT → Home hoặc Onboarding
-        end
-    end
-```
-
-### 1.3 Onboarding
-
-Sau đăng ký lần đầu, user chọn **kỹ năng quan tâm** (Flutter, React, Go, Python…). Dữ liệu này dùng để cá nhân hóa tab "Dành cho bạn" trên Feed.
-
----
-
-## 2. Bảng tin (`feed`)
-
-### 2.1 Ba tab bảng tin
-
-| Tab | Thuật toán | Ý nghĩa |
-|-----|-----------|---------|
-| **Dành cho bạn** | Hybrid Relevance | Kết hợp kỹ năng user + bài viết phổ biến → Gợi ý bài phù hợp nhất |
-| **Xu hướng** | High Engagement 72h | Bài có nhiều Like + Comment nhất trong 3 ngày gần đây |
-| **Đang theo dõi** | Following Filter | Chỉ hiển thị bài từ những user đã Follow |
-
-### 2.2 Tương tác trên bài viết
-
-```mermaid
-stateDiagram-v2
-    state "Chưa Like (♡)" as CL
-    state "Đã Like (❤️)" as DL
-    state "Chưa Bookmark (☆)" as CB
-    state "Đã Bookmark (★)" as DB
-
-    [*] --> CL
-    CL --> DL: Bấm Like
-    DL --> CL: Bấm lại (Unlike)
-    
-    [*] --> CB
-    CB --> DB: Bấm Bookmark
-    DB --> CB: Bấm lại (Unbookmark)
-```
-
-> **Optimistic UI**: Icon đổi trạng thái **ngay lập tức** khi bấm, không chờ server. Nếu server trả lỗi → UI tự revert về trạng thái cũ. Điều này giúp app cảm giác cực kỳ mượt mà.
-
-### 2.3 Tạo bài viết mới
-
-Bấm nút FAB (+) trên Home → Điền form:
-
-| Trường | Bắt buộc | Mô tả |
-|--------|---------|-------|
-| Tiêu đề | ✅ | Tên bài viết |
-| Nội dung | ✅ | Hỗ trợ Markdown |
-| Loại bài | ✅ | `Article` / `TIL` / `Question` |
-| Tags | ❌ | Gắn nhãn chủ đề |
-
-### 2.4 Chi tiết bài viết & Bình luận
-
-Bấm vào bài viết → Xem chi tiết → Gửi bình luận:
-- Nhập nội dung vào ô comment ở cuối màn hình
-- Bấm icon Send (➤)
-- Comment mới xuất hiện ngay trên danh sách
-- `comment_count` trên bài viết được tăng lên
-
-### 2.5 Pull-to-Refresh & Infinite Scroll
-
-- **Kéo xuống** (Pull-to-refresh): Tải lại toàn bộ feed từ đầu
-- **Cuộn tới cuối**: Tự động tải trang tiếp theo (Infinite scroll, 20 bài/trang)
-
----
-
-## 3. Tuyển dụng (`job_board`)
-
-### 3.1 Hiển thị Job Card
-
-Mỗi thẻ việc làm hiển thị:
-
-```
-┌──────────────────────────────────┐
-│ [G]  Google — Senior Flutter Dev │  ← Logo chữ cái đầu + Tên công ty
-│                          [85%]   │  ← Match % (xanh lá)
-│                                  │
-│ [Flutter] [Dart] [Firebase]      │  ← Tech Stack chips
-│ 📍 Hà Nội - Remote              │  ← Địa điểm + Remote
-│ 💰 $3,000 - $5,000              │  ← Khoảng lương
-│                                  │
-│ ┌──────────────────────────────┐ │
-│ │      Ứng tuyển ngay          │ │  ← Nút ứng tuyển
-│ └──────────────────────────────┘ │
-└──────────────────────────────────┘
-```
-
-### 3.2 Luồng ứng tuyển
-
-```mermaid
-sequenceDiagram
-    participant U as 👤 User
-    participant App as 📱 App
-    participant API as ☁️ Server
-
-    U->>App: Bấm "Ứng tuyển ngay"
-
-    alt Chưa đăng nhập
-        App-->>U: Snackbar "Vui lòng đăng nhập"
-    else Đã ứng tuyển rồi
-        App-->>App: Không làm gì (idempotent)
-    else Lần đầu
-        App->>API: POST /api/jobs/{id}/apply
-        API-->>App: 200 OK
-        App->>App: Nút đổi → "Đã ứng tuyển" (màu xanh lá)
-        App-->>U: Snackbar "Đã ứng tuyển thành công!"
-    end
-```
-
-**Quy tắc nghiệp vụ quan trọng:**
-- Nút "Đã ứng tuyển" có `backgroundColor: success.withOpacity(0.1)` và `borderColor: success`
-- Bấm lại nút "Đã ứng tuyển" → **không xảy ra gì** (idempotent, `_appliedJobs.contains(jobId)` trả `true`)
-- Hỗ trợ Pull-to-refresh để cập nhật danh sách việc mới
-
----
-
-## 4. Sàn dự án (`project_marketplace`)
-
-### 4.1 Hiển thị Project Card
-
-```
-┌──────────────────────────────────┐
-│ 👤 Minh Nguyen        [Tuyển]   │  ← Owner + Badge trạng thái
-│ DevConnect Mobile App            │  ← Tên dự án
-│ Mạng xã hội cho lập trình viên  │  ← Mô tả
-│                                  │
-│ [Flutter] [Node.js] [PostgreSQL] │  ← Tech Stack chips
-│ 3/5 thành viên                   │  ← Tiến độ nhóm
-└──────────────────────────────────┘
-```
-
-| Trạng thái | Badge | Màu |
-|-----------|-------|-----|
-| `LOOKING_FOR_MEMBERS` | Tuyển | 🟠 Accent |
-| Khác | Hoạt động | 🔵 Primary |
-
-- FAB "Tạo dự án" → Hiện Snackbar: *"Tạo dự án mới sẽ triển khai ở phase sau"*
-
----
-
-## 5. Bảng xếp hạng (`leaderboard`)
-
-Danh sách user sắp xếp theo `reputation` (giảm dần). Top 3 hiển thị icon đặc biệt (🥇🥈🥉).
-
----
-
-## 6. Chat (`chat`)
-
-### 6.1 Danh sách hội thoại
-
-Hiển thị: Avatar + Tên + Tin nhắn cuối + Badge số tin chưa đọc
-
-### 6.2 Gửi tin nhắn
-
-```mermaid
-sequenceDiagram
-    participant A as 👤 User A
-    participant WS as 🔌 WebSocket
-    participant B as 👤 User B
-
-    A->>WS: Gửi {content, type: "text"}
-    WS->>WS: Lưu vào DB (messages)
-    WS->>B: Push real-time
-    B->>B: Hiển thị tin nhắn mới
-```
-
-**Loại tin nhắn:** `text` (văn bản) và `code` (code snippet có `code_language`)
-
----
-
-## 7. Thông báo (`notifications`)
-
-| Loại | Trigger | Nội dung |
-|------|---------|---------|
-| Like | Ai đó like bài của bạn | "X đã thích bài viết của bạn" |
-| Follow | Ai đó follow bạn | "X đã theo dõi bạn" |
-| Comment | Ai đó comment bài của bạn | "X đã bình luận bài viết của bạn" |
-
-Nút **"Đọc hết"** → Đánh dấu tất cả `is_read = 1`
-
----
-
-## 8. Profile (`profile`)
-
-### 8.1 Cấu trúc màn hình
-
-```
-┌──────────────────────────────┐
-│  [Avatar]   [Edit] [⚙️]     │
-│  Minh Nguyen                 │
-│  @minhdev                    │
-│  Flutter developer           │
-│                              │
-│  ┌────────┬────────┬───────┐ │
-│  │Bài viết│Theo dõi│Ng. TD │ │
-│  │  12    │  156   │  89   │ │
-│  └────────┴────────┴───────┘ │
-│                              │
-│  [Bài viết] [Đã lưu] [❤️]   │
-│  ─ Danh sách nội dung ───── │
-└──────────────────────────────┘
-```
-
-### 8.2 Xem Profile người khác
-
-Bấm Avatar trên Feed/Chat/Leaderboard → Hiển thị Profile + nút **"Theo dõi"** (thay cho "Edit")
-
-### 8.3 Follow/Unfollow
-
-Toggle: Bấm 1 lần = Follow → Bấm lại = Unfollow. Cập nhật `follower_count` / `following_count` tức thì.
-
----
-
-## 9. Cài đặt (`settings`)
-
-| Mục | Tương tác | Loại UI |
-|-----|----------|---------|
-| Tài khoản | Chỉnh sửa thông tin cá nhân | Navigation |
-| Giao diện | Chuyển Dark/Light mode | Switch toggle |
-| Thông báo | Bật/tắt push notification | Switch toggle |
-| Quyền riêng tư | Cấu hình hiển thị profile | Navigation |
-| Về ứng dụng | Hiển thị phiên bản | Info page |
-| Đăng xuất | Xóa JWT → Quay về Login | Button (destructive) |
-
----
-
-## Tiếp theo
-
-Đọc **[03_DATABASE.md](03_DATABASE.md)** để hiểu cấu trúc dữ liệu lưu trữ phía sau các luồng nghiệp vụ này.
+# 02. User Flows
+
+## 1. Bảng đối chiếu `docs/showcase`
+
+| Showcase | Route runtime | File chính | Trạng thái |
+|---|---|---|---|
+| `01_login.png` | `/login` | `app/lib/features/auth/screens/login_screen.dart` | Có route/auth UI. |
+| `02_register.png` | `/register` | `register_screen.dart` | Có route/register UI. |
+| `03_onboarding.png` | `/onboarding` | `onboarding_screen.dart` | Đã sửa responsive: dùng `CustomScrollView`, grid theo width, CTA không bị đẩy khỏi màn thấp. |
+| `04_home_feed.png` | `/home` | `home_screen.dart`, `feed_list.dart`, `post_card.dart` | Đã nối comment action sang detail, fix navigation GoRouter, sync like/bookmark count qua backend response/cache invalidation. |
+| `05_post_detail.png` | `/post/:id` | `post_detail_screen.dart` | Comment, like, bookmark, follow có flow thật; comment icon focus composer. |
+| `06_explore.png` | `/explore` | `explore_screen.dart` | Có route khám phá/search surface. |
+| `07_profile.png` | `/profile`, `/user/:id` | `profile_screen.dart` | Có profile route và GitHub-related API stub/runtime. |
+| `08_create_post.png` | `/create-post` | `create_post_screen.dart` | Có create post + AI sheet. |
+| `09_direct_message.png` | `/chat/:id` | `chat_screen.dart` | Đã sửa mark-read khi vào chat và khi nhận message trong chat đang mở. |
+| `10_chat_list.png` | `/chat` | `chat_list_screen.dart` | Đã sửa unread clear tức thì, realtime presence theo token, realtime last-message khi list đang mở. |
+| `11_notifications.png` | `/notifications` | `notifications_screen.dart` | Đã sửa mark-read local ngay sau API, không chờ reload thủ công. |
+| `12_project_marketplace.png` | `/projects` | `project_marketplace_screen.dart` | Có list/join/project detail flow. |
+| `13_job_board.png` | `/jobs` | `job_board_screen.dart` | Có list/apply/my applications flow. |
+| `14_leaderboard.png` | `/leaderboard` | `leaderboard_screen.dart` | Có route và backend module. |
+| `15_analytics.png` | `/analytics` | `analytics_screen.dart` | Có route và backend module. |
+| `16_code_playground.png` | `/playground` | `playground_screen.dart` | Có run/review/explain API flow. |
+| `17_mentorship.png` | `/mentorship` | `mentorship_screen.dart` | Có mentors/requests API flow. |
+| `18_live_code.png` | `/live-code` | `live_code_screen.dart`, `live.gateway.ts` | Có live room/service/gateway, vẫn cần QA realtime sâu hơn. |
+| `19_settings.png` | `/settings` | `settings_screen.dart` | Có grouped settings UI; cần manual QA mobile/tablet/desktop khi chỉnh nhiều toggle. |
+| `20_search_results.png` | `/search?q=...` | `search_results_screen.dart` | Có route/search state; empty state cần dùng showcase làm benchmark visual. |
+
+## 2. Auth: đăng nhập, đăng ký, vào app
+
+1. Người dùng nhập email/password hoặc chọn GitHub.
+2. Flutter gọi `POST /api/auth/login` hoặc `POST /api/auth/register`.
+3. Backend kiểm tra user, tạo JWT token, trả user profile.
+4. Flutter lưu token vào `SharedPreferences` (`auth.token`) và set token cho `ApiService`.
+5. Router thấy có token, nếu onboarding xong thì vào `/home`, nếu chưa thì vào `/onboarding`.
+
+Điểm cần nhớ: app không nên tự tin chỉ vì login screen hiện ra. Pass thật là token được lưu, route guard đọc đúng token, và API sau đó có header `Authorization: Bearer ...`.
+
+## 3. Onboarding: chọn sở thích
+
+1. Người dùng chọn skill/topic.
+2. Flutter lưu local bằng `AppPreferences.saveOnboardingData`.
+3. Nếu đã login, Flutter patch `/api/users/me` để backend biết skills.
+4. Flutter set `onboarding.completed = true` rồi điều hướng `/home`.
+
+Vì màn này phải chạy trên mobile thấp, UI dùng scroll thay vì nhét grid vào `Expanded`. CTA vẫn nằm sau grid và scroll tới được, không bị tràn khỏi viewport.
+
+## 4. Feed: like, bookmark, comment
+
+1. Home gọi `GET /api/posts?type=foryou|following|trending`.
+2. Backend đọc Postgres hoặc Redis cache, trả post kèm `isLikedByMe`, `isBookmarkedByMe`, counts.
+3. Khi bấm like/bookmark, Flutter cập nhật UI ngay.
+4. Backend toggle trong transaction, trả lại state và count thật.
+5. Backend xóa cache `posts:item:*` và `posts:feed:*` để reload không lấy số cũ.
+6. Nếu API fail, Flutter rollback state cũ và báo lỗi.
+
+Comment trên card không phải nút chết nữa: nó mở `/post/:id`, nơi comment composer xử lý `POST /api/posts/:id/comments`.
+
+## 5. Post detail: đọc, tương tác, bình luận
+
+1. Flutter gọi `GET /api/posts/:id` và `GET /api/posts/:id/comments`.
+2. Người dùng like/bookmark/follow thì UI optimistic trước, API đồng bộ sau.
+3. Người dùng nhập comment, Flutter gọi `POST /api/posts/:id/comments`.
+4. Backend tạo comment, tăng `commentCount`, xóa cache post/feed.
+5. Flutter refresh detail và phát `FeedRefreshBus` để feed sau đó có số mới.
+
+## 6. Chat: list, unread, read, presence
+
+1. Flutter bootstrap token rồi mở Socket.IO `http://localhost/chat` với `auth.token`.
+2. Backend `ChatGateway` verify token, lấy `payload.sub`, set Redis `online:user:{id}`, broadcast `presence_change`.
+3. Chat list gọi `GET /api/chat/conversations`.
+4. Khi tap conversation, chat list clear unread local ngay và gọi `PATCH /api/chat/conversations/:id/read`.
+5. Chat screen cũng mark read khi vào màn và khi nhận tin nhắn mới trong conversation đang mở.
+6. Tin nhắn gửi qua `POST /api/chat/conversations/:id/messages` hoặc socket event, backend lưu message và update last message.
+
+Mục tiêu UX: badge unread biến mất ngay khi mở chat, không phải reload trang.
+
+## 7. Notifications: unread và grouped state
+
+1. Flutter gọi `GET /api/notifications`.
+2. User tap notification hoặc `Mark all as read`.
+3. Backend patch read state.
+4. Flutter cập nhật local list ngay sau API, không đợi reload thủ công.
+
+Thông báo realtime có gateway riêng trong backend, nhưng client hiện tập trung realtime ở chat namespace. Nếu muốn badge app-wide realtime hoàn chỉnh, cần nối thêm notification namespace ở roadmap.
+
+## 8. Projects, jobs, tools
+
+Projects và jobs đi theo CRUD/action flow quen thuộc:
+
+1. List screen gọi `GET`.
+2. Detail hoặc action gọi `GET :id`, `POST :id/join`, `POST :id/apply`.
+3. Backend dùng Postgres để giữ trạng thái application/member.
+4. Flutter refresh list/detail để UI không lệch.
+
+Playground/AI dùng API riêng vì đây là thao tác tốn tài nguyên và có thể chạy nền/queue.

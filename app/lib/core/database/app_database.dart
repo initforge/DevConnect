@@ -6,9 +6,9 @@ import 'migrations.dart';
 
 /// Database seeding option - controls whether to seed on first open
 enum DatabaseSeedMode {
-  none,    // Never seed - production
+  none, // Never seed - production
   minimal, // Only essential tables (users)
-  full,    // All seed data
+  full, // All seed data
 }
 
 /// AppDatabase - SQLite local-first database for DevConnect
@@ -118,6 +118,7 @@ class AppDatabase {
       CREATE TABLE IF NOT EXISTS comments (
         id TEXT PRIMARY KEY,
         post_id TEXT NOT NULL,
+        parent_id TEXT,
         author_id TEXT NOT NULL,
         content TEXT NOT NULL,
         depth INTEGER NOT NULL DEFAULT 0,
@@ -128,6 +129,7 @@ class AppDatabase {
         sync_dirty INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+        FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE,
         FOREIGN KEY (author_id) REFERENCES users(id)
       )
     ''');
@@ -141,6 +143,7 @@ class AppDatabase {
         body TEXT NOT NULL,
         from_user_id TEXT,
         is_read INTEGER NOT NULL DEFAULT 0,
+        merged_count INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL
       )
     ''');
@@ -245,47 +248,167 @@ class AppDatabase {
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     ''');
+
+    // Mentorship requests
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS mentorship_requests (
+        id TEXT PRIMARY KEY,
+        mentee_id TEXT NOT NULL,
+        mentor_id TEXT NOT NULL,
+        mentee_username TEXT,
+        mentee_display_name TEXT,
+        mentor_username TEXT,
+        mentor_display_name TEXT,
+        topic TEXT,
+        message TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (mentee_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (mentor_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Mentorship sessions (scheduled video / async sessions for a request)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS mentorship_sessions (
+        id TEXT PRIMARY KEY,
+        request_id TEXT NOT NULL,
+        scheduled_at TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'scheduled',
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (request_id) REFERENCES mentorship_requests(id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Mentorship journals (mentee notes + optional mentor feedback)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS mentorship_journals (
+        id TEXT PRIMARY KEY,
+        request_id TEXT,
+        author_id TEXT NOT NULL,
+        text TEXT NOT NULL,
+        mentor_feedback TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (request_id) REFERENCES mentorship_requests(id) ON DELETE SET NULL,
+        FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    ''');
   }
 
   Future<void> _createIndexes(Database db) async {
     // Users indexes
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_users_reputation ON users(reputation DESC)');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_users_reputation ON users(reputation DESC)',
+    );
 
     // Posts indexes
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_posts_author_id ON posts(author_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_posts_type ON posts(type)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_posts_like_count ON posts(like_count DESC)');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_posts_author_id ON posts(author_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_posts_type ON posts(type)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_posts_like_count ON posts(like_count DESC)',
+    );
 
     // Comments indexes
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_comments_author_id ON comments(author_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_comments_created_at ON comments(created_at ASC)');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON comments(parent_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_comments_author_id ON comments(author_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_comments_created_at ON comments(created_at ASC)',
+    );
 
     // Notifications indexes
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_notifications_from_user_id ON notifications(from_user_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC)');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_notifications_from_user_id ON notifications(from_user_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC)',
+    );
 
     // Messages indexes
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at ASC)');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at ASC)',
+    );
 
     // Conversations indexes
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_conversations_updated_at ON conversations(updated_at DESC)');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_conversations_updated_at ON conversations(updated_at DESC)',
+    );
 
     // Junction table indexes
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_user_follows_follower ON user_follows(follower_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_user_follows_following ON user_follows(following_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_post_likes_post ON post_likes(post_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_post_likes_user ON post_likes(user_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_post_bookmarks_post ON post_bookmarks(post_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_post_bookmarks_user ON post_bookmarks(user_id)');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_user_follows_follower ON user_follows(follower_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_user_follows_following ON user_follows(following_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_post_likes_post ON post_likes(post_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_post_likes_user ON post_likes(user_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_post_bookmarks_post ON post_bookmarks(post_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_post_bookmarks_user ON post_bookmarks(user_id)',
+    );
+
+    // User-post interactions table (recommendation engine)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS user_post_interactions (
+        user_id TEXT NOT NULL,
+        post_id TEXT NOT NULL,
+        interaction_type TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (user_id, post_id, interaction_type),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_interactions_user ON user_post_interactions(user_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_interactions_post ON user_post_interactions(post_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_interactions_type ON user_post_interactions(interaction_type)',
+    );
   }
 
   Future<void> _seedIfNeeded(Database db) async {
-    final count = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM users')) ?? 0;
+    final count =
+        Sqflite.firstIntValue(
+          await db.rawQuery('SELECT COUNT(*) FROM users'),
+        ) ??
+        0;
     if (count > 0 && _seedMode != DatabaseSeedMode.full) {
       return; // Data exists, skip seeding
     }
@@ -366,6 +489,7 @@ class AppDatabase {
       await db.insert('comments', {
         'id': comment.id,
         'post_id': 'p1',
+        'parent_id': comment.parentId,
         'author_id': comment.author.id,
         'content': comment.content,
         'depth': comment.depth,
@@ -476,6 +600,7 @@ class AppDatabase {
   Future<void> reset() async {
     final db = await database;
     await db.transaction((txn) async {
+      await txn.delete('user_post_interactions');
       await txn.delete('post_bookmarks');
       await txn.delete('post_likes');
       await txn.delete('user_follows');

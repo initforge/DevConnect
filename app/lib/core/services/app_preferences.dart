@@ -24,8 +24,7 @@ class AppPreferences {
   static const _onlineStatusKey = 'settings.onlineStatus';
   static const _messagePermissionKey = 'settings.messagePermission';
   static const _quietHoursKey = 'settings.quietHours';
-  static const _fontSizeKey = 'settings.fontSize';
-  static const _languageKey = 'settings.language';
+  static const _languageCodeKey = 'settings.languageCode';
   static const _recentSearchesKey = 'search.recentQueries';
   static const _teamInviteStateKey = 'notifications.teamInviteState';
   static const _tokenKey = 'auth.token';
@@ -50,8 +49,7 @@ class AppPreferences {
   String get messagePermission =>
       _prefs.getString(_messagePermissionKey) ?? 'Everyone';
   String get quietHours => _prefs.getString(_quietHoursKey) ?? '10 PM - 8 AM';
-  String get fontSize => _prefs.getString(_fontSizeKey) ?? 'Medium';
-  String get language => _prefs.getString(_languageKey) ?? 'English';
+  String get languageCode => _prefs.getString(_languageCodeKey) ?? 'en';
   List<String> get recentSearches =>
       _prefs.getStringList(_recentSearchesKey) ?? const [];
   String? get teamInviteState => _prefs.getString(_teamInviteStateKey);
@@ -70,10 +68,8 @@ class AppPreferences {
       _prefs.setString(_messagePermissionKey, value);
   Future<void> setQuietHours(String value) =>
       _prefs.setString(_quietHoursKey, value);
-  Future<void> setFontSize(String value) =>
-      _prefs.setString(_fontSizeKey, value);
-  Future<void> setLanguage(String value) =>
-      _prefs.setString(_languageKey, value);
+  Future<void> setLanguageCode(String value) =>
+      _prefs.setString(_languageCodeKey, value);
   Future<void> setTeamInviteState(String? value) async {
     if (value == null || value.isEmpty) {
       await _prefs.remove(_teamInviteStateKey);
@@ -116,6 +112,8 @@ class AppPreferences {
     if (data == null) return null;
     return jsonDecode(data) as Map<String, dynamic>;
   }
+
+  String? get userId => user?['id']?.toString();
 
   Future<void> saveUser(Map<String, dynamic> userData) =>
       _prefs.setString(_userKey, jsonEncode(userData));

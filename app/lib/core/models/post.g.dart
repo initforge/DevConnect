@@ -24,6 +24,8 @@ Post _$PostFromJson(Map<String, dynamic> json) => Post(
   isLikedByMe: json['isLikedByMe'] as bool? ?? false,
   isBookmarkedByMe: json['isBookmarkedByMe'] as bool? ?? false,
   createdAt: DateTime.parse(json['createdAt'] as String),
+  highlightedTitle: json['highlightedTitle'] as String?,
+  highlightedContent: json['highlightedContent'] as String?,
 );
 
 Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
@@ -41,4 +43,6 @@ Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
   'isLikedByMe': instance.isLikedByMe,
   'isBookmarkedByMe': instance.isBookmarkedByMe,
   'createdAt': instance.createdAt.toIso8601String(),
+  'highlightedTitle': instance.highlightedTitle,
+  'highlightedContent': instance.highlightedContent,
 };

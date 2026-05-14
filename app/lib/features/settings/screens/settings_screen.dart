@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/routes.dart';
+import '../../../core/localization/app_strings.dart';
 import '../../../core/riverpod/providers.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/app_preferences.dart';
+import '../../../core/services/oauth_redirect.dart';
+import '../../../core/state/profile_refresh_bus.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/decorative_widgets.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/user_repository.dart';
 
@@ -21,17 +26,73 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _userRepository = UserRepository();
-  String _profileVisibility =
-      AppPreferences.instance.privateProfile ? 'Private' : 'Public';
+  bool _privateProfile = AppPreferences.instance.privateProfile;
   bool _onlineStatus = AppPreferences.instance.onlineStatus;
   bool _pushNotifications = AppPreferences.instance.pushNotif;
   bool _emailNotifications = AppPreferences.instance.emailNotif;
   String _messagePermission = AppPreferences.instance.messagePermission;
   String _quietHours = AppPreferences.instance.quietHours;
-  String _fontSize = AppPreferences.instance.fontSize;
-  String _language = AppPreferences.instance.language;
+  bool _githubConnected = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRemoteSettings();
+  }
+
+  Future<void> _loadRemoteSettings() async {
+    try {
+      final remote = await ApiService.instance.getObject('/users/me/settings');
+      final language = remote['language'];
+      if (language == 'en' || language == 'vi') {
+        await ref.read(appLocaleProvider.notifier).setLocale(Locale(language));
+      }
+      if (!mounted) return;
+      setState(() {
+        _privateProfile = remote['privateProfile'] == true;
+        _githubConnected = remote['githubConnected'] == true;
+        final onlineStatus = remote['onlineStatus'];
+        if (onlineStatus is bool) {
+          _onlineStatus = onlineStatus;
+        }
+        final pushNotifications = remote['pushNotifications'];
+        if (pushNotifications is bool) {
+          _pushNotifications = pushNotifications;
+        }
+        final emailNotifications = remote['emailNotifications'];
+        if (emailNotifications is bool) {
+          _emailNotifications = emailNotifications;
+        }
+        final messagePermission = remote['messagePermission'];
+        if (messagePermission is String && messagePermission.isNotEmpty) {
+          _messagePermission = messagePermission;
+        }
+        final quietHours = remote['quietHours'];
+        if (quietHours is String && quietHours.isNotEmpty) {
+          _quietHours = quietHours;
+        }
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _saveRemoteSettings(Map<String, dynamic> data) async {
+    try {
+      await ApiService.instance.patch('/users/me/settings', data);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(e))));
+    }
+  }
+
+  String _friendlyError(Object error) {
+    if (error is ApiException) return error.message;
+    return error.toString();
+  }
 
   Future<void> _openEditProfile() async {
+    final strings = AppStrings.current();
     final user = AppPreferences.instance.user ?? const <String, dynamic>{};
     final nameCtrl = TextEditingController(
       text: user['displayName']?.toString() ?? '',
@@ -49,14 +110,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
             Future<void> save() async {
               final displayName = nameCtrl.text.trim();
               if (displayName.isEmpty) {
-                setSheetState(() => error = 'Display name is required');
+                setSheetState(
+                  () => error = strings.t('settings.displayNameRequired'),
+                );
                 return;
               }
 
@@ -81,13 +144,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Navigator.of(sheetContext).pop();
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Profile updated')),
+                  SnackBar(content: Text(strings.t('settings.profileUpdated'))),
                 );
+                ProfileRefreshBus.instance.refresh();
                 setState(() {});
               } catch (e) {
                 setSheetState(() {
                   saving = false;
-                  error = e.toString();
+                  error = _friendlyError(e);
                 });
               }
             }
@@ -103,14 +167,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'Edit Profile',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  Text(
+                    strings.t('settings.editProfile'),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Update the basics people see on your profile.',
-                    style: TextStyle(
+                  Text(
+                    strings.t('settings.editProfileSubtitle'),
+                    style: const TextStyle(
                       fontSize: 13,
                       color: AppColors.textSecondary,
                     ),
@@ -118,20 +185,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: nameCtrl,
-                    decoration: _sheetInputDecoration('Display name'),
+                    decoration: _sheetInputDecoration(
+                      strings.t('settings.displayName'),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: bioCtrl,
                     minLines: 3,
                     maxLines: 4,
-                    decoration: _sheetInputDecoration('Short bio'),
+                    decoration: _sheetInputDecoration(
+                      strings.t('settings.shortBio'),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: skillsCtrl,
                     decoration: _sheetInputDecoration(
-                      'Skills (comma separated)',
+                      strings.t('settings.skillsComma'),
                     ),
                   ),
                   if (error != null) ...[
@@ -165,7 +236,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                              : const Text('Save profile'),
+                              : Text(strings.t('settings.saveProfile')),
                     ),
                   ),
                 ],
@@ -182,6 +253,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _openChangePassword() async {
+    final strings = AppStrings.current();
     final currentCtrl = TextEditingController();
     final newCtrl = TextEditingController();
     final confirmCtrl = TextEditingController();
@@ -192,19 +264,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
             Future<void> submit() async {
               if (newCtrl.text.length < 8) {
                 setSheetState(
-                  () => error = 'New password must be at least 8 characters',
+                  () => error = strings.t('settings.newPasswordTooShort'),
                 );
                 return;
               }
               if (newCtrl.text != confirmCtrl.text) {
-                setSheetState(() => error = 'Passwords do not match');
+                setSheetState(
+                  () => error = strings.t('settings.passwordsDoNotMatch'),
+                );
                 return;
               }
 
@@ -222,12 +296,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Navigator.of(sheetContext).pop();
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Password changed')),
+                  SnackBar(
+                    content: Text(strings.t('settings.passwordChanged')),
+                  ),
                 );
               } catch (e) {
                 setSheetState(() {
                   saving = false;
-                  error = e.toString();
+                  error = _friendlyError(e);
                 });
               }
             }
@@ -243,27 +319,45 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'Change Password',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  Text(
+                    strings.t('settings.changePassword'),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: currentCtrl,
                     obscureText: true,
-                    decoration: _sheetInputDecoration('Current password'),
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    autofillHints: const [AutofillHints.password],
+                    decoration: _sheetInputDecoration(
+                      strings.t('settings.currentPassword'),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: newCtrl,
                     obscureText: true,
-                    decoration: _sheetInputDecoration('New password'),
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    autofillHints: const [AutofillHints.newPassword],
+                    decoration: _sheetInputDecoration(
+                      strings.t('settings.newPassword'),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: confirmCtrl,
                     obscureText: true,
-                    decoration: _sheetInputDecoration('Confirm new password'),
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    autofillHints: const [AutofillHints.newPassword],
+                    decoration: _sheetInputDecoration(
+                      strings.t('settings.confirmNewPassword'),
+                    ),
                   ),
                   if (error != null) ...[
                     const SizedBox(height: 12),
@@ -296,7 +390,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                              : const Text('Update password'),
+                              : Text(strings.t('settings.updatePassword')),
                     ),
                   ),
                 ],
@@ -313,24 +407,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _deleteAccount() async {
+    final strings = AppStrings.current();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Delete account?'),
-          content: const Text(
-            'This removes your account from the current device and backend demo data.',
-          ),
+          title: Text(strings.t('settings.deleteAccountTitle')),
+          content: Text(strings.t('settings.deleteAccountBody')),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text(strings.t('common.cancel')),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
-                'Delete',
-                style: TextStyle(color: AppColors.error),
+              child: Text(
+                strings.t('settings.delete'),
+                style: const TextStyle(color: AppColors.error),
               ),
             ),
           ],
@@ -350,49 +443,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(e))));
     }
   }
 
-  Future<void> _showTerms() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Colors.white,
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                'Terms of Service',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-              ),
-              SizedBox(height: 12),
-              Text(
-                'DevConnect is provided for collaboration, discovery, and educational sharing. Keep account credentials secure, avoid abusive automation, and only publish content you are allowed to share.',
-                style: TextStyle(
-                  fontSize: 13,
-                  height: 1.6,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              SizedBox(height: 12),
-              Text(
-                'By continuing to use the app, you agree that moderation actions, account removal, and content visibility may be applied to keep the platform healthy.',
-                style: TextStyle(
-                  fontSize: 13,
-                  height: 1.6,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+  void _connectGithub() {
+    try {
+      redirectToExternalUrl('${AppConstants.apiBaseUrl}/auth/github');
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.current().t('settings.githubWebOnly')),
+        ),
+      );
+    }
   }
 
   Future<void> _pickSetting({
@@ -404,7 +468,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final selected = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (context) {
         return SafeArea(
           child: ListView(
@@ -443,8 +507,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   InputDecoration _sheetInputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
+      labelText: hint,
       filled: true,
-      fillColor: const Color(0xFFF4F6FA),
+      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide.none,
@@ -462,35 +527,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
     final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(appLocaleProvider);
     final themeNotifier = ref.read(themeModeNotifierProvider.notifier);
+    final publicLabel = strings.t('common.public');
+    final privateLabel = strings.t('common.private');
+    final everyoneLabel = strings.t('common.everyone');
+    final followersLabel = strings.t('common.followers');
+    final nobodyLabel = strings.t('common.nobody');
+    final offLabel = strings.t('common.off');
+    final profileVisibilityValue = _privateProfile ? privateLabel : publicLabel;
+    final messagePermissionValue =
+        _messagePermission == 'Followers'
+            ? followersLabel
+            : _messagePermission == 'Nobody'
+            ? nobodyLabel
+            : everyoneLabel;
+    final quietHoursValue = _quietHours == 'Off' ? offLabel : _quietHours;
+    final englishLabel = strings.t('settings.languageEnglish');
+    final vietnameseLabel = strings.t('settings.languageVietnamese');
+    final languageValue =
+        locale.languageCode == 'vi' ? vietnameseLabel : englishLabel;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       bottomNavigationBar: AppBottomNavBar(
         items: [
           AppBottomNavItem(
             icon: Icons.home_outlined,
             selectedIcon: Icons.home,
-            label: 'Home',
+            label: strings.nav('home'),
             route: AppRoutes.home,
           ),
           AppBottomNavItem(
             icon: Icons.explore_outlined,
             selectedIcon: Icons.explore,
-            label: 'Explore',
+            label: strings.nav('explore'),
             route: AppRoutes.explore,
           ),
           AppBottomNavItem(
             icon: Icons.settings_outlined,
             selectedIcon: Icons.settings,
-            label: 'Settings',
+            label: strings.nav('settings'),
             route: AppRoutes.settings,
           ),
           AppBottomNavItem(
             icon: Icons.person_outline,
             selectedIcon: Icons.person,
-            label: 'Profile',
+            label: strings.nav('profile'),
             route: AppRoutes.profile,
           ),
         ],
@@ -499,215 +584,250 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         centerCreate: true,
       ),
       appBar: AppBar(
-        title: const Text(
-          'Settings',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary.withValues(alpha: 0.06),
+                Colors.transparent,
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
+        title: Text(
+          strings.t('settings.title'),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
-        children: [
-          _SectionCard(
-            title: 'ACCOUNT',
-            children: [
-              _ArrowRow(
-                icon: Icons.person_outline,
-                title: 'Edit Profile',
-                onTap: _openEditProfile,
-              ),
-              _ArrowRow(
-                icon: Icons.lock_outline,
-                title: 'Change Password',
-                onTap: _openChangePassword,
-              ),
-              _StatusRow(
-                icon: Icons.code,
-                title: 'GitHub Integration',
-                status: 'Connected',
-                statusColor: AppColors.success,
-              ),
-              _ArrowRow(
-                icon: Icons.delete_outline,
-                title: 'Delete Account',
-                titleColor: AppColors.error,
-                onTap: _deleteAccount,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _SectionCard(
-            title: 'PRIVACY',
-            children: [
-              _ValueRow(
-                icon: Icons.visibility_outlined,
-                title: 'Profile Visibility',
-                value: _profileVisibility,
-                onTap:
-                    () => _pickSetting(
-                      title: 'Profile Visibility',
-                      options: const ['Public', 'Private'],
-                      currentValue: _profileVisibility,
-                      onSelected: (value) async {
-                        setState(() => _profileVisibility = value);
-                        await AppPreferences.instance.setPrivateProfile(
-                          value == 'Private',
-                        );
-                      },
-                    ),
-              ),
-              _SwitchRow(
-                icon: Icons.toggle_on_outlined,
-                title: 'Online Status',
-                value: _onlineStatus,
-                onChanged: (value) async {
-                  final messenger = ScaffoldMessenger.of(context);
-                  setState(() => _onlineStatus = value);
-                  await AppPreferences.instance.setOnlineStatus(value);
-                  try {
-                    await _userRepository.updateOnlineStatus(value);
-                  } catch (_) {
-                    if (!mounted) return;
-                    messenger.showSnackBar(
-                      const SnackBar(
-                        content: Text('Saved locally. Sync will retry later.'),
+      body: DecorativeBackground(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+          children: [
+            ScreenGradientHeader(
+              title: strings.t('settings.title'),
+              subtitle: strings.t('settings.subtitle'),
+              icon: Icons.settings_outlined,
+              gradientColors: const [Color(0xFF5B53F6), Color(0xFF8B5CF6)],
+            ),
+            const SizedBox(height: 16),
+            _SectionCard(
+              title: strings.t('settings.account'),
+              children: [
+                _ArrowRow(
+                  icon: Icons.person_outline,
+                  title: strings.t('settings.editProfile'),
+                  onTap: () => context.go(AppRoutes.profile),
+                ),
+                _ArrowRow(
+                  icon: Icons.lock_outline,
+                  title: strings.t('settings.changePassword'),
+                  onTap: _openChangePassword,
+                ),
+                _StatusRow(
+                  icon: Icons.code,
+                  title: strings.t('settings.githubIntegration'),
+                  status:
+                      _githubConnected
+                          ? strings.t('settings.connected')
+                          : strings.t('settings.notLinked'),
+                  statusColor:
+                      _githubConnected
+                          ? AppColors.success
+                          : AppColors.textTertiary,
+                  onTap: _githubConnected ? null : _connectGithub,
+                ),
+                _ArrowRow(
+                  icon: Icons.delete_outline,
+                  title: strings.t('settings.deleteAccount'),
+                  titleColor: AppColors.error,
+                  onTap: _deleteAccount,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _SectionCard(
+              title: strings.t('settings.privacy'),
+              children: [
+                _ValueRow(
+                  icon: Icons.visibility_outlined,
+                  title: strings.t('settings.profileVisibility'),
+                  value: profileVisibilityValue,
+                  onTap:
+                      () => _pickSetting(
+                        title: strings.t('settings.profileVisibilityTitle'),
+                        options: [publicLabel, privateLabel],
+                        currentValue: profileVisibilityValue,
+                        onSelected: (value) async {
+                          final isPrivate = value == privateLabel;
+                          setState(() => _privateProfile = isPrivate);
+                          await AppPreferences.instance.setPrivateProfile(
+                            isPrivate,
+                          );
+                          await _saveRemoteSettings({
+                            'privateProfile': isPrivate,
+                          });
+                        },
                       ),
-                    );
-                  }
-                },
-              ),
-              _ValueRow(
-                icon: Icons.mail_outline,
-                title: 'Who Can Message',
-                value: _messagePermission,
-                onTap:
-                    () => _pickSetting(
-                      title: 'Who Can Message',
-                      options: const ['Everyone', 'Followers', 'Nobody'],
-                      currentValue: _messagePermission,
-                      onSelected: (value) async {
-                        setState(() => _messagePermission = value);
-                        await AppPreferences.instance.setMessagePermission(
-                          value,
-                        );
-                      },
-                    ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _SectionCard(
-            title: 'NOTIFICATIONS',
-            children: [
-              _SwitchRow(
-                icon: Icons.notifications_outlined,
-                title: 'Push Notifications',
-                value: _pushNotifications,
-                onChanged: (value) async {
-                  setState(() => _pushNotifications = value);
-                  await AppPreferences.instance.setPushNotif(value);
-                },
-              ),
-              _SwitchRow(
-                icon: Icons.email_outlined,
-                title: 'Email Notifications',
-                value: _emailNotifications,
-                onChanged: (value) async {
-                  setState(() => _emailNotifications = value);
-                  await AppPreferences.instance.setEmailNotif(value);
-                },
-              ),
-              _ValueRow(
-                icon: Icons.nightlight_round,
-                title: 'Quiet Hours',
-                value: _quietHours,
-                onTap:
-                    () => _pickSetting(
-                      title: 'Quiet Hours',
-                      options: const [
-                        'Off',
-                        '10 PM - 8 AM',
-                        '11 PM - 7 AM',
-                        '12 AM - 8 AM',
-                      ],
-                      currentValue: _quietHours,
-                      onSelected: (value) async {
-                        setState(() => _quietHours = value);
-                        await AppPreferences.instance.setQuietHours(value);
-                      },
-                    ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _SectionCard(
-            title: 'APPEARANCE',
-            children: [
-              _ValueRow(
-                icon: Icons.palette_outlined,
-                title: 'Theme',
-                value: themeMode == ThemeMode.dark ? 'Dark' : 'Light',
-                onTap: () => themeNotifier.toggleTheme(),
-              ),
-              _ValueRow(
-                icon: Icons.text_fields_outlined,
-                title: 'Font Size',
-                value: _fontSize,
-                onTap:
-                    () => _pickSetting(
-                      title: 'Font Size',
-                      options: const ['Small', 'Medium', 'Large'],
-                      currentValue: _fontSize,
-                      onSelected: (value) async {
-                        setState(() => _fontSize = value);
-                        await AppPreferences.instance.setFontSize(value);
-                      },
-                    ),
-              ),
-              _ValueRow(
-                icon: Icons.language_outlined,
-                title: 'Language',
-                value: _language,
-                onTap:
-                    () => _pickSetting(
-                      title: 'Language',
-                      options: const ['English', 'Vietnamese'],
-                      currentValue: _language,
-                      onSelected: (value) async {
-                        setState(() => _language = value);
-                        await AppPreferences.instance.setLanguage(value);
-                      },
-                    ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _SectionCard(
-            title: 'ABOUT',
-            children: [
-              const _ValueRow(
-                icon: Icons.info_outline,
-                title: 'Version',
-                value: 'v1.0.0',
-              ),
-              _ArrowRow(
-                icon: Icons.description_outlined,
-                title: 'Terms of Service',
-                onTap: _showTerms,
-              ),
-              _ArrowRow(
-                icon: Icons.logout,
-                title: 'Log Out',
-                titleColor: AppColors.error,
-                onTap: () async {
-                  await AppPreferences.instance.clearAuth();
-                  ApiService.instance.setToken(null);
-                  if (!context.mounted) return;
-                  context.go(AppRoutes.login);
-                },
-              ),
-            ],
-          ),
-        ],
+                ),
+                _SwitchRow(
+                  icon: Icons.toggle_on_outlined,
+                  title: strings.t('settings.onlineStatus'),
+                  value: _onlineStatus,
+                  onChanged: (value) async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    setState(() => _onlineStatus = value);
+                    await AppPreferences.instance.setOnlineStatus(value);
+                    await _saveRemoteSettings({'onlineStatus': value});
+                    try {
+                      await _userRepository.updateOnlineStatus(value);
+                    } catch (_) {
+                      if (!mounted) return;
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            strings.t('settings.savedLocallySyncLater'),
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                ),
+                _ValueRow(
+                  icon: Icons.mail_outline,
+                  title: strings.t('settings.whoCanMessage'),
+                  value: messagePermissionValue,
+                  onTap:
+                      () => _pickSetting(
+                        title: strings.t('settings.whoCanMessageTitle'),
+                        options: [everyoneLabel, followersLabel, nobodyLabel],
+                        currentValue: messagePermissionValue,
+                        onSelected: (value) async {
+                          final rawValue =
+                              value == followersLabel
+                                  ? 'Followers'
+                                  : value == nobodyLabel
+                                  ? 'Nobody'
+                                  : 'Everyone';
+                          setState(() => _messagePermission = rawValue);
+                          await AppPreferences.instance.setMessagePermission(
+                            rawValue,
+                          );
+                          await _saveRemoteSettings({
+                            'messagePermission': rawValue,
+                          });
+                        },
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _SectionCard(
+              title: strings.t('settings.notifications'),
+              children: [
+                _SwitchRow(
+                  icon: Icons.notifications_outlined,
+                  title: strings.t('settings.pushNotifications'),
+                  value: _pushNotifications,
+                  onChanged: (value) async {
+                    setState(() => _pushNotifications = value);
+                    await AppPreferences.instance.setPushNotif(value);
+                    await _saveRemoteSettings({'pushNotifications': value});
+                  },
+                ),
+                _SwitchRow(
+                  icon: Icons.email_outlined,
+                  title: strings.t('settings.emailNotifications'),
+                  value: _emailNotifications,
+                  onChanged: (value) async {
+                    setState(() => _emailNotifications = value);
+                    await AppPreferences.instance.setEmailNotif(value);
+                    await _saveRemoteSettings({'emailNotifications': value});
+                  },
+                ),
+                _ValueRow(
+                  icon: Icons.nightlight_round,
+                  title: strings.t('settings.quietHours'),
+                  value: quietHoursValue,
+                  onTap:
+                      () => _pickSetting(
+                        title: strings.t('settings.quietHoursTitle'),
+                        options: [
+                          offLabel,
+                          '10 PM - 8 AM',
+                          '11 PM - 7 AM',
+                          '12 AM - 8 AM',
+                        ],
+                        currentValue: quietHoursValue,
+                        onSelected: (value) async {
+                          final rawValue = value == offLabel ? 'Off' : value;
+                          setState(() => _quietHours = rawValue);
+                          await AppPreferences.instance.setQuietHours(rawValue);
+                          await _saveRemoteSettings({'quietHours': rawValue});
+                        },
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _SectionCard(
+              title: strings.t('settings.appearance'),
+              children: [
+                _ValueRow(
+                  icon: Icons.palette_outlined,
+                  title: strings.t('settings.theme'),
+                  value:
+                      themeMode == ThemeMode.dark
+                          ? strings.t('common.dark')
+                          : strings.t('common.light'),
+                  onTap: () => themeNotifier.toggleTheme(),
+                ),
+                _ValueRow(
+                  icon: Icons.language_outlined,
+                  title: strings.t('settings.language'),
+                  value: languageValue,
+                  onTap:
+                      () => _pickSetting(
+                        title: strings.t('settings.language'),
+                        options: [englishLabel, vietnameseLabel],
+                        currentValue: languageValue,
+                        onSelected: (value) async {
+                          final nextCode =
+                              value == vietnameseLabel ? 'vi' : 'en';
+                          await ref
+                              .read(appLocaleProvider.notifier)
+                              .setLocale(Locale(nextCode));
+                          await _saveRemoteSettings({'language': nextCode});
+                        },
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _SectionCard(
+              title: strings.t('settings.about'),
+              children: [
+                _ValueRow(
+                  icon: Icons.info_outline,
+                  title: strings.t('settings.version'),
+                  value: 'v1.0.0',
+                ),
+                _ArrowRow(
+                  icon: Icons.logout,
+                  title: strings.t('settings.logout'),
+                  titleColor: AppColors.error,
+                  onTap: () async {
+                    await AppPreferences.instance.clearAuth();
+                    ApiService.instance.setToken(null);
+                    if (!context.mounted) return;
+                    context.go(AppRoutes.login);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

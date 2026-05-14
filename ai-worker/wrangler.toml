@@ -9,3 +9,19 @@ binding = "AI"
 AI_MODEL_CODE_REVIEW = "@cf/meta/llama-3.1-8b-instruct"
 AI_MODEL_EXPLAIN = "@cf/meta/llama-3.1-8b-instruct"
 AI_MODEL_MENTORSHIP = "@cf/meta/llama-3.1-8b-instruct"
+
+# ---- Production environment overrides ----
+# Use `wrangler deploy --env production` to deploy with these settings.
+[env.production]
+name = "devconnect-ai-worker-prod"
+[env.production.vars]
+AI_MODEL_CODE_REVIEW = "@cf/meta/llama-3.1-8b-instruct"
+AI_MODEL_EXPLAIN = "@cf/meta/llama-3.1-8b-instruct"
+AI_MODEL_MENTORSHIP = "@cf/meta/llama-3.1-8b-instruct"
+
+# Secrets (set via wrangler secret put, NOT committed to git):
+#   AI_WORKER_SECRET  — shared HMAC key for backend-to-worker auth
+#   JUDGE0_API_KEY    — Judge0 RapidAPI key (if using code execution)
+
+[observability]
+enabled = true

@@ -3,10 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/routes.dart';
+import '../../../core/localization/app_strings.dart';
 import '../../../core/models/models.dart';
+import '../../../core/services/api_service.dart';
 import '../../../core/services/app_preferences.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_utils.dart';
+import '../../../core/widgets/decorative_widgets.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/notification_repository.dart';
 
@@ -20,46 +23,92 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final _repository = NotificationRepository();
   late Future<List<AppNotification>> _loader;
+  List<AppNotification> _items = [];
   int _selectedTab = 0;
   String? _teamInviteState;
 
   @override
   void initState() {
     super.initState();
-    _loader = _repository.getNotifications();
+    _loader = _repository.getNotifications().then((items) {
+      _items = items;
+      return items;
+    });
     _teamInviteState = AppPreferences.instance.teamInviteState;
   }
 
   Future<void> _reload() async {
     setState(() {
-      _loader = _repository.getNotifications();
+      _loader = _repository.getNotifications().then((items) {
+        _items = items;
+        return items;
+      });
     });
+    await _loader;
   }
 
   Future<void> _markAllRead() async {
     await _repository.markAllAsRead();
     if (!mounted) return;
-    await _reload();
+    setState(() {
+      _items =
+          _items
+              .map(
+                (item) => AppNotification(
+                  id: item.id,
+                  type: item.type,
+                  title: item.title,
+                  body: item.body,
+                  fromUser: item.fromUser,
+                  isRead: true,
+                  createdAt: item.createdAt,
+                  mergedCount: item.mergedCount,
+                ),
+              )
+              .toList();
+      _loader = Future.value(_items);
+    });
   }
 
   Future<void> _markSingleRead(AppNotification item) async {
     if (item.isRead) return;
     await _repository.markAsRead(item.id);
     if (!mounted) return;
-    await _reload();
+    setState(() {
+      _items =
+          _items.map((notification) {
+            if (notification.id != item.id) return notification;
+            return AppNotification(
+              id: notification.id,
+              type: notification.type,
+              title: notification.title,
+              body: notification.body,
+              fromUser: notification.fromUser,
+              isRead: true,
+              createdAt: notification.createdAt,
+              mergedCount: notification.mergedCount,
+            );
+          }).toList();
+      _loader = Future.value(_items);
+    });
   }
 
   Future<void> _handleInvite(String decision) async {
     await AppPreferences.instance.setTeamInviteState(decision);
+    // Persist to backend so it doesn't reappear across devices
+    try {
+      await ApiService.instance.post('/notifications/team-invite', {'decision': decision});
+    } catch (_) {}
     if (!mounted) return;
 
     setState(() => _teamInviteState = decision);
+    final strings = AppStrings.current();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           decision == 'accepted'
-              ? 'You joined Team Flutter.'
-              : 'Team Flutter invite declined.',
+              ? strings.t('notifications.accepted')
+              : strings.t('notifications.declined'),
         ),
       ),
     );
@@ -71,6 +120,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
     return FutureBuilder<List<AppNotification>>(
       future: _loader,
       builder: (context, snapshot) {
@@ -84,14 +134,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           return Scaffold(
             backgroundColor: Colors.white,
             appBar: AppBar(
-              title: const Text(
-                'Notifications',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              title: Text(
+                strings.t('notifications.title'),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             body: Center(
               child: ErrorState(
-                message: 'Unable to load notifications right now.',
+                message: strings.t('notifications.unableLoad'),
                 onRetry: _reload,
               ),
             ),
@@ -106,9 +159,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            title: const Text(
-              'Notifications',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            flexibleSpace: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.06),
+                    Colors.transparent,
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+            title: Text(
+              strings.t('notifications.title'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             actions: const [
               Padding(
@@ -117,136 +182,150 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
             ],
           ),
-          body: items.isEmpty
-              ? const EmptyNotifications()
-              : Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: ResponsiveUtils.getContentMaxWidth(context),
-                    ),
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
-                      children: [
-                        _FilterTabs(
-                          selected: _selectedTab,
-                          onSelected:
-                              (value) => setState(() => _selectedTab = value),
+          body: DecorativeBackground(
+            child:
+                items.isEmpty
+                    ? const EmptyNotifications()
+                    : Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: ResponsiveUtils.getContentMaxWidth(context),
                         ),
-                        const SizedBox(height: 10),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton(
-                            onPressed: _markAllRead,
-                            child: const Text(
-                              'Mark all as read',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        const Text(
-                          'Today',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                      ...today.map(
-                        (item) => _NotificationTile(
-                          item: item,
-                          onTap: () => _handleTap(item),
+                        child: _buildNotificationsContent(
+                          context,
+                          items,
+                          today,
+                          earlier,
                         ),
                       ),
-                      if (earlier.isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        const Text(
-                          'Earlier',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        ...earlier.map(
-                          (item) => _NotificationTile(
-                            item: item,
-                            onTap: () => _handleTap(item),
-                          ),
-                        ),
-                      ],
-                      if (_teamInviteState == null) ...[
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFF8EC),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "You've been invited to join the Team Flutter organization.",
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  ElevatedButton(
-                                    onPressed: () => _handleInvite('accepted'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF5B53F6),
-                                      minimumSize: const Size(74, 32),
-                                      padding: EdgeInsets.zero,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Accept',
-                                      style: TextStyle(fontSize: 11),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  OutlinedButton(
-                                    onPressed: () => _handleInvite('declined'),
-                                    style: OutlinedButton.styleFrom(
-                                      minimumSize: const Size(74, 32),
-                                      padding: EdgeInsets.zero,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Decline',
-                                      style: TextStyle(fontSize: 11),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
+                    ),
+          ),
         );
       },
+    );
+  }
+
+  Widget _buildNotificationsContent(
+    BuildContext context,
+    List<AppNotification> items,
+    List<AppNotification> today,
+    List<AppNotification> earlier,
+  ) {
+    final strings = AppStrings.of(context);
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+      children: [
+        ScreenGradientHeader(
+          title: strings.t('notifications.title'),
+          subtitle: strings.t('notifications.subtitle'),
+          icon: Icons.notifications_active_outlined,
+          gradientColors: const [Color(0xFF5B53F6), Color(0xFF00D9A6)],
+        ),
+        const SizedBox(height: 14),
+        _FilterTabs(
+          selected: _selectedTab,
+          onSelected: (value) => setState(() => _selectedTab = value),
+        ),
+        const SizedBox(height: 10),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            onPressed: _markAllRead,
+            child: Text(
+              AppStrings.of(context).t('notifications.markAllRead'),
+              style: const TextStyle(fontSize: 12),
+            ),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          AppStrings.of(context).t('notifications.today'),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 8),
+        ...today.map(
+          (item) =>
+              _NotificationTile(item: item, onTap: () => _handleTap(item)),
+        ),
+        if (earlier.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text(
+            AppStrings.of(context).t('notifications.earlier'),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          ...earlier.map(
+            (item) =>
+                _NotificationTile(item: item, onTap: () => _handleTap(item)),
+          ),
+        ],
+        if (_teamInviteState == null) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF8EC),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppStrings.of(context).t('notifications.teamInvite'),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    ElevatedButton(
+                      onPressed: () => _handleInvite('accepted'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF5B53F6),
+                        minimumSize: const Size(74, 32),
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(
+                        AppStrings.of(context).t('common.accept'),
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton(
+                      onPressed: () => _handleInvite('declined'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(74, 32),
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(
+                        AppStrings.of(context).t('common.decline'),
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 
   List<AppNotification> _filter(List<AppNotification> items) {
     switch (_selectedTab) {
       case 1:
-        return items.where((e) => e.type == 'MENTION').toList();
+        return items.where((e) => e.type.toLowerCase() == 'mention').toList();
       case 2:
-        return items.where((e) => e.type == 'FOLLOW').toList();
+        return items.where((e) => e.type.toLowerCase() == 'follow').toList();
       default:
         return items;
     }
@@ -256,8 +335,29 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     HapticFeedback.lightImpact();
     await _markSingleRead(item);
     if (!mounted) return;
-    if (item.fromUser != null) {
-      context.push('${AppRoutes.userBase}/${item.fromUser!.id}');
+    switch (item.type.toLowerCase()) {
+      case 'follow':
+        if (item.fromUser != null) {
+          context.push('${AppRoutes.userBase}/${item.fromUser!.id}');
+        }
+        break;
+      case 'like':
+      case 'comment':
+      case 'mention':
+        if (item.targetPostId != null && item.targetPostId!.isNotEmpty) {
+          context.push('${AppRoutes.postBase}/${item.targetPostId}');
+        } else if (item.fromUser != null) {
+          context.push('${AppRoutes.userBase}/${item.fromUser!.id}');
+        } else {
+          context.go(AppRoutes.home);
+        }
+        break;
+      default:
+        if (item.targetPostId != null && item.targetPostId!.isNotEmpty) {
+          context.push('${AppRoutes.postBase}/${item.targetPostId}');
+        } else if (item.fromUser != null) {
+          context.push('${AppRoutes.userBase}/${item.fromUser!.id}');
+        }
     }
   }
 }
@@ -270,7 +370,12 @@ class _FilterTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labels = ['All', 'Mentions', 'Follows'];
+    final strings = AppStrings.of(context);
+    final labels = [
+      strings.t('notifications.all'),
+      strings.t('notifications.mentions'),
+      strings.t('notifications.follows'),
+    ];
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
@@ -343,15 +448,45 @@ class _NotificationTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFE7EAF2)),
-              ),
-              child: Icon(icon, size: 16, color: const Color(0xFF5B53F6)),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFE7EAF2)),
+                  ),
+                  child: Icon(icon, size: 16, color: const Color(0xFF5B53F6)),
+                ),
+                if (item.mergedCount > 1)
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.error,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        item.mergedCount > 99
+                            ? '99+'
+                            : '+${item.mergedCount - 1}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -381,8 +516,19 @@ class _NotificationTile extends StatelessWidget {
 
   String _timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
+    final strings = AppStrings.current();
+    if (diff.inHours < 1) {
+      return strings.isVietnamese
+          ? '${diff.inMinutes} phút trước'
+          : '${diff.inMinutes}m ago';
+    }
+    if (diff.inHours < 24) {
+      return strings.isVietnamese
+          ? '${diff.inHours} giờ trước'
+          : '${diff.inHours}h ago';
+    }
+    return strings.isVietnamese
+        ? '${diff.inDays} ngày trước'
+        : '${diff.inDays}d ago';
   }
 }

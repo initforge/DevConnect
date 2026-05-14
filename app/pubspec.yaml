@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   cupertino_icons: ^1.0.8
   
@@ -19,6 +21,7 @@ dependencies:
   # Networking
   dio: ^5.9.2
   web_socket_channel: ^3.0.0
+  socket_io_client: ^3.0.0
   
   # Routing
   go_router: ^17.0.0
@@ -28,6 +31,9 @@ dependencies:
   shimmer: ^3.0.0
   google_fonts: ^6.3.2
   flutter_markdown: ^0.7.7+1
+  flutter_highlight: ^0.7.0
+  highlight: ^0.7.0
+  fl_chart: ^0.70.1
   
   # Storage
   shared_preferences: ^2.5.3
@@ -37,7 +43,7 @@ dependencies:
   path: ^1.9.0
   
   # Utilities
-  intl: ^0.20.2
+  intl: 0.19.0
   equatable: ^2.0.8
   connectivity_plus: ^6.0.5
   image_picker: ^1.1.2

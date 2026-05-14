@@ -1,11 +1,11 @@
 {
-    "name": "devconnect",
-    "short_name": "devconnect",
+    "name": "DevConnect — Mạng xã hội cho lập trình viên",
+    "short_name": "DevConnect",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#f8f9fc",
+    "theme_color": "#4F46E5",
+    "description": "Chia sẻ code, tìm mentor, và cộng tác dự án cùng lập trình viên khắp Việt Nam.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

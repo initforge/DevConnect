@@ -1,29 +1,41 @@
-FROM node:22-alpine
-
-LABEL maintainer="DevConnect Team"
+# Stage 1: Build
+FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
 
-RUN apk add --no-cache dumb-init wget
-
-# Create non-root user first
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001 -G nodejs
+# Install native dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    libvips-dev \
+    openssl \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm install
 
 COPY . .
+RUN npx prisma generate
+RUN npm run build
 
-RUN mkdir -p /app/data && chown -R nodejs:nodejs /app
+# Stage 2: Production
+FROM node:20-bookworm-slim
 
-USER nodejs
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libvips42 \
+    openssl \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --output-document=/dev/null http://localhost:8080/health || exit 1
-
-ENTRYPOINT ["dumb-init", "--"]
-
-CMD ["node", "src/server.js"]
+CMD ["npm", "run", "start:prod"]

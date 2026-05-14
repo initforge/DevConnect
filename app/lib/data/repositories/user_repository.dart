@@ -15,23 +15,41 @@ class UserRepository {
   final bool _useApi;
 
   Future<User?> getCurrentUser() async {
-    final userId = AppPreferences.instance.user?['id'];
-    if (userId == null) return null;
-    return getUserById(userId);
+    final userId = AppPreferences.instance.userId;
+    if (userId != null) {
+      final user = await getUserById(userId);
+      if (user != null) return user;
+    }
+
+    final cachedUser = AppPreferences.instance.user;
+    if (cachedUser != null) {
+      final user = ModelMappers.userFromJson(cachedUser);
+      await _saveUserToDb(user);
+      return user;
+    }
+
+    final db = await _database.database;
+    final rows = await db.query('users', orderBy: 'created_at ASC', limit: 1);
+    if (rows.isEmpty) return null;
+    return ModelMappers.userFromRow(rows.first);
   }
 
   Future<List<User>> getAllUsers() async {
     if (_useApi) {
-      final data = await ApiService.instance.get('/api/users');
-      final users =
-          data
-              .map(
-                (json) =>
-                    ModelMappers.userFromJson(json as Map<String, dynamic>),
-              )
-              .toList();
-      await _saveUsersToDb(users);
-      return users;
+      try {
+        final data = await ApiService.instance.get('/users');
+        final users =
+            data
+                .map(
+                  (json) =>
+                      ModelMappers.userFromJson(json as Map<String, dynamic>),
+                )
+                .toList();
+        await _saveUsersToDb(users);
+        return users;
+      } catch (_) {
+        rethrow;
+      }
     }
     final db = await _database.database;
     final rows = await db.query('users', orderBy: 'created_at DESC');
@@ -40,17 +58,21 @@ class UserRepository {
 
   Future<List<User>> getTopUsers({int limit = 6}) async {
     if (_useApi) {
-      final data = await ApiService.instance.get('/api/users');
-      final users =
-          data
-              .take(limit)
-              .map(
-                (json) =>
-                    ModelMappers.userFromJson(json as Map<String, dynamic>),
-              )
-              .toList();
-      await _saveUsersToDb(users);
-      return users;
+      try {
+        final data = await ApiService.instance.get('/users');
+        final users =
+            data
+                .take(limit)
+                .map(
+                  (json) =>
+                      ModelMappers.userFromJson(json as Map<String, dynamic>),
+                )
+                .toList();
+        await _saveUsersToDb(users);
+        return users;
+      } catch (_) {
+        rethrow;
+      }
     }
     final db = await _database.database;
     final rows = await db.query(
@@ -63,10 +85,14 @@ class UserRepository {
 
   Future<User?> getUserById(String id) async {
     if (_useApi) {
-      final data = await ApiService.instance.getObject('/api/users/$id');
-      final user = ModelMappers.userFromJson(data);
-      await _saveUserToDb(user);
-      return user;
+      try {
+        final data = await ApiService.instance.getObject('/users/$id');
+        final user = ModelMappers.userFromJson(data);
+        await _saveUserToDb(user);
+        return user;
+      } catch (_) {
+        rethrow;
+      }
     }
     final db = await _database.database;
     final rows = await db.query(
@@ -81,19 +107,23 @@ class UserRepository {
 
   Future<List<User>> getLeaderboard() async {
     if (_useApi) {
-      final data = await ApiService.instance.get('/api/leaderboard');
-      final List<dynamic> dataList = data;
-      final users =
-          dataList
-              .map(
-                (item) => ModelMappers.userFromJson(
-                  (item as Map<String, dynamic>)['user']
-                      as Map<String, dynamic>,
-                ),
-              )
-              .toList();
-      await _saveUsersToDb(users);
-      return users;
+      try {
+        final data = await ApiService.instance.get('/leaderboard');
+        final List<dynamic> dataList = data;
+        final users =
+            dataList
+                .map(
+                  (item) => ModelMappers.userFromJson(
+                    (item as Map<String, dynamic>)['user']
+                        as Map<String, dynamic>,
+                  ),
+                )
+                .toList();
+        await _saveUsersToDb(users);
+        return users;
+      } catch (_) {
+        rethrow;
+      }
     }
     final db = await _database.database;
     final rows = await db.query('users', orderBy: 'reputation DESC', limit: 20);
@@ -103,18 +133,22 @@ class UserRepository {
   Future<List<User>> searchUsers(String query) async {
     if (query.length < 2) return [];
     if (_useApi) {
-      final data = await ApiService.instance.get(
-        '/api/users/search',
-        queryParams: {'q': query},
-      );
-      final users =
-          data
-              .map(
-                (json) =>
-                    ModelMappers.userFromJson(json as Map<String, dynamic>),
-              )
-              .toList();
-      return users;
+      try {
+        final data = await ApiService.instance.get(
+          '/users/search',
+          queryParams: {'q': query},
+        );
+        final users =
+            data
+                .map(
+                  (json) =>
+                      ModelMappers.userFromJson(json as Map<String, dynamic>),
+                )
+                .toList();
+        return users;
+      } catch (_) {
+        rethrow;
+      }
     }
     final db = await _database.database;
     final rows = await db.query(
@@ -130,7 +164,7 @@ class UserRepository {
   Future<bool> toggleFollow(String userId) async {
     if (_useApi) {
       final result = await ApiService.instance.post(
-        '/api/users/$userId/follow',
+        '/users/$userId/follow',
         {},
       );
       return result['following'] == true;
@@ -158,12 +192,12 @@ class UserRepository {
     String? bio,
     List<String>? skills,
   }) async {
-    final userId = AppPreferences.instance.user?['id']?.toString();
+    final userId = AppPreferences.instance.userId;
     if (userId == null) {
       throw Exception('User not logged in');
     }
 
-    final data = await ApiService.instance.put('/api/users/$userId', {
+    final data = await ApiService.instance.put('/users/$userId', {
       'displayName': displayName,
       'bio': bio ?? '',
       if (skills != null) 'skills': skills,
@@ -176,21 +210,21 @@ class UserRepository {
   }
 
   Future<void> deleteCurrentUser() async {
-    final userId = AppPreferences.instance.user?['id']?.toString();
+    final userId = AppPreferences.instance.userId;
     if (userId == null) {
       throw Exception('User not logged in');
     }
 
-    await ApiService.instance.delete('/api/users/$userId');
+    await ApiService.instance.delete('/users/$userId');
   }
 
   Future<void> updateOnlineStatus(bool isOnline) async {
-    final userId = AppPreferences.instance.user?['id']?.toString();
+    final userId = AppPreferences.instance.userId;
     if (userId == null) {
       throw Exception('User not logged in');
     }
 
-    final data = await ApiService.instance.put('/api/users/$userId', {
+    final data = await ApiService.instance.put('/users/$userId', {
       'isOnline': isOnline,
     });
 

@@ -1,46 +1,75 @@
-# Dependencies
+# ========== BUILD & DEPENDENCIES ==========
 node_modules/
-package-lock.json
-!backend/package-lock.json
-
-# Flutter
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-build/
-*.iml
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
+backend/node_modules/
+ai-worker/node_modules/
 *.log
 
-# Docker volumes
+# ========== FLUTTER APP ==========
+app/build/
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.metadata
+app/pubspec.lock
+app/coverage/
+app/screenshots/
+app/flutter_web_*.err
+app/flutter_web_*.out
+app/web/sqlite3.wasm
+app/web/sqflite_sw.js
+
+# ========== BACKEND ==========
+backend/src.old/
+backend/.env
+backend/prisma/migrations/
+
+# ========== AI WORKER ==========
+ai-worker/.dev.vars
+
+# ========== DOCKER ==========
 pgdata/
 redisdata/
+mongodbdata/
 
-# IDE
+# ========== IDE ==========
+.idea/caches/
+.idea/workspace.xml
+.idea/deviceStreaming.xml
 .vscode/
 *.swp
 *.swo
 
-# Misc
-.gitnexus/
-.playwright-cli/
+# ========== OS ==========
+.DS_Store
+Thumbs.db
+
+# ========== TEST ARTIFACTS ==========
 output/
-app/build/
-app/.dart_tool/
-app/coverage/
-app/web/sqlite3.wasm
-app/web/sqflite_sw.js
-app/screenshot.png
-app/screenshots/
+scripts/output/
+.playwright-cli/
+
+# ========== DELIVERABLES ==========
 deliverables/assets/
-docs/showcase/screenshots/
+deliverables/node_modules/
+
+# ========== ENV & SECRETS ==========
 .env
 .env.*
 !.env.example
 
-# Gradle
-.gradle/
+# ========== AGENT & AI FRAMEWORKS ==========
+.agent/
+.opencode/
+.claude/
+.kiro/
+.gitnexus/
+.hivemind/
+
+# ========== PLANNING (local only) ==========
+plan/
+
+# ========== BACKEND BUILD ==========
+backend/dist/
+
+# ========== DOCS LOCAL ==========
+docs/superpowers/

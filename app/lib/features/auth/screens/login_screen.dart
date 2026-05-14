@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/routes.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/app_preferences.dart';
+import '../../../core/services/oauth_redirect.dart';
 import '../../../core/theme/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -74,6 +76,7 @@ class _LoginScreenState extends State<LoginScreen>
       await AppPreferences.instance.saveToken(token);
       await AppPreferences.instance.saveUser(user);
       ApiService.instance.setToken(token);
+      await _syncOnboardingState(user);
 
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -95,27 +98,34 @@ class _LoginScreenState extends State<LoginScreen>
     });
 
     try {
-      final response = await ApiService.instance.post('/auth/github/callback', {
-        'code': 'demo',
-      });
-
-      final token = response['token'] as String;
-      final user = response['user'] as Map<String, dynamic>;
-
-      await AppPreferences.instance.saveToken(token);
-      await AppPreferences.instance.saveUser(user);
-      ApiService.instance.setToken(token);
-
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      context.go(AppRoutes.home);
+      redirectToExternalUrl('${AppConstants.apiBaseUrl}/auth/github');
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = e.toString();
+        _errorMessage =
+            'GitHub OAuth is only available through the backend redirect.';
       });
     }
+  }
+
+  Future<void> _syncOnboardingState(Map<String, dynamic> user) async {
+    try {
+      final settings = await ApiService.instance.getObject(
+        '/users/me/settings',
+      );
+      final remoteCompleted = settings['onboardingCompleted'];
+      if (remoteCompleted is bool) {
+        await AppPreferences.instance.setOnboardingCompleted(remoteCompleted);
+        return;
+      }
+    } catch (_) {}
+
+    final skills = user['skills'];
+    final hasSkills =
+        (skills is List && skills.isNotEmpty) ||
+        (skills is String && skills.trim().isNotEmpty);
+    await AppPreferences.instance.setOnboardingCompleted(hasSkills);
   }
 
   Future<void> _openForgotPasswordSheet() async {

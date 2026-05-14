@@ -1,0 +1,380 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String                   @id
+  username       String                   @unique
+  displayName    String                   @map("display_name")
+  email          String                   @unique
+  avatarUrl      String?                  @map("avatar_url")
+  bio            String?
+  skills         String                   @default("") // Pipe-separated string
+  followerCount  Int                      @default(0) @map("follower_count")
+  followingCount Int                      @default(0) @map("following_count")
+  postCount      Int                      @default(0) @map("post_count")
+  reputation     Int                      @default(0)
+  isOnline       Int                      @default(0) @map("is_online")
+  isMentor       Int                      @default(0) @map("is_mentor")
+  passwordHash   String?                  @map("password_hash")
+  settings       String                   @default("{}")
+  searchVector   Unsupported("tsvector")? @map("search_vector") // Managed by DB trigger
+  createdAt      DateTime                 @default(now()) @map("created_at")
+
+  posts               Post[]
+  comments            Comment[]
+  sentNotifications   Notification[]        @relation("FromUser")
+  projects            Project[]
+  jobApplications     JobApplication[]
+  projectMemberships  ProjectMember[]
+  mentorshipsAsMentee MentorshipRequest[]   @relation("Mentee")
+  mentorshipsAsMentor MentorshipRequest[]   @relation("Mentor")
+  mentorshipJournals  MentorshipJournal[]   @relation("JournalAuthor")
+  refreshTokens       RefreshToken[]
+  fcmTokens           FcmToken[]
+  followers           UserFollow[]          @relation("Following")
+  following           UserFollow[]          @relation("Follower")
+  likes               PostLike[]
+  bookmarks           PostBookmark[]
+  interactions        UserPostInteraction[]
+  conversations       Conversation[]        @relation("UserConversations")
+  otherConversations  Conversation[]        @relation("OtherUserConversations")
+  messages            Message[]
+  liveCodeRooms       LiveCodeRoom[]        @relation("HostRooms")
+
+  @@map("users")
+}
+
+model Post {
+  id            String   @id
+  authorId      String   @map("author_id")
+  title         String
+  content       String
+  type          String   @default("article")
+  tags          String   @default("") // Pipe-separated string
+  imageUrl      String?  @map("image_url")
+  viewCount     Int      @default(0) @map("view_count")
+  likeCount     Int      @default(0) @map("like_count")
+  commentCount  Int      @default(0) @map("comment_count")
+  bookmarkCount Int      @default(0) @map("bookmark_count")
+  trendingScore Float    @default(0) @map("trending_score")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Full-text search vector (handled by raw SQL)
+  searchVector Unsupported("tsvector")? @map("search_vector")
+
+  author       User                  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments     Comment[]
+  likes        PostLike[]
+  bookmarks    PostBookmark[]
+  interactions UserPostInteraction[]
+
+  @@index([authorId], name: "idx_posts_author_id")
+  @@index([createdAt(sort: Desc)], name: "idx_posts_created_at")
+  @@index([type], name: "idx_posts_type")
+  @@map("posts")
+}
+
+model Comment {
+  id         String   @id
+  postId     String   @map("post_id")
+  parentId   String?  @map("parent_id")
+  authorId   String   @map("author_id")
+  content    String
+  depth      Int      @default(0)
+  upvotes    Int      @default(0)
+  replyCount Int      @default(0) @map("reply_count")
+  isBest     Int      @default(0) @map("is_best")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId], name: "idx_comments_post_id")
+  @@index([authorId], name: "idx_comments_author_id")
+  @@map("comments")
+}
+
+model Notification {
+  id           String   @id
+  type         String
+  title        String
+  body         String
+  fromUserId   String?  @map("from_user_id")
+  targetUserId String?  @map("target_user_id") // Added target user
+  isRead       Int      @default(0) @map("is_read")
+  mergedCount  Int      @default(1) @map("merged_count") // For merge logic
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  fromUser User? @relation("FromUser", fields: [fromUserId], references: [id], onDelete: SetNull)
+
+  @@index([fromUserId], name: "idx_notifications_from_user_id")
+  @@index([createdAt(sort: Desc)], name: "idx_notifications_created_at")
+  @@map("notifications")
+}
+
+model Project {
+  id          String   @id
+  ownerId     String   @map("owner_id")
+  title       String
+  description String
+  techStack   String   @default("") @map("tech_stack")
+  status      String   @default("LOOKING_FOR_MEMBERS")
+  memberCount Int      @default(1) @map("member_count")
+  maxMembers  Int      @default(5) @map("max_members")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  owner   User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  members ProjectMember[]
+
+  @@index([status], name: "idx_projects_status")
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String   @id
+  projectId String   @map("project_id")
+  userId    String   @map("user_id")
+  message   String   @default("")
+  status    String   @default("PENDING")
+  joinedAt  DateTime @default(now()) @map("joined_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId], name: "idx_project_members_project")
+  @@index([userId], name: "idx_project_members_user")
+  @@map("project_members")
+}
+
+model Job {
+  id           String   @id
+  company      String
+  title        String
+  location     String
+  remote       Int      @default(0)
+  salaryRange  String   @map("salary_range")
+  techStack    String   @default("") @map("tech_stack")
+  experience   String
+  matchPercent Int      @default(0) @map("match_percent")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  applications JobApplication[]
+
+  @@index([createdAt(sort: Desc)], name: "idx_jobs_created_at")
+  @@map("jobs")
+}
+
+model JobApplication {
+  id         String   @id
+  jobId      String   @map("job_id")
+  userId     String   @map("user_id")
+  coverNote  String   @default("") @map("cover_note")
+  resumeUrl  String?  @map("resume_url")
+  status     String   @default("PENDING")
+  created_at DateTime @default(now()) @map("created_at")
+
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, userId])
+  @@index([jobId], name: "idx_job_applications_job")
+  @@index([userId], name: "idx_job_applications_user")
+  @@map("job_applications")
+}
+
+model MentorshipRequest {
+  id        String   @id
+  menteeId  String   @map("mentee_id")
+  mentorId  String   @map("mentor_id")
+  status    String   @default("pending")
+  note      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  mentee   User                @relation("Mentee", fields: [menteeId], references: [id], onDelete: Cascade)
+  mentor   User                @relation("Mentor", fields: [mentorId], references: [id], onDelete: Cascade)
+  sessions MentorshipSession[]
+  journals MentorshipJournal[]
+
+  @@index([menteeId], name: "idx_mentorship_mentee")
+  @@index([mentorId], name: "idx_mentorship_mentor")
+  @@index([status], name: "idx_mentorship_status")
+  @@map("mentorship_requests")
+}
+
+model MentorshipSession {
+  id          String   @id @default(uuid())
+  requestId   String   @map("request_id")
+  scheduledAt DateTime @map("scheduled_at")
+  status      String   @default("scheduled")
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  request MentorshipRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId], name: "idx_mentorship_sessions_request")
+  @@index([scheduledAt], name: "idx_mentorship_sessions_scheduled")
+  @@map("mentorship_sessions")
+}
+
+model MentorshipJournal {
+  id             String   @id @default(uuid())
+  requestId      String?  @map("request_id")
+  authorId       String   @map("author_id")
+  text           String
+  mentorFeedback String?  @map("mentor_feedback")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  request MentorshipRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  author  User               @relation("JournalAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([requestId], name: "idx_mentorship_journals_request")
+  @@index([authorId], name: "idx_mentorship_journals_author")
+  @@index([createdAt(sort: Desc)], name: "idx_mentorship_journals_created")
+  @@map("mentorship_journals")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model FcmToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("fcm_tokens")
+}
+
+model UserFollow {
+  id          String   @id @default(uuid())
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  follower  User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId], name: "idx_user_follows_follower")
+  @@index([followingId], name: "idx_user_follows_following")
+  @@map("user_follows")
+}
+
+model PostLike {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId], name: "idx_post_likes_post")
+  @@index([userId], name: "idx_post_likes_user")
+  @@map("post_likes")
+}
+
+model PostBookmark {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId], name: "idx_post_bookmarks_post")
+  @@index([userId], name: "idx_post_bookmarks_user")
+  @@map("post_bookmarks")
+}
+
+model UserPostInteraction {
+  userId          String   @map("user_id")
+  postId          String   @map("post_id")
+  interactionType String   @map("interaction_type") // 'view', 'like', 'comment', 'bookmark'
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId, interactionType])
+  @@index([userId], name: "idx_interactions_user")
+  @@index([postId], name: "idx_interactions_post")
+  @@index([interactionType], name: "idx_interactions_type")
+  @@map("user_post_interactions")
+}
+
+model LiveCodeRoom {
+  id        String   @id @default(uuid())
+  hostId    String   @map("host_id")
+  title     String
+  code      String   @default("")
+  language  String   @default("javascript")
+  revision  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  host User @relation("HostRooms", fields: [hostId], references: [id], onDelete: Cascade)
+
+  @@map("live_code_rooms")
+}
+
+model Conversation {
+  id          String   @id
+  userId      String   @map("user_id")
+  otherUserId String   @map("other_user_id")
+  lastMessage String   @default("") @map("last_message")
+  unreadCount Int      @default(0) @map("unread_count")
+  updatedAt   DateTime @default(now()) @map("updated_at")
+
+  user      User      @relation("UserConversations", fields: [userId], references: [id], onDelete: Cascade)
+  otherUser User      @relation("OtherUserConversations", fields: [otherUserId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@index([userId], name: "idx_conversations_user_id")
+  @@index([updatedAt(sort: Desc)], name: "idx_conversations_updated_at")
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id
+  conversationId String   @map("conversation_id")
+  senderId       String   @map("sender_id")
+  content        String
+  type           String   @default("text")
+  codeLanguage   String?  @map("code_language")
+  codeSource     String?  @map("code_source")
+  reactions      String   @default("") // Pipe-separated string
+  isRead         Int      @default(0) @map("is_read")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId], name: "idx_messages_conversation_id")
+  @@map("messages")
+}

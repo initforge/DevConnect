@@ -7,6 +7,8 @@ part 'comment.g.dart';
 @JsonSerializable()
 class Comment extends Equatable {
   final String id;
+  @JsonKey(name: 'parentId')
+  final String? parentId;
   final User author;
   final String content;
   final int depth;
@@ -20,6 +22,7 @@ class Comment extends Equatable {
 
   const Comment({
     required this.id,
+    this.parentId,
     required this.author,
     required this.content,
     this.depth = 0,
@@ -29,7 +32,8 @@ class Comment extends Equatable {
     required this.createdAt,
   });
 
-  factory Comment.fromJson(Map<String, dynamic> json) => _$CommentFromJson(json);
+  factory Comment.fromJson(Map<String, dynamic> json) =>
+      _$CommentFromJson(json);
   Map<String, dynamic> toJson() => _$CommentToJson(this);
 
   @override

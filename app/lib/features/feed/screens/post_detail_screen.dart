@@ -6,6 +6,7 @@ import '../../../core/config/app_runtime_config.dart';
 import '../../../core/constants/routes.dart';
 import '../../../core/models/models.dart';
 import '../../../core/services/ai_service.dart';
+import '../../../core/services/app_preferences.dart';
 import '../../../core/state/feed_refresh_bus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/ai_sheets.dart';
@@ -32,9 +33,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   final _commentRepository = CommentRepository();
   final _userRepository = UserRepository();
   final _commentCtrl = TextEditingController();
+  final _commentFocus = FocusNode();
 
   late Future<_PostDetailData> _loader;
   bool _isSendingComment = false;
+  final Set<String> _expandedCommentIds = {};
+  String? _replyingToCommentId;
+  String? _replyingToName;
 
   @override
   void initState() {
@@ -44,6 +49,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   @override
   void dispose() {
+    _commentFocus.dispose();
     _commentCtrl.dispose();
     super.dispose();
   }
@@ -126,8 +132,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       await _commentRepository.createComment(
         postId: widget.postId,
         content: content,
+        parentId: _replyingToCommentId,
       );
       _commentCtrl.clear();
+      _replyingToCommentId = null;
+      _replyingToName = null;
       FeedRefreshBus.instance.refresh();
       await _refresh();
     } catch (_) {
@@ -170,6 +179,48 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
+  void _replyTo(Comment comment) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _replyingToCommentId = comment.id;
+      _replyingToName = comment.author.displayName;
+      _expandedCommentIds.add(comment.id);
+    });
+    _commentFocus.requestFocus();
+  }
+
+  void _cancelReply() {
+    setState(() {
+      _replyingToCommentId = null;
+      _replyingToName = null;
+    });
+  }
+
+  void _toggleReplies(Comment comment) {
+    setState(() {
+      if (_expandedCommentIds.contains(comment.id)) {
+        _expandedCommentIds.remove(comment.id);
+      } else {
+        _expandedCommentIds.add(comment.id);
+      }
+    });
+  }
+
+  Future<void> _markBestAnswer(Comment comment) async {
+    try {
+      await _commentRepository.markBestAnswer(
+        postId: widget.postId,
+        commentId: comment.id,
+      );
+      await _refresh();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to mark best answer right now')),
+      );
+    }
+  }
+
   Future<void> _showAiReview(Post post) {
     return showAiReviewSheet(
       context,
@@ -181,14 +232,53 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
-  Future<void> _showAiExplain(Post post) {
+  Future<void> _showAiExplain(Post post) async {
+    final level = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        const levels = [
+          ('beginner', 'Beginner'),
+          ('intermediate', 'Intermediate'),
+          ('advanced', 'Advanced'),
+        ];
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Explain level',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 10),
+                ...levels.map(
+                  (item) => ListTile(
+                    leading: const Icon(Icons.psychology_alt_outlined),
+                    title: Text(item.$2),
+                    onTap: () => Navigator.of(context).pop(item.$1),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (level == null || !mounted) return;
+
     return showAiExplainSheet(
       context,
       explanationFuture: AiService.instance.explainCode(
         code: _buildPostSnippet(post),
         language: 'typescript',
+        level: level,
       ),
-      title: 'AI Explain',
+      title: 'AI Explain ${level.toUpperCase()}',
     );
   }
 
@@ -233,8 +323,20 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         }
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
+            flexibleSpace: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.05),
+                    Colors.transparent,
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
             title: const Text(
               'Post',
               style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
@@ -362,7 +464,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       const SizedBox(height: 16),
                       _MetaRow(post: post),
                       const SizedBox(height: 18),
-                      const Divider(height: 1, color: Color(0xFFE8EAF2)),
+                      const Divider(height: 1),
                       const SizedBox(height: 18),
                       _SectionHeader(
                         title: 'Comments',
@@ -376,27 +478,20 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           subtitle: 'Start the thread with a quick note.',
                         )
                       else
-                        ...data.comments.map((comment) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _CommentCard(
-                              comment: comment,
-                              onUpvote:
-                                  () => _commentRepository.upvoteComment(
-                                    comment.id,
-                                  ),
-                            ),
-                          );
-                        }),
+                        ..._buildCommentList(post, data.comments),
                     ],
                   ),
                 ),
                 _BottomCommentBar(
                   controller: _commentCtrl,
+                  focusNode: _commentFocus,
                   post: post,
                   isSending: _isSendingComment,
+                  replyingToName: _replyingToName,
+                  onCancelReply: _cancelReply,
                   onLike: _handleLike,
                   onBookmark: _handleBookmark,
+                  onComment: () => _commentFocus.requestFocus(),
                   onSend: _addComment,
                 ),
               ],
@@ -410,6 +505,74 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   String _leadParagraph(Post post) {
     if (post.content.length < 120) return post.content;
     return '${post.content.substring(0, 120).trim()}...';
+  }
+
+  List<Widget> _buildCommentList(Post post, List<Comment> comments) {
+    final currentUserId = AppPreferences.instance.userId;
+    final canMarkBest =
+        currentUserId != null && currentUserId == post.author.id;
+    final byParent = <String?, List<Comment>>{};
+
+    for (final comment in comments) {
+      byParent.putIfAbsent(comment.parentId, () => []).add(comment);
+    }
+
+    for (final group in byParent.values) {
+      group.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    }
+
+    final ids = comments.map((comment) => comment.id).toSet();
+    final roots =
+        comments
+            .where(
+              (comment) =>
+                  comment.parentId == null || !ids.contains(comment.parentId),
+            )
+            .toList();
+    if (roots.isEmpty) {
+      return comments
+          .map(
+            (comment) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _CommentCard(
+                comment: comment,
+                canMarkBest: canMarkBest && !comment.isBest,
+                onReply: () => _replyTo(comment),
+                onMarkBest: () => _markBestAnswer(comment),
+                onUpvote: () => _commentRepository.upvoteComment(comment.id),
+              ),
+            ),
+          )
+          .toList();
+    }
+
+    List<Widget> buildBranch(Comment comment) {
+      final replies = byParent[comment.id] ?? const <Comment>[];
+      final expanded = _expandedCommentIds.contains(comment.id);
+      return [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: _CommentCard(
+            comment: comment,
+            canMarkBest: canMarkBest && !comment.isBest,
+            replyCount:
+                replies.isNotEmpty ? replies.length : comment.replyCount,
+            repliesExpanded: expanded,
+            onToggleReplies:
+                replies.isEmpty && comment.replyCount == 0
+                    ? null
+                    : () => _toggleReplies(comment),
+            onReply: () => _replyTo(comment),
+            onMarkBest: () => _markBestAnswer(comment),
+            onUpvote: () => _commentRepository.upvoteComment(comment.id),
+          ),
+        ),
+        if (expanded)
+          for (final reply in replies) ...buildBranch(reply),
+      ];
+    }
+
+    return [for (final root in roots) ...buildBranch(root)];
   }
 
   Future<void> _copyLink(Post post) async {
@@ -448,7 +611,7 @@ class _ShowcasePostDetailScreenState extends State<_ShowcasePostDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         titleSpacing: 0,
         title: const Text(
@@ -569,9 +732,9 @@ class _ShowcasePostDetailScreenState extends State<_ShowcasePostDetailScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F8FC),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFFE8EAF2)),
+              border: Border.all(color: Theme.of(context).dividerColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../core/database/app_database.dart';
 import '../../core/models/models.dart';
@@ -15,20 +14,24 @@ class NotificationRepository {
 
   Future<List<AppNotification>> getNotifications({int limit = 50}) async {
     if (_useApi) {
-      final data = await ApiService.instance.get(
-        '/api/notifications',
-        queryParams: {'limit': limit},
-      );
-      final notifications =
-          data
-              .map(
-                (json) => ModelMappers.notificationFromJson(
-                  json as Map<String, dynamic>,
-                ),
-              )
-              .toList();
-      await _saveNotificationsToDb(notifications);
-      return notifications;
+      try {
+        final data = await ApiService.instance.get(
+          '/notifications',
+          queryParams: {'limit': limit},
+        );
+        final notifications =
+            data
+                .map(
+                  (json) => ModelMappers.notificationFromJson(
+                    json as Map<String, dynamic>,
+                  ),
+                )
+                .toList();
+        await _saveNotificationsToDb(notifications);
+        return notifications;
+      } catch (_) {
+        rethrow;
+      }
     }
     final db = await _database.database;
     final rows = await db.query(
@@ -42,7 +45,7 @@ class NotificationRepository {
   Future<void> markAsRead(String notificationId) async {
     if (_useApi) {
       await ApiService.instance.patch(
-        '/api/notifications/$notificationId/read',
+        '/notifications/$notificationId/read',
         {},
       );
     }
@@ -57,7 +60,7 @@ class NotificationRepository {
 
   Future<void> markAllAsRead() async {
     if (_useApi) {
-      await ApiService.instance.patch('/api/notifications/read-all', {});
+      await ApiService.instance.patch('/notifications/read-all', {});
     }
     final db = await _database.database;
     await db.update('notifications', {'is_read': 1});
@@ -67,13 +70,11 @@ class NotificationRepository {
     if (_useApi) {
       try {
         final data = await ApiService.instance.getObject(
-          '/api/notifications/count',
+          '/notifications/count',
         );
         return data['count'] as int? ?? 0;
-      } catch (error) {
-        debugPrint(
-          'NotificationRepository.getUnreadCount API fallback: $error',
-        );
+      } catch (_) {
+        rethrow;
       }
     }
     final db = await _database.database;
@@ -96,6 +97,7 @@ class NotificationRepository {
           'body': notification.body,
           'from_user_id': notification.fromUser?.id,
           'is_read': notification.isRead ? 1 : 0,
+          'merged_count': notification.mergedCount,
           'created_at': notification.createdAt.toIso8601String(),
         }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
@@ -114,6 +116,7 @@ class NotificationRepository {
             body: row['body']?.toString() ?? '',
             fromUser: null,
             isRead: (row['is_read'] as int?) == 1,
+            mergedCount: row['merged_count'] as int? ?? 1,
             createdAt:
                 DateTime.tryParse(row['created_at']?.toString() ?? '') ??
                 DateTime.now(),

@@ -1,217 +1,120 @@
-# 04 — Đặc tả API (API Specification)
+# 04. API
 
-> **Đọc sau 03_DATABASE.** File này liệt kê tất cả endpoint của Backend, kèm ví dụ request/response cụ thể.
+## 1. Quy ước chung
 
----
+Backend có global prefix `/api`. Khi docs ghi `GET /posts`, URL thật qua Nginx là `http://localhost/api/posts`.
 
-## Thông tin chung
+Auth dùng JWT. Flutter lưu token local, `ApiService` tự gắn header:
 
-| Thuộc tính | Giá trị |
-|-----------|---------|
-| Base URL | `http://localhost:8080` |
-| Content-Type | `application/json` |
-| Auth | Bearer Token (JWT) trong header `Authorization` |
-
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```http
+Authorization: Bearer <token>
 ```
 
----
+Socket.IO không dùng header HTTP thường trong browser flow; client gửi token qua `handshake.auth.token`.
 
-## Bản đồ Endpoints
+## 2. Auth và user
 
-```mermaid
-graph LR
-    subgraph "🔓 Public"
-        R[POST /auth/register]
-        L[POST /auth/login]
-        H[GET /health]
-    end
+| Endpoint | Screen gọi | Ý nghĩa |
+|---|---|---|
+| `POST /auth/login` | Login | Đăng nhập, trả token + user. |
+| `POST /auth/register` | Register | Tạo account, trả token + user. |
+| `POST /auth/refresh` | API service | Làm mới token khi hết hạn. |
+| `GET /users/me` | Bootstrap/profile | Lấy user hiện tại. |
+| `PATCH /users/me` | Onboarding/profile | Cập nhật skills/profile. |
+| `GET /users/:id` | Profile/chat list | Lấy user khác. |
+| `GET /users/:id/repos` | Profile | Lấy repo GitHub public. |
+| `GET /users/:id/github-contributions` | Profile | Lấy contribution graph. |
+| `POST /users/:id/github-sync` | Profile | Xóa cache GitHub và sync lại repo/contribution. |
+| `POST /users/:id/follow` | Post detail/profile | Follow user. |
+| `DELETE /users/:id/follow` | Profile | Unfollow user. |
+| `GET /users/me/settings` | Settings | Lấy settings server. |
+| `PATCH /users/me/settings` | Settings | Lưu settings server. |
 
-    subgraph "🔒 Cần JWT"
-        ME[GET /auth/me]
-        GP[GET /api/posts]
-        CP[POST /api/posts]
-        LK[POST /api/posts/:id/like]
-        GU[GET /api/users]
-        GU1[GET /api/users/:id]
-        FO[POST /api/users/:id/follow]
-        ST[GET /api/status]
-    end
-```
+## 3. Feed và post
 
----
+| Endpoint | Screen gọi | Contract quan trọng |
+|---|---|---|
+| `GET /posts?type=foryou` | Home tab For You | Trả list post có `isLikedByMe`, `isBookmarkedByMe`, counts. |
+| `GET /posts?type=following` | Home tab Following | Chỉ post từ người đã follow. |
+| `GET /posts?type=trending` | Home tab Trending | Sort theo `trendingScore`. |
+| `GET /posts/:id` | Post detail | Trả một post đủ author/tags/count/state. |
+| `POST /posts` | Create post | Tạo post, queue notifications, xóa cache feed. |
+| `POST /posts/:id/like` | Feed/detail | Trả `{ liked, likeCount, trendingScore }`. |
+| `POST /posts/:id/bookmark` | Feed/detail | Trả `{ bookmarked, bookmarkCount, trendingScore }`. |
+| `GET /posts/:id/comments` | Post detail | Load comment list. |
+| `POST /posts/:id/comments` | Post detail | Tạo comment, tăng `commentCount`, xóa cache. |
+| `PATCH /posts/:id/comments/:commentId/best-answer` | Post detail | Author chọn best answer, reset best answer cũ. |
+| `GET /posts/search?q=` | Search results | Full-text search post. |
 
-## 1. Authentication
+Like/bookmark không được chỉ trả bool nếu UI cần count đúng. Count thật từ backend là cách tránh bug bấm like rồi số cứ giảm sai.
 
-### `POST /auth/register` — Đăng ký
+## 4. Chat và realtime
 
-**Request:**
-```json
-{
-  "email": "minh@dev.com",
-  "password": "StrongPass123!",
-  "username": "minhdev",
-  "displayName": "Minh Nguyen"
-}
-```
+HTTP:
 
-**Response 201:**
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIs...",
-  "user": {
-    "id": "usr_abc123",
-    "username": "minhdev",
-    "display_name": "Minh Nguyen",
-    "email": "minh@dev.com",
-    "reputation": 0
-  }
-}
-```
+| Endpoint | Screen gọi | Ý nghĩa |
+|---|---|---|
+| `GET /chat/conversations` | Chat list | List conversation + unread count + last message. |
+| `GET /chat/conversations/:id/messages` | Chat detail | Tin nhắn trong thread. |
+| `PATCH /chat/conversations/:id/read` | Chat list/detail | Mark conversation read ngay khi mở. |
+| `POST /chat/conversations/:id/messages` | Chat detail | Gửi message bằng HTTP fallback. |
+| `POST /chat/conversations/:id/messages/:messageId/reactions` | Chat detail | Toggle reaction trên message. |
+| `DELETE /chat/conversations/:id` | Chat list | Xóa conversation. |
 
-| Lỗi | Nguyên nhân |
-|-----|-----------|
-| 400 | Thiếu trường bắt buộc |
-| 409 | Email hoặc Username đã tồn tại |
+Socket.IO:
 
----
+| Namespace/Event | Payload | Ý nghĩa |
+|---|---|---|
+| `/chat` handshake | `{ auth: { token } }` | Backend verify JWT để biết user thật. |
+| `presence_change` | `{ userId, status }` | Online/offline. |
+| `join_conversation` | `conversationId` | Join room. |
+| `send_message` | `{ conversationId, content, type }` | Gửi message realtime. |
+| `new_message` | message object | Broadcast message đã lưu. |
+| `typing` | `{ conversationId, isTyping }` | Typing indicator. |
 
-### `POST /auth/login` — Đăng nhập
+## 5. Notifications
 
-**Request:**
-```json
-{
-  "email": "minh@dev.com",
-  "password": "StrongPass123!"
-}
-```
+| Endpoint | Screen gọi | Ý nghĩa |
+|---|---|---|
+| `GET /notifications` | Notifications | List notification. |
+| `GET /notifications/count` | App badge | Unread count. |
+| `PATCH /notifications/read-all` | Notifications | Mark all read. |
+| `PATCH /social/notifications/:id/read` | Notifications | Mark one read. |
 
-**Response 200:** `{ "token": "...", "user": {...} }`
+Client hiện update notification local list ngay sau API để user không cần reload.
 
-| Lỗi | Nguyên nhân |
-|-----|-----------|
-| 401 | Sai email hoặc mật khẩu |
+## 6. Projects và jobs
 
----
+| Endpoint | Screen gọi | Ý nghĩa |
+|---|---|---|
+| `GET /projects` | Project marketplace | List projects. |
+| `GET /projects/:id` | Project detail | Detail. |
+| `POST /projects` | Create project | Tạo project. |
+| `POST /projects/:id/join` | Project detail | Xin tham gia. |
+| `POST /projects/:id/members/:userId/accept` | Owner action | Duyệt member. |
+| `GET /jobs` | Job board | List jobs. |
+| `GET /jobs/:id` | Job detail/apply | Detail. |
+| `POST /jobs/:id/apply` | Job board/detail | Apply job. |
+| `GET /jobs/my-applications` | My applications | List application của user. |
 
-### `GET /auth/me` — Thông tin user hiện tại 🔒
+## 7. Tools, AI, analytics
 
-**Response 200:**
-```json
-{
-  "id": "usr_abc123",
-  "username": "minhdev",
-  "display_name": "Minh Nguyen",
-  "bio": "Flutter developer",
-  "skills": ["Flutter", "Dart", "Go"],
-  "reputation": 1250,
-  "follower_count": 89,
-  "following_count": 156,
-  "post_count": 12
-}
-```
+| Endpoint | Screen gọi | Ý nghĩa |
+|---|---|---|
+| `POST /playground/run` hoặc `/code/run` | Playground | Chạy code. |
+| `POST /ai/code-review` | Post/playground/create | Review code. |
+| `POST /ai/explain` | Post/playground | Giải thích code. |
+| `POST /ai/mentor-match` | Mentorship | Tính match mentor. |
+| `GET /leaderboard` | Leaderboard | Ranking. |
+| `GET /analytics/me` | Analytics | Stats cá nhân. |
+| `POST /media/upload` | Create/profile | Upload file lên MinIO. |
 
----
+## 8. API pass thật là gì
 
-## 2. Social Feed
+Một endpoint không chỉ "trả 200". Pass thật cần:
 
-### `GET /api/posts` — Lấy bảng tin 🔒
-
-**Query Parameters:**
-
-| Param | Type | Default | Mô tả |
-|-------|------|---------|-------|
-| `type` | string | `foryou` | `foryou` / `trending` / `following` |
-| `page` | int | 1 | Số trang |
-| `limit` | int | 20 | Số bài mỗi trang |
-
-**Response 200:**
-```json
-[
-  {
-    "id": "post_xyz",
-    "title": "Flutter State Management 2026",
-    "content": "## Giới thiệu\nRiverpod là...",
-    "type": "article",
-    "tags": ["Flutter", "Riverpod"],
-    "author": {
-      "id": "usr_abc123",
-      "display_name": "Minh Nguyen",
-      "avatar_url": null,
-      "is_online": true
-    },
-    "like_count": 42,
-    "comment_count": 7,
-    "is_liked_by_me": false,
-    "is_bookmarked_by_me": true,
-    "created_at": "2026-05-01T10:30:00Z"
-  }
-]
-```
-
----
-
-### `POST /api/posts` — Tạo bài viết 🔒
-
-**Request:**
-```json
-{
-  "title": "TIL: Dart Records",
-  "content": "Hôm nay tôi học được...",
-  "type": "til",
-  "tags": ["Dart", "TIL"]
-}
-```
-
-**Response 201:** Object bài viết vừa tạo.
-
----
-
-### `POST /api/posts/:id/like` — Toggle Like 🔒
-
-Bấm 1 lần = Like, bấm lần 2 = Unlike (toggle).
-
-**Response 200:**
-```json
-{ "liked": true, "like_count": 43 }
-```
-
----
-
-## 3. Users & Networking
-
-### `GET /api/users` — Danh sách users 🔒
-
-Sắp xếp theo `reputation` giảm dần (dùng cho Leaderboard).
-
-### `GET /api/users/:id` — Chi tiết Profile 🔒
-
-### `POST /api/users/:id/follow` — Toggle Follow 🔒
-
-**Response 200:**
-```json
-{ "following": true, "follower_count": 90 }
-```
-
----
-
-## 4. System
-
-### `GET /health` — Health Check
-
-```json
-{ "status": "ok", "uptime": 123456, "timestamp": "2026-05-07T08:30:00Z" }
-```
-
-### `GET /api/status` — Module Status 🔒
-
-```json
-{ "database": "connected", "redis": "connected", "websocket": "active" }
-```
-
----
-
-## Tiếp theo
-
-Đọc **[05_DEVELOPMENT.md](05_DEVELOPMENT.md)** để biết cách cài đặt và chạy dự án trên máy của bạn.
+1. Screen gọi đúng URL.
+2. Backend đọc đúng user từ JWT.
+3. Response có đủ field UI đang dùng.
+4. Local cache/Redis cache không trả dữ liệu cũ sau mutation.
+5. UI cập nhật ngay khi user tương tác, và rollback nếu API fail.

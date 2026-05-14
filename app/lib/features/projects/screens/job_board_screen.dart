@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/routes.dart';
+import '../../../core/localization/app_strings.dart';
 import '../../../core/models/models.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_utils.dart';
+import '../../../core/widgets/decorative_widgets.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/job_repository.dart';
 
@@ -19,8 +21,11 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
   final _repository = JobRepository();
   late Future<List<Job>> _loader;
   final Set<String> _appliedJobs = <String>{};
-  int _selectedFilter = 0;
   bool _remoteOnly = false;
+
+  String _searchQuery = '';
+  String _selectedLevel = '';
+  String _selectedTech = '';
 
   @override
   void initState() {
@@ -42,7 +47,7 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
   Future<void> _applyForJob(Job job) async {
     if (!ApiService.instance.isAuthenticated) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sign in to apply for jobs')),
+        SnackBar(content: Text(AppStrings.of(context).t('jobs.signInToApply'))),
       );
       return;
     }
@@ -55,13 +60,147 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
       setState(() => _appliedJobs.add(job.id));
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Applied to ${job.company}')));
+      ).showSnackBar(SnackBar(content: Text('${AppStrings.of(context).t('jobs.applied')} - ${job.company}')));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Application failed. Try again.')),
+        SnackBar(content: Text(AppStrings.of(context).t('jobs.applicationFailed'))),
       );
     }
+  }
+
+  Future<void> _openPostJobSheet() async {
+    if (!ApiService.instance.isAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(context).t('jobs.signInToApply'))),
+      );
+      return;
+    }
+
+    final titleCtrl = TextEditingController();
+    final companyCtrl = TextEditingController();
+    final locationCtrl = TextEditingController();
+    final salaryCtrl = TextEditingController();
+    final experienceCtrl = TextEditingController();
+    final techCtrl = TextEditingController();
+    bool remote = false;
+    String? error;
+    bool saving = false;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            Future<void> submit() async {
+              final title = titleCtrl.text.trim();
+              final company = companyCtrl.text.trim();
+              if (title.isEmpty || company.isEmpty) {
+                setSheetState(() => error = AppStrings.of(context).t('jobs.titleCompanyRequired'));
+                return;
+              }
+              setSheetState(() { saving = true; error = null; });
+              try {
+                await _repository.createJob(
+                  title: title,
+                  company: company,
+                  location: locationCtrl.text.trim(),
+                  remote: remote,
+                  salaryRange: salaryCtrl.text.trim(),
+                  techStack: techCtrl.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
+                  experience: experienceCtrl.text.trim(),
+                );
+                if (!sheetContext.mounted) return;
+                Navigator.of(sheetContext).pop();
+                if (!mounted) return;
+                _loadFeeds();
+                setState(() {});
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(AppStrings.of(context).t('jobs.posted'))),
+                );
+              } catch (e) {
+                setSheetState(() { saving = false; error = e.toString(); });
+              }
+            }
+
+            InputDecoration decoration(String hint) {
+              return InputDecoration(
+                hintText: hint,
+                filled: true,
+                fillColor: const Color(0xFFF7F8FC),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF5B53F6))),
+              );
+            }
+
+            final strings = AppStrings.of(context);
+            return Padding(
+              padding: EdgeInsets.fromLTRB(20, 8, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(strings.t('jobs.postJob'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 6),
+                    Text(strings.t('jobs.postJobSubtitle'), style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                    const SizedBox(height: 16),
+                    TextField(controller: titleCtrl, decoration: decoration(strings.t('jobs.jobTitle'))),
+                    const SizedBox(height: 10),
+                    TextField(controller: companyCtrl, decoration: decoration(strings.t('jobs.company'))),
+                    const SizedBox(height: 10),
+                    TextField(controller: locationCtrl, decoration: decoration(strings.t('jobs.location'))),
+                    const SizedBox(height: 10),
+                    TextField(controller: salaryCtrl, decoration: decoration(strings.t('jobs.salary'))),
+                    const SizedBox(height: 10),
+                    TextField(controller: experienceCtrl, decoration: decoration(strings.t('jobs.experience'))),
+                    const SizedBox(height: 10),
+                    TextField(controller: techCtrl, decoration: decoration(strings.t('jobs.techStackHint'))),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Text(strings.t('jobs.remote'), style: const TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(width: 8),
+                        Switch(value: remote, onChanged: (v) => setSheetState(() => remote = v), activeColor: const Color(0xFF16C784)),
+                      ],
+                    ),
+                    if (error != null) ...[
+                      const SizedBox(height: 8),
+                      Text(error!, style: const TextStyle(fontSize: 12, color: AppColors.error)),
+                    ],
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: saving ? null : submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF5B53F6),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: saving
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : Text(strings.t('jobs.postJob'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    titleCtrl.dispose();
+    companyCtrl.dispose();
+    locationCtrl.dispose();
+    salaryCtrl.dispose();
+    experienceCtrl.dispose();
+    techCtrl.dispose();
   }
 
   @override
@@ -73,25 +212,25 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
           AppBottomNavItem(
             icon: Icons.home_outlined,
             selectedIcon: Icons.home,
-            label: 'Home',
+            label: AppStrings.of(context).nav('home'),
             route: AppRoutes.home,
           ),
           AppBottomNavItem(
             icon: Icons.explore_outlined,
             selectedIcon: Icons.explore,
-            label: 'Explore',
+            label: AppStrings.of(context).nav('explore'),
             route: AppRoutes.explore,
           ),
           AppBottomNavItem(
             icon: Icons.business_center_outlined,
             selectedIcon: Icons.business_center,
-            label: 'Jobs',
+            label: AppStrings.of(context).nav('jobs'),
             route: AppRoutes.jobs,
           ),
           AppBottomNavItem(
             icon: Icons.person_outline,
             selectedIcon: Icons.person,
-            label: 'Profile',
+            label: AppStrings.of(context).nav('profile'),
             route: AppRoutes.profile,
           ),
         ],
@@ -99,10 +238,30 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
         currentRoute: AppRoutes.jobs,
         centerCreate: true,
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openPostJobSheet,
+        backgroundColor: const Color(0xFF5B53F6),
+        foregroundColor: Colors.white,
+        elevation: 2,
+        icon: const Icon(Icons.add, size: 20),
+        label: Text(AppStrings.of(context).t('jobs.postJob'), style: const TextStyle(fontWeight: FontWeight.w700)),
+      ),
       appBar: AppBar(
-        title: const Text(
-          'Jobs',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary.withOpacity(0.06),
+                Colors.transparent,
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
+        title: Text(
+          AppStrings.of(context).t('jobs.title'),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
         ),
       ),
       body: FutureBuilder<List<Job>>(
@@ -120,7 +279,7 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
                 children: [
                   SizedBox(height: MediaQuery.of(context).size.height * 0.3),
                   ErrorState(
-                    message: 'Unable to load jobs.\nPull to try again.',
+                    message: AppStrings.of(context).t('jobs.unableLoad'),
                     onRetry: _refresh,
                   ),
                 ],
@@ -132,10 +291,10 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
           final filtered = _filteredJobs(jobs);
 
           if (jobs.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.work_outline,
-              title: 'No jobs available',
-              subtitle: 'Check back later for new openings.',
+              title: AppStrings.of(context).t('jobs.noJobs'),
+              subtitle: AppStrings.of(context).t('jobs.noJobsSubtitle'),
             );
           }
 
@@ -165,45 +324,62 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
                       avgMatch: avgMatch,
                     ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _SegmentedFilters(
-                        labels: const ['Top match', 'Recent', 'Senior'],
-                        selected: _selectedFilter,
-                        onSelected:
-                            (value) => setState(() => _selectedFilter = value),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                      height: 46,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE8EAF2)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            'Remote',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Switch(
-                            value: _remoteOnly,
-                            onChanged:
-                                (value) => setState(() => _remoteOnly = value),
-                            activeColor: const Color(0xFF16C784),
-                          ),
+                // Search bar
+                TextField(
+                  onChanged: (v) => setState(() => _searchQuery = v),
+                  decoration: InputDecoration(
+                    hintText: AppStrings.of(context).t('jobs.search'),
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE8EAF2))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE8EAF2))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF5B53F6))),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // Filter row: Level + Tech + Remote
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _FilterDropdown(
+                        value: _selectedLevel,
+                        items: [
+                          _FilterItem('', AppStrings.of(context).t('jobs.allLevels')),
+                          _FilterItem('junior', AppStrings.of(context).t('jobs.junior')),
+                          _FilterItem('mid', AppStrings.of(context).t('jobs.mid')),
+                          _FilterItem('senior', AppStrings.of(context).t('jobs.senior')),
                         ],
+                        onChanged: (v) => setState(() => _selectedLevel = v),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      _FilterDropdown(
+                        value: _selectedTech,
+                        items: [
+                          _FilterItem('', AppStrings.of(context).t('jobs.filterTech')),
+                          ..._extractTechTags(jobs).map((t) => _FilterItem(t, t)),
+                        ],
+                        onChanged: (v) => setState(() => _selectedTech = v),
+                      ),
+                      const SizedBox(width: 8),
+                      _RemoteToggleChip(
+                        active: _remoteOnly,
+                        label: AppStrings.of(context).t('jobs.remote'),
+                        onTap: () => setState(() => _remoteOnly = !_remoteOnly),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+                // Match % explanation
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    AppStrings.of(context).t('jobs.matchExplain'),
+                    style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: AppColors.textSecondary),
+                  ),
                 ),
                 const SizedBox(height: 14),
                 ...filtered.map(
@@ -226,27 +402,50 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
   List<Job> _filteredJobs(List<Job> jobs) {
     var filtered = jobs;
 
+    // Search
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      filtered = filtered.where((job) =>
+        job.title.toLowerCase().contains(q) ||
+        job.company.toLowerCase().contains(q) ||
+        job.techStack.any((t) => t.toLowerCase().contains(q))
+      ).toList();
+    }
+
+    // Remote
     if (_remoteOnly) {
       filtered = filtered.where((job) => job.remote).toList();
     }
 
-    switch (_selectedFilter) {
-      case 1:
-        filtered = [...filtered]
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        break;
-      case 2:
-        filtered =
-            filtered
-                .where((job) => job.experience.toLowerCase().contains('senior'))
-                .toList();
-        break;
-      default:
-        filtered = [...filtered]
-          ..sort((a, b) => b.matchPercent.compareTo(a.matchPercent));
+    // Level
+    if (_selectedLevel.isNotEmpty) {
+      filtered = filtered.where((job) =>
+        job.experience.toLowerCase().contains(_selectedLevel)
+      ).toList();
     }
 
+    // Tech stack
+    if (_selectedTech.isNotEmpty) {
+      final tech = _selectedTech.toLowerCase();
+      filtered = filtered.where((job) =>
+        job.techStack.any((t) => t.toLowerCase() == tech)
+      ).toList();
+    }
+
+    // Sort by match percent descending
+    filtered = [...filtered]..sort((a, b) => b.matchPercent.compareTo(a.matchPercent));
     return filtered;
+  }
+
+  List<String> _extractTechTags(List<Job> jobs) {
+    final tags = <String>{};
+    for (final job in jobs) {
+      for (final tech in job.techStack) {
+        tags.add(tech);
+      }
+    }
+    final sorted = tags.toList()..sort();
+    return sorted.take(15).toList();
   }
 }
 
@@ -273,13 +472,13 @@ class _JobsSummary extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.work_history_outlined, color: Color(0xFF5B53F6)),
-              SizedBox(width: 8),
+              const Icon(Icons.work_history_outlined, color: Color(0xFF5B53F6)),
+              const SizedBox(width: 8),
               Text(
-                'Hiring pulse',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                AppStrings.of(context).t('jobs.hiringPulse'),
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
               ),
             ],
           ),
@@ -289,7 +488,7 @@ class _JobsSummary extends StatelessWidget {
               Expanded(
                 child: _MetricTile(
                   value: '$totalJobs',
-                  label: 'Open roles',
+                  label: AppStrings.of(context).t('jobs.openRoles'),
                   tint: const Color(0xFFEFF3FF),
                 ),
               ),
@@ -297,7 +496,7 @@ class _JobsSummary extends StatelessWidget {
               Expanded(
                 child: _MetricTile(
                   value: '$remoteJobs',
-                  label: 'Remote',
+                  label: AppStrings.of(context).t('jobs.remote'),
                   tint: const Color(0xFFECFDF5),
                 ),
               ),
@@ -305,7 +504,7 @@ class _JobsSummary extends StatelessWidget {
               Expanded(
                 child: _MetricTile(
                   value: '$avgMatch%',
-                  label: 'Avg match',
+                  label: AppStrings.of(context).t('jobs.avgMatch'),
                   tint: const Color(0xFFF5F3FF),
                 ),
               ),
@@ -431,7 +630,7 @@ class _JobCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  '${job.matchPercent}% match',
+                  '${job.matchPercent}% ${AppStrings.of(context).t('jobs.match')}',
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -480,7 +679,7 @@ class _JobCard extends StatelessWidget {
                 ),
               ),
               child: Text(
-                applied ? 'Applied' : 'Apply now',
+                applied ? AppStrings.of(context).t('jobs.applied') : AppStrings.of(context).t('jobs.applyNow'),
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
@@ -513,53 +712,100 @@ class _JobMeta extends StatelessWidget {
   }
 }
 
-class _SegmentedFilters extends StatelessWidget {
-  const _SegmentedFilters({
-    required this.labels,
-    required this.selected,
-    required this.onSelected,
+class _FilterItem {
+  const _FilterItem(this.value, this.label);
+  final String value;
+  final String label;
+}
+
+class _FilterDropdown extends StatelessWidget {
+  const _FilterDropdown({
+    required this.value,
+    required this.items,
+    required this.onChanged,
   });
 
-  final List<String> labels;
-  final int selected;
-  final ValueChanged<int> onSelected;
+  final String value;
+  final List<_FilterItem> items;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
+    final current = items.firstWhere(
+      (i) => i.value == value,
+      orElse: () => items.first,
+    );
     return Container(
-      padding: const EdgeInsets.all(3),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F3F8),
-        borderRadius: BorderRadius.circular(18),
+        color: value.isEmpty ? Colors.white : const Color(0xFFEEECFF),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: value.isEmpty ? const Color(0xFFE8EAF2) : const Color(0xFF5B53F6),
+        ),
       ),
-      child: Row(
-        children: List.generate(labels.length, (index) {
-          final active = index == selected;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onSelected(index),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: active ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  labels[index],
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color:
-                        active
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
-                  ),
-                ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isDense: true,
+          icon: const Icon(Icons.expand_more, size: 18),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: value.isEmpty ? AppColors.textSecondary : const Color(0xFF5B53F6),
+          ),
+          items: items.map((item) => DropdownMenuItem(
+            value: item.value,
+            child: Text(item.label),
+          )).toList(),
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _RemoteToggleChip extends StatelessWidget {
+  const _RemoteToggleChip({
+    required this.active,
+    required this.label,
+    required this.onTap,
+  });
+
+  final bool active;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFFE6FFF4) : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: active ? const Color(0xFF16C784) : const Color(0xFFE8EAF2),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.wifi, size: 14, color: active ? const Color(0xFF16C784) : AppColors.textSecondary),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: active ? const Color(0xFF16C784) : AppColors.textSecondary,
               ),
             ),
-          );
-        }),
+          ],
+        ),
       ),
     );
   }

@@ -3,13 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/routes.dart';
+import '../../../core/localization/app_strings.dart';
 import '../../../core/models/models.dart';
 import '../../../core/state/feed_refresh_bus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_utils.dart';
-import '../../../core/widgets/shared_widgets.dart';
+import '../../../core/widgets/decorative_widgets.dart';
 import '../../../data/repositories/post_repository.dart';
-import '../widgets/post_card.dart';
+import '../widgets/feed_list.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,7 +22,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabCtrl;
-  final _tabs = const ['For You', 'Following', 'Trending'];
+  List<String> _tabLabels = const [];
   final _repository = PostRepository();
 
   late Future<List<Post>> _forYouPosts;
@@ -35,6 +36,13 @@ class _HomeScreenState extends State<HomeScreen>
     _tabCtrl.addListener(_onTabChanged);
     FeedRefreshBus.instance.addListener(_handleExternalRefresh);
     _loadFeeds();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final s = AppStrings.of(context);
+    _tabLabels = [s.t('feed.forYou'), s.t('feed.following'), s.t('feed.trending')];
   }
 
   void _loadFeeds() {
@@ -70,19 +78,46 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFF),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         titleSpacing: 12,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary.withValues(alpha: 0.05),
+                Colors.transparent,
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
         title: Row(
           children: [
             Container(
-              width: 22,
-              height: 22,
+              width: 26,
+              height: 26,
               decoration: BoxDecoration(
-                color: const Color(0xFFEEF2FF),
-                borderRadius: BorderRadius.circular(7),
+                gradient: const LinearGradient(
+                  colors: [AppColors.primary, Color(0xFF21B5FF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              child: const Icon(Icons.code, color: Color(0xFF4F46E5), size: 14),
+              child: const Icon(
+                Icons.code,
+                color: Colors.white,
+                size: 14,
+              ),
             ),
             const SizedBox(width: 8),
             const Text(
@@ -127,13 +162,13 @@ class _HomeScreenState extends State<HomeScreen>
               height: 36,
               padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
-                color: const Color(0xFFF2F4F8),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: TabBar(
                 controller: _tabCtrl,
                 indicator: BoxDecoration(
-                  color: const Color(0xFF4F46E5),
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 dividerColor: Colors.transparent,
@@ -144,135 +179,42 @@ class _HomeScreenState extends State<HomeScreen>
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
-                tabs: _tabs.map((item) => Tab(text: item)).toList(),
+                tabs: _tabLabels.map((item) => Tab(text: item)).toList(),
               ),
             ),
           ),
         ),
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: ResponsiveUtils.getContentMaxWidth(context),
-          ),
-          child: TabBarView(
-            controller: _tabCtrl,
-            children: [
-              _buildFeed(_forYouPosts, highlightAi: true),
-              _buildFeed(_followingPosts),
-              _buildFeed(_trendingPosts),
-            ],
+      body: DecorativeBackground(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: ResponsiveUtils.getContentMaxWidth(context),
+            ),
+            child: TabBarView(
+              controller: _tabCtrl,
+              children: [
+                FeedList(
+                  key: const PageStorageKey('foryou'),
+                  fetcher: _repository.getForYouPosts,
+                  highlightAi: true,
+                  onRefresh: _refresh,
+                ),
+                FeedList(
+                  key: const PageStorageKey('following'),
+                  fetcher: _repository.getFollowingPosts,
+                  onRefresh: _refresh,
+                ),
+                FeedList(
+                  key: const PageStorageKey('trending'),
+                  fetcher: _repository.getTrendingPosts,
+                  onRefresh: _refresh,
+                ),
+              ],
+            ),
           ),
         ),
-     ),
-    );
-  }
-
-  Widget _buildFeed(
-    Future<List<Post>> futurePosts, {
-    bool highlightAi = false,
-  }) {
-    return FutureBuilder<List<Post>>(
-      future: futurePosts,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return RefreshIndicator(
-            onRefresh: _refresh,
-            child: ListView(
-              children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.25),
-                ErrorState(
-                  message: 'Unable to load your feed.\nPlease try again.',
-                  onRetry: _refresh,
-                ),
-              ],
-            ),
-          );
-        }
-
-        final posts = snapshot.data ?? const <Post>[];
-        if (posts.isEmpty) {
-          return RefreshIndicator(
-            onRefresh: _refresh,
-            child: ListView(
-              children: const [
-                SizedBox(height: 140),
-                EmptyState(
-                  icon: Icons.feed_outlined,
-                  title: 'No posts yet',
-                  subtitle:
-                      'Your feed will appear here once content is available.',
-                ),
-              ],
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: _refresh,
-          child: ListView.builder(
-            padding: ResponsiveUtils.isDesktop(context)
-                ? const EdgeInsets.fromLTRB(0, 8, 0, 80)
-                : const EdgeInsets.fromLTRB(0, 8, 0, 80),
-            itemCount: posts.length,
-            itemBuilder: (context, index) {
-              final post = posts[index];
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (index == 0 && highlightAi)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFECFDF5),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.auto_awesome,
-                              size: 12,
-                              color: AppColors.success,
-                            ),
-                            SizedBox(width: 5),
-                            Text(
-                              'AI PICKED FOR YOU',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.success,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 680),
-                    child: PostCard(
-                      post: post,
-                      index: index,
-                      onTap:
-                          () => context.push('${AppRoutes.postBase}/${post.id}'),
-                    ),
-                  ),
-                  if (index != posts.length - 1)
-                    const Divider(height: 1, indent: 16, endIndent: 16),
-                ],
-              );
-            },
-          ),
-        );
-      },
+      ),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/screens/login_screen.dart';
+import '../features/auth/screens/oauth_callback_screen.dart';
 import '../features/auth/screens/register_screen.dart';
 import '../features/auth/screens/onboarding_screen.dart';
 import '../features/feed/screens/home_screen.dart';
@@ -15,13 +16,15 @@ import '../features/chat/screens/chat_list_screen.dart';
 import '../features/chat/screens/chat_screen.dart';
 import '../features/notifications/screens/notifications_screen.dart';
 import '../features/projects/screens/project_marketplace_screen.dart';
+import '../features/projects/screens/project_detail_screen.dart';
 import '../features/projects/screens/job_board_screen.dart';
+import '../features/projects/screens/my_applications_screen.dart';
 import '../features/leaderboard/screens/leaderboard_screen.dart';
 import '../features/analytics/screens/analytics_screen.dart';
 import '../features/debug/screens/screenshot_lab_screen.dart';
 import '../features/playground/screens/playground_screen.dart';
 import '../features/playground/screens/live_code_screen.dart';
-import '../features/mentorship/screens/mentorship_screen.dart';
+
 import '../features/settings/screens/settings_screen.dart';
 import '../features/more/screens/more_screen.dart';
 import '../core/constants/routes.dart';
@@ -49,26 +52,24 @@ final appRouter = GoRouter(
       // Preferences not initialized yet, skip redirect
       return null;
     }
+    final path = state.uri.path;
     final isLoggedIn = token != null;
     final isAuthRoute =
-        state.uri.toString() == AppRoutes.login ||
-        state.uri.toString() == AppRoutes.register ||
-        state.uri.toString() == AppRoutes.onboarding;
+        path == AppRoutes.login ||
+        path == AppRoutes.register ||
+        path == AppRoutes.onboarding ||
+        path == AppRoutes.oauthCallback;
 
     if (!isLoggedIn && !isAuthRoute) {
       return AppRoutes.login;
     }
-    if (isLoggedIn &&
-        (state.uri.toString() == AppRoutes.login ||
-            state.uri.toString() == AppRoutes.register)) {
+    if (isLoggedIn && (path == AppRoutes.login || path == AppRoutes.register)) {
       // If logged in but onboarding not completed, go to onboarding
       if (!onboardingCompleted) return AppRoutes.onboarding;
       return AppRoutes.home;
     }
     // If logged in and going to home, check onboarding status
-    if (isLoggedIn &&
-        state.uri.toString() == AppRoutes.home &&
-        !onboardingCompleted) {
+    if (isLoggedIn && path == AppRoutes.home && !onboardingCompleted) {
       return AppRoutes.onboarding;
     }
     return null;
@@ -95,6 +96,11 @@ final appRouter = GoRouter(
       path: AppRoutes.onboarding,
       name: AppRoutes.nameOnboarding,
       builder: (_, __) => const OnboardingScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.oauthCallback,
+      name: AppRoutes.nameOauthCallback,
+      builder: (_, __) => const OAuthCallbackScreen(),
     ),
 
     // Main app — Navigation shell with responsive layout
@@ -152,11 +158,6 @@ final appRouter = GoRouter(
           builder: (_, __) => const PlaygroundScreen(),
         ),
         GoRoute(
-          path: AppRoutes.mentorship,
-          name: AppRoutes.nameMentorship,
-          builder: (_, __) => const MentorshipScreen(),
-        ),
-        GoRoute(
           path: AppRoutes.settings,
           name: AppRoutes.nameSettings,
           builder: (_, __) => const SettingsScreen(),
@@ -198,6 +199,18 @@ final appRouter = GoRouter(
       builder: (_, state) => ProfileScreen(userId: state.pathParameters['id']),
     ),
     GoRoute(
+      path: AppRoutes.projectDetail,
+      name: AppRoutes.nameProjectDetail,
+      builder:
+          (_, state) =>
+              ProjectDetailScreen(projectId: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: AppRoutes.myApplications,
+      name: AppRoutes.nameMyApplications,
+      builder: (_, __) => const MyApplicationsScreen(),
+    ),
+    GoRoute(
       path: AppRoutes.search,
       name: AppRoutes.nameSearch,
       builder:
@@ -205,7 +218,6 @@ final appRouter = GoRouter(
             initialQuery: state.uri.queryParameters['q'] ?? '',
           ),
     ),
-
   ],
 );
 
@@ -227,31 +239,33 @@ class _MainShellState extends ConsumerState<_MainShell> {
   @override
   Widget build(BuildContext context) {
     final path = GoRouterState.of(context).uri.toString();
+    final showFab = !kScreenshotMode &&
+        (path == AppRoutes.home || path == AppRoutes.explore || path == AppRoutes.profile);
     return ResponsiveScaffold(
       body: widget.child,
       currentRoute: path,
-      onDestinationSelected: (destination) =>
-          context.go(destination.route),
+      onDestinationSelected: (destination) => context.go(destination.route),
       onCreateSelected: () async {
         final created = await context.push<bool>('/create-post');
         if (created == true) {
           FeedRefreshBus.instance.refresh();
         }
       },
-      floatingActionButton: kScreenshotMode
-          ? null
-          : FloatingActionButton(
-              onPressed: () async {
-                final created = await context.push<bool>('/create-post');
-                if (created == true) {
-                  FeedRefreshBus.instance.refresh();
-                }
-              },
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              elevation: 4,
-              child: const Icon(Icons.edit),
-            ),
+      floatingActionButton:
+          showFab
+              ? FloatingActionButton(
+                onPressed: () async {
+                  final created = await context.push<bool>('/create-post');
+                  if (created == true) {
+                    FeedRefreshBus.instance.refresh();
+                  }
+                },
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 4,
+                child: const Icon(Icons.edit),
+              )
+              : null,
     );
   }
 }

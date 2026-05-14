@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_runtime_config.dart';
 import '../../../core/constants/routes.dart';
+import '../../../core/localization/app_strings.dart';
 import '../../../core/models/models.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_utils.dart';
+import '../../../core/widgets/decorative_widgets.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/project_repository.dart';
 
@@ -27,6 +30,8 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
   late Future<List<Project>> _loader;
   final Set<String> _joinedProjects = <String>{};
   int _selectedFilter = 0;
+  String _searchQuery = '';
+  String _selectedTech = '';
 
   @override
   void initState() {
@@ -58,11 +63,11 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
       setState(() {});
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Joined ${project.title}')));
+      ).showSnackBar(SnackBar(content: Text('${AppStrings.current().t('projects.joined')} ${project.title}')));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to join project right now')),
+        SnackBar(content: Text(AppStrings.current().t('projects.unableJoin'))),
       );
     }
   }
@@ -70,7 +75,7 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
   Future<void> _openCreateProjectSheet() async {
     if (!ApiService.instance.isAuthenticated) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sign in to create a project')),
+        SnackBar(content: Text(AppStrings.current().t('projects.unableJoin'))),
       );
       return;
     }
@@ -86,7 +91,7 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
@@ -104,7 +109,7 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
 
               if (title.isEmpty || description.isEmpty) {
                 setSheetState(
-                  () => error = 'Title and description are required',
+                  () => error = AppStrings.of(context).t('projects.titleDescRequired'),
                 );
                 return;
               }
@@ -127,7 +132,7 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
                 _loadFeeds();
                 setState(() {});
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Project created')),
+                  SnackBar(content: Text(AppStrings.of(context).t('projects.created'))),
                 );
               } catch (e) {
                 setSheetState(() {
@@ -141,7 +146,7 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
               return InputDecoration(
                 hintText: hint,
                 filled: true,
-                fillColor: const Color(0xFFF4F6FA),
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
@@ -168,13 +173,13 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'Create Project',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  Text(
+                    AppStrings.of(context).t('projects.createProject'),
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Set up a new collaboration workspace for the community.',
+                  Text(
+                    AppStrings.of(context).t('projects.createSubtitle'),
                     style: TextStyle(
                       fontSize: 13,
                       color: AppColors.textSecondary,
@@ -183,25 +188,25 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: titleCtrl,
-                    decoration: decoration('Project title'),
+                    decoration: decoration(AppStrings.of(context).t('projects.projectTitle')),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: descriptionCtrl,
                     minLines: 3,
                     maxLines: 4,
-                    decoration: decoration('Describe what you are building'),
+                    decoration: decoration(AppStrings.of(context).t('projects.projectDescription')),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: techStackCtrl,
-                    decoration: decoration('Tech stack (comma separated)'),
+                    decoration: decoration(AppStrings.of(context).t('projects.techStack')),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: maxMembersCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: decoration('Max members'),
+                    decoration: decoration(AppStrings.of(context).t('projects.maxMembers')),
                   ),
                   if (error != null) ...[
                     const SizedBox(height: 12),
@@ -234,7 +239,7 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                              : const Text('Create project'),
+                              : Text(AppStrings.of(context).t('projects.create')),
                     ),
                   ),
                 ],
@@ -258,7 +263,33 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary.withOpacity(0.06),
+                Colors.transparent,
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
+        title: Text(
+          AppStrings.of(context).t('projects.title'),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openCreateProjectSheet,
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 2,
+        icon: const Icon(Icons.add, size: 20),
+        label: Text(AppStrings.of(context).t('projects.createProject'), style: const TextStyle(fontWeight: FontWeight.w700)),
+      ),
       body: FutureBuilder<List<Project>>(
         future: _loader,
         builder: (context, snapshot) {
@@ -274,7 +305,7 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
                 children: [
                   SizedBox(height: MediaQuery.of(context).size.height * 0.28),
                   ErrorState(
-                    message: 'Unable to load projects.\nPull to try again.',
+                    message: AppStrings.of(context).t('projects.unableLoad'),
                     onRetry: _refresh,
                   ),
                 ],
@@ -286,16 +317,17 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
           final filtered = _filteredProjects(projects);
 
           if (projects.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.folder_open_outlined,
-              title: 'No projects yet',
-              subtitle: 'Create the first project to start collaborating.',
+              title: AppStrings.of(context).t('projects.noProjects'),
+              subtitle: AppStrings.of(context).t('projects.noProjectsSubtitle'),
             );
           }
 
           return RefreshIndicator(
             onRefresh: _refresh,
-            child: ConstrainedBox(
+            child: DecorativeBackground(
+              child: ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: ResponsiveUtils.getContentMaxWidth(context),
               ),
@@ -303,42 +335,54 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 110),
                 children: [
-                  const Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Projects',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      Icon(Icons.search, size: 18),
-                      SizedBox(width: 12),
-                      Icon(Icons.tune, size: 18),
-                    ],
+                  ScreenGradientHeader(
+                    title: AppStrings.of(context).t('projects.marketplace'),
+                    subtitle: AppStrings.of(context).t('projects.marketplaceSubtitle'),
+                    icon: Icons.rocket_launch_outlined,
+                    gradientColors: [Color(0xFF5B53F6), Color(0xFF00D9A6)],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
+                  // Search bar
+                  TextField(
+                    onChanged: (v) => setState(() => _searchQuery = v),
+                    decoration: InputDecoration(
+                      hintText: AppStrings.of(context).t('explore.searchPlaceholder'),
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surface,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Theme.of(context).dividerColor)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Theme.of(context).dividerColor)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.primary)),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Status filter chips
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
                       _ShowcaseFilterChip(
-                        label: 'All',
+                        label: AppStrings.of(context).t('projects.all'),
                         selected: _selectedFilter == 0,
                         onTap: () => setState(() => _selectedFilter = 0),
                       ),
                       _ShowcaseFilterChip(
-                        label: 'Looking for Devs',
+                        label: AppStrings.of(context).t('projects.lookingForDevs'),
                         selected: _selectedFilter == 1,
                         onTap: () => setState(() => _selectedFilter = 1),
                       ),
                       _ShowcaseFilterChip(
-                        label: 'Open Source',
+                        label: AppStrings.of(context).t('projects.openSource'),
                         selected: _selectedFilter == 2,
                         onTap: () => setState(() => _selectedFilter = 2),
                       ),
+                      // Tech stack filter badges (dynamic from data)
+                      ..._extractTechTags(projects).map((tag) => _ShowcaseFilterChip(
+                        label: tag,
+                        selected: _selectedTech == tag,
+                        onTap: () => setState(() => _selectedTech = _selectedTech == tag ? '' : tag),
+                      )),
                     ],
                   ),
                   const SizedBox(height: 14),
@@ -352,6 +396,7 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
                 ],
               ),
             ),
+            ),
           );
         },
       ),
@@ -359,17 +404,49 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
   }
 
   List<Project> _filteredProjects(List<Project> projects) {
+    var filtered = projects;
+
+    // Search
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      filtered = filtered.where((project) =>
+        project.title.toLowerCase().contains(q) ||
+        project.description.toLowerCase().contains(q) ||
+        project.techStack.any((t) => t.toLowerCase().contains(q))
+      ).toList();
+    }
+
+    // Tech stack filter
+    if (_selectedTech.isNotEmpty) {
+      final tech = _selectedTech.toLowerCase();
+      filtered = filtered.where((project) =>
+        project.techStack.any((t) => t.toLowerCase() == tech)
+      ).toList();
+    }
+
+    // Status filter
     switch (_selectedFilter) {
       case 1:
-        return projects
+        return filtered
             .where((project) => project.status == 'LOOKING_FOR_MEMBERS')
             .toList();
       case 2:
-        return projects
+        return filtered
             .where((project) => project.status != 'LOOKING_FOR_MEMBERS')
             .toList();
       default:
-        return projects;
+        return filtered;
     }
+  }
+
+  List<String> _extractTechTags(List<Project> projects) {
+    final tags = <String>{};
+    for (final project in projects) {
+      for (final tech in project.techStack) {
+        tags.add(tech);
+      }
+    }
+    final sorted = tags.toList()..sort();
+    return sorted.take(10).toList();
   }
 }

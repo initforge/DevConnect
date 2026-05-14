@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// DevConnect — App Constants
 class AppConstants {
   AppConstants._();
@@ -6,16 +8,29 @@ class AppConstants {
   static const appName = 'DevConnect';
   static const appVersion = '1.0.0';
 
-  // API Configuration. Override per target with --dart-define.
-  static const String apiBaseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://localhost:8080',
-  );
+  // Helper to resolve the correct host for local development.
+  // When running on Android Emulator, it uses '10.0.2.2' to access the host's Nginx.
+  // Otherwise (Web, iOS Simulator), it uses 'localhost'.
+  static String get _host {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      return '10.0.2.2'; // Android Emulator magic IP
+    }
+    return 'localhost';
+  }
 
-  static const String wsBaseUrl = String.fromEnvironment(
-    'WS_BASE_URL',
-    defaultValue: 'ws://localhost:8081',
-  );
+  // API Configuration. Override per target with --dart-define.
+  static const String _envApiUrl = String.fromEnvironment('API_BASE_URL');
+  static const String _envWsUrl = String.fromEnvironment('WS_BASE_URL');
+
+  static String get apiBaseUrl {
+    if (_envApiUrl.isNotEmpty) return _envApiUrl;
+    return 'http://$_host/api';
+  }
+
+  static String get wsBaseUrl {
+    if (_envWsUrl.isNotEmpty) return _envWsUrl;
+    return 'ws://$_host';
+  }
 
   // Connection timeouts
   static const Duration apiConnectTimeout = Duration(seconds: 30);

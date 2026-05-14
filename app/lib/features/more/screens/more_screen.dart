@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/navigation/feature_destination.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/decorative_widgets.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -31,14 +32,34 @@ class _MoreScreenState extends State<MoreScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FC),
       appBar: AppBar(
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary.withOpacity(0.06),
+                Colors.transparent,
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
         title: const Text(
           'More',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
         ),
       ),
-      body: ListView(
+      body: DecorativeBackground(
+        child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         children: [
+          const ScreenGradientHeader(
+            title: 'More Features',
+            subtitle: 'Explore all tools and features available in DevConnect',
+            icon: Icons.apps_outlined,
+            gradientColors: [Color(0xFF5B53F6), Color(0xFF21B5FF)],
+          ),
+          const SizedBox(height: 16),
           TextField(
             controller: _queryController,
             onChanged: (value) => setState(() => _query = value.trim()),
@@ -75,6 +96,7 @@ class _MoreScreenState extends State<MoreScreen> {
             );
           }),
         ],
+      ),
       ),
     );
   }

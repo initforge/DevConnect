@@ -1,165 +1,62 @@
-# 01 — Tổng quan DevConnect
+# 01. Tổng Quan DevConnect
 
-> **Đọc file này trước tiên.** Nó giúp bạn hiểu DevConnect là gì, giải quyết vấn đề gì, và được xây dựng bằng công nghệ nào.
+## 1. DevConnect là gì
 
----
+DevConnect là một mạng xã hội cho lập trình viên. Người dùng có thể đăng bài, đọc feed cá nhân hóa, bình luận, lưu bài, nhắn tin, nhận thông báo, tìm dự án, ứng tuyển job, dùng playground/AI để review hoặc giải thích code.
 
-## DevConnect là gì?
+`docs/showcase` là bộ ảnh chuẩn để đối chiếu trải nghiệm. App thật phải được kiểm tra ngược lại với bộ ảnh đó, không chỉ nhìn một màn rồi kết luận "chạy được".
 
-DevConnect là **mạng xã hội chuyên biệt cho lập trình viên**. Khác với Facebook hay LinkedIn, DevConnect tập trung vào:
+## 2. Kiến trúc một câu
 
-| Tính năng | Mạng xã hội thường | DevConnect |
-|-----------|-------------------|------------|
-| Nội dung | Ảnh, video, status | **Code snippets**, bài kỹ thuật, TIL |
-| Kết nối | Bạn bè, đồng nghiệp | **Đồng đội dự án**, Mentor-Mentee |
-| Việc làm | Đăng tuyển chung | **Match %** dựa trên Tech Stack |
-| Gamification | Không có | **XP, Bảng xếp hạng, Danh hiệu** |
+Flutter render giao diện. NestJS nhận request và realtime event. PostgreSQL giữ dữ liệu chính. Redis giữ cache, queue và presence ngắn hạn. MinIO giữ file upload. Nginx đứng trước để gom các cổng thành một cửa vào.
 
----
+Luồng cơ bản:
 
-## Kiến trúc tổng thể
+1. Người dùng bấm trong Flutter.
+2. Flutter gọi `http://localhost/api/...` hoặc mở Socket.IO namespace `/chat`.
+3. Nginx nhận request ở port `80` và chuyển vào backend NestJS port `8080`.
+4. Backend đọc/ghi PostgreSQL, dùng Redis cho cache/queue, dùng MinIO nếu có file.
+5. Flutter cập nhật UI ngay nếu action phù hợp optimistic state, rồi đồng bộ lại theo kết quả backend.
 
-Hệ thống gồm 3 tầng chính, tất cả chạy trong Docker:
+## 3. Vì sao có các container
 
-```mermaid
-graph TB
-    subgraph "📱 Mobile Client"
-        direction TB
-        UI["UI Layer<br/>(Flutter Widgets)"]
-        STATE["State Management<br/>(Riverpod)"]
-        LOCAL["Local Storage<br/>(SQLite)"]
-        NET["Networking<br/>(Dio + WebSocket)"]
-        
-        UI --> STATE
-        STATE --> LOCAL
-        STATE --> NET
-    end
+| Container | Vai trò | Lý do tồn tại |
+|---|---|---|
+| `nginx` | Cửa vào duy nhất ở port `80` | Trình duyệt/mobile chỉ cần gọi một host. Nginx proxy `/api`, `/chat`, `/storage` đến đúng service bên trong. |
+| `backend` | NestJS API ở port nội bộ `8080` | Chứa logic auth, feed, chat, notification, project, job, AI, media. |
+| `postgres` | Database chính | Dữ liệu quan hệ như user, post, comment, like, bookmark, conversation, message cần transaction và index rõ ràng. |
+| `redis` | Cache + queue + presence | Feed, profile, trending cần trả nhanh; BullMQ cần Redis; online status cần TTL ngắn. |
+| `minio` | Object storage | File upload cần storage kiểu S3 thay vì nhét blob vào database. |
 
-    subgraph "☁️ Backend Server"
-        HTTP["HTTP Server<br/>Node.js — Port 8080"]
-        AUTH["JWT Middleware"]
-        WS["WebSocket Server"]
-        
-        HTTP --> AUTH --> HANDLERS["Route Handlers"]
-        HTTP --> WS
-    end
+## 4. Vì sao có nhiều port
 
-    subgraph "🗄️ Data Layer"
-        PG[("PostgreSQL 16<br/>Port 5432")]
-        REDIS[("Redis 7<br/>Port 6379")]
-    end
+| Port | Ai dùng | Giải thích |
+|---:|---|---|
+| `80` | Người dùng/app | Cổng chính qua Nginx. Flutter web/mobile mặc định gọi `http://localhost/api`. |
+| `8080` | Backend bên trong Docker hoặc local dev | NestJS listen ở đây. Khi chạy qua Nginx, người dùng không cần gọi trực tiếp port này. |
+| `5432` | Backend -> PostgreSQL | Cổng database, không dành cho UI. |
+| `6379` | Backend/BullMQ -> Redis | Cổng cache/queue/presence, không dành cho UI. |
+| `9000` | Backend/Nginx -> MinIO API | Cổng máy dùng để upload/download object. |
+| `9001` | Dev/admin | Console web của MinIO. Đây là lý do MinIO có 2 port: một port cho API, một port cho màn quản trị. |
 
-    NET -->|"REST API"| HTTP
-    NET -->|"Real-time"| WS
-    HANDLERS --> PG
-    HANDLERS --> REDIS
-```
+## 5. Vì sao chọn tech này
 
-### Giải thích từng tầng
+| Tech | Dùng cho | Vì sao hợp |
+|---|---|---|
+| Flutter | App mobile/web | Một codebase cho nhiều màn, UI nhiều animation, chạy được mobile và web build. |
+| NestJS | Backend | Module rõ ràng, guard/auth/gateway/queue dễ tách, hợp TypeScript. |
+| Prisma + PostgreSQL | Data chính | Quan hệ user/post/comment/message cần unique constraint, transaction, index, full-text search. |
+| Redis | Cache, BullMQ, online TTL | Dữ liệu tạm, cần nhanh, mất được, tự hết hạn. |
+| Socket.IO | Chat/presence/typing | Dễ reconnect, event rõ, Flutter có client package. |
+| MinIO | File/media | Tương thích S3, chạy local bằng Docker, không khóa vào cloud vendor. |
+| Nginx | Reverse proxy | Gom port, proxy websocket, proxy object storage, đơn giản hóa URL cho app. |
 
-**📱 Mobile Client (Flutter)**
-- **UI Layer**: Giao diện người dùng, xây bằng Flutter Widgets
-- **Riverpod**: Quản lý trạng thái toàn app (state management). Khi dữ liệu thay đổi ở một nơi, tất cả các màn hình liên quan tự động cập nhật
-- **SQLite**: Lưu dữ liệu offline trên thiết bị. App hoạt động được **ngay cả khi mất mạng** (Local-first strategy)
-- **Dio**: Thư viện HTTP mạnh mẽ, hỗ trợ interceptor, retry, timeout
+## 6. Nguồn sự thật
 
-**☁️ Backend Server (Node.js)**
-- Server HTTP thuần (không dùng Express) để giảm overhead và hiểu rõ nền tảng
-- JWT Middleware xác thực mọi request cần đăng nhập
-- WebSocket Server cho chat và thông báo real-time
+Nguồn sự thật theo thứ tự:
 
-**🗄️ Data Layer (Docker)**
-- PostgreSQL: Cơ sở dữ liệu quan hệ chính, lưu toàn bộ dữ liệu
-- Redis: Cache layer, dự kiến dùng cho session và rate limiting
+1. Code runtime trong `app/lib`, `backend/src`, `docker-compose.yml`, `nginx.conf`.
+2. `docs/showcase` là chuẩn hình ảnh và chuẩn luồng cần đối chiếu.
+3. Docs 01-07 giải thích trạng thái hiện tại sau khi đối chiếu, không thay thế code.
 
----
-
-## Chiến lược Local-first
-
-Đây là điểm khác biệt quan trọng nhất của DevConnect. Dữ liệu **luôn đọc từ SQLite trước**, sau đó mới đồng bộ với server:
-
-```mermaid
-sequenceDiagram
-    participant User as 👤 Người dùng
-    participant App as 📱 Flutter App
-    participant SQLite as 💾 SQLite (Local)
-    participant API as ☁️ Backend API
-
-    User->>App: Mở bảng tin
-    App->>SQLite: Đọc bài viết đã cache
-    SQLite-->>App: Hiển thị ngay (nhanh!)
-    
-    App->>API: GET /api/posts (đồng bộ nền)
-    API-->>App: Dữ liệu mới nhất
-    App->>SQLite: Cập nhật cache
-    App->>App: Làm mới UI nếu có thay đổi
-```
-
-> **Tại sao Local-first?** Vì lập trình viên thường làm việc ở quán cà phê, trên tàu, hay ở những nơi mạng không ổn định. App phải luôn hoạt động mượt mà bất kể kết nối.
-
----
-
-## Tech Stack
-
-### Backend
-
-| Công nghệ | Phiên bản | Vai trò | Lý do chọn |
-|-----------|----------|---------|------------|
-| Node.js | v20+ | Runtime | Event-loop phù hợp cho I/O (API + WebSocket) |
-| PostgreSQL | 16 | Database | ACID, JSON support, full-text search |
-| Redis | 7 | Cache | Nhanh, hỗ trợ pub/sub cho real-time |
-| JWT | — | Auth | Stateless, dễ scale ngang |
-| bcryptjs | — | Password | Hash an toàn (salt rounds = 10) |
-| Docker | — | Deploy | Đồng nhất môi trường dev/prod |
-
-### Frontend
-
-| Công nghệ | Phiên bản | Vai trò | Lý do chọn |
-|-----------|----------|---------|------------|
-| Flutter | 3.29+ | Framework | Cross-platform, hot reload, widget library phong phú |
-| Riverpod | — | State | Type-safe, testable, không cần BuildContext |
-| GoRouter | — | Navigation | Declarative routing, deep linking |
-| Dio | — | HTTP | Interceptors, retry, timeout |
-| sqflite | — | Local DB | SQLite cho Flutter, hỗ trợ offline |
-
----
-
-## Cấu trúc thư mục dự án
-
-```
-midterm-mobile/
-├── app/                          # 📱 Flutter Mobile App
-│   ├── lib/
-│   │   ├── core/                 #   Hạ tầng dùng chung (theme, services, widgets)
-│   │   ├── features/             #   Các module nghiệp vụ
-│   │   │   ├── auth/             #     Đăng nhập, Đăng ký, Onboarding
-│   │   │   ├── feed/             #     Bảng tin, Tạo bài viết
-│   │   │   ├── explore/          #     Tìm kiếm, Khám phá
-│   │   │   ├── chat/             #     Nhắn tin real-time
-│   │   │   ├── notifications/    #     Thông báo
-│   │   │   ├── profile/          #     Hồ sơ cá nhân
-│   │   │   ├── settings/         #     Cài đặt
-│   │   │   ├── projects/         #     Sàn dự án + Việc làm
-│   │   │   ├── leaderboard/      #     Bảng xếp hạng
-│   │   │   ├── playground/       #     Sân chơi code
-│   │   │   ├── mentorship/       #     Ghép cặp Mentor
-│   │   │   └── analytics/        #     Thống kê
-│   │   └── data/                 #   Repositories + Models
-│   └── integration_test/flows/   #   E2E Integration Tests
-│
-├── backend/                      # ☁️ Node.js API Server
-│   ├── src/server.js             #   Entry point
-│   ├── scripts/                  #   Utility scripts (test, seed)
-│   ├── init.sql                  #   Database schema
-│   └── Dockerfile                #   Container definition
-│
-├── docs/                         # 📖 Tài liệu (bạn đang ở đây)
-├── docker-compose.yml            # 🐳 Orchestration
-└── README.md                     # 🏠 Trang chủ dự án
-```
-
----
-
-## Tiếp theo
-
-Đọc **[02_USER_FLOWS.md](02_USER_FLOWS.md)** để hiểu chi tiết từng luồng người dùng và business logic của app.
+Nếu docs nói có một feature nhưng route/API không có, đó là lỗi docs. Nếu showcase có một trạng thái mà runtime chưa xử lý, đó là gap cần đưa vào roadmap, không được viết như đã hoàn thiện.

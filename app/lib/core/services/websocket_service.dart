@@ -1,6 +1,6 @@
-import 'dart:async';
 import 'dart:convert';
-import 'package:web_socket_channel/web_socket_channel.dart';
+
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 import '../constants/app_constants.dart';
 
@@ -14,6 +14,7 @@ enum WsMessageType {
   message,
   notification,
   presence,
+  typing,
   error,
 }
 
@@ -73,215 +74,236 @@ abstract class WebSocketServiceListener {
   void onWsMessage(WsMessage msg);
   void onWsError(String error);
   void onWsPresenceUpdate(String userId, bool isOnline);
+  void onWsTyping(String userId, bool isTyping);
 }
 
-/// Real WebSocket service with automatic reconnection
+/// Socket.IO-backed realtime service for chat, presence, and typing.
 class WebSocketService {
   WebSocketService._();
   static final WebSocketService instance = WebSocketService._();
 
-  WebSocketChannel? _channel;
-  StreamSubscription? _subscription;
-  Timer? _reconnectTimer;
-  Timer? _heartbeatTimer;
-
+  IO.Socket? _socket;
   String? _token;
   final List<WebSocketServiceListener> _listeners = [];
   final Set<WsChannel> _subscribedChannels = {};
+  final Set<String> _joinedConversations = {};
 
   WsConnectionState _state = WsConnectionState.disconnected;
-  int _reconnectAttempts = 0;
-  static const int _maxReconnectAttempts = 10;
-  static const Duration _baseReconnectDelay = Duration(seconds: 1);
-  static const Duration _maxReconnectDelay = Duration(seconds: 30);
-  static const Duration _heartbeatInterval = Duration(seconds: 30);
 
   WsConnectionState get state => _state;
   bool get isConnected => _state == WsConnectionState.connected;
 
-  /// Connect to WebSocket server with authentication
+  String get _socketOrigin {
+    final apiUri = Uri.parse(AppConstants.apiBaseUrl);
+    return Uri(
+      scheme: apiUri.scheme.isEmpty ? 'http' : apiUri.scheme,
+      host: apiUri.host,
+      port: apiUri.hasPort ? apiUri.port : null,
+    ).toString();
+  }
+
+  /// Connect to Socket.IO server with authentication token.
   void connect({required String token}) {
-    if (_state == WsConnectionState.connecting || _state == WsConnectionState.connected) {
+    if (_token == token && _socket?.connected == true) {
       return;
     }
 
     _token = token;
+    _disposeSocket();
     _state = WsConnectionState.connecting;
-    _doConnect();
+    _createSocket();
   }
 
-  void _doConnect() {
+  void _createSocket() {
     if (_token == null) return;
 
-    try {
-      final uri = Uri.parse('${AppConstants.wsBaseUrl}/ws');
-      _channel = WebSocketChannel.connect(uri);
+    final socket = IO.io(
+      '$_socketOrigin/chat',
+      IO.OptionBuilder()
+          .setTransports(['websocket'])
+          .setAuth({'token': _token})
+          .enableReconnection()
+          .setReconnectionAttempts(999999)
+          .setReconnectionDelay(1000)
+          .setReconnectionDelayMax(30000)
+          .setRandomizationFactor(0)
+          .disableAutoConnect()
+          .build(),
+    );
 
-      _state = WsConnectionState.connecting;
-      _notifyDisconnected();
+    _socket = socket;
 
-      _subscription = _channel!.stream.listen(
-        _onMessage,
-        onError: _onError,
-        onDone: _onDone,
-      );
-
-      // Send auth immediately after connection
-      _sendRaw({'type': 'auth', 'token': _token});
-    } catch (e) {
-      _scheduleReconnect();
-    }
-  }
-
-  void _onMessage(dynamic data) {
-    try {
-      final json = jsonDecode(data as String) as Map<String, dynamic>;
-      final msg = WsMessage.fromJson(json);
-
-      switch (msg.type) {
-        case WsMessageType.auth:
-          if (msg.error == null) {
-            _state = WsConnectionState.connected;
-            _reconnectAttempts = 0;
-            _startHeartbeat();
-            _notifyConnected();
-            _resubscribeChannels();
-          } else {
-            _notifyError(msg.error!);
-          }
-          break;
-
-        case WsMessageType.pong:
-          // Heartbeat acknowledged
-          break;
-
-        case WsMessageType.subscribed:
-          if (msg.channel != null) {
-            final channel = WsChannel.values.firstWhere(
-              (c) => c.name == msg.channel,
-              orElse: () => WsChannel.notifications,
-            );
-            _subscribedChannels.add(channel);
-          }
-          break;
-
-        case WsMessageType.notification:
-        case WsMessageType.message:
-        case WsMessageType.presence:
-          _notifyMessage(msg);
-          break;
-
-        case WsMessageType.error:
-          _notifyError(msg.error ?? 'Unknown error');
-          break;
-
-        default:
-          _notifyMessage(msg);
-      }
-    } catch (e) {
-      // Ignore malformed messages
-    }
-  }
-
-  void _onError(dynamic error) {
-    _notifyError(error.toString());
-    _scheduleReconnect();
-  }
-
-  void _onDone() {
-    _state = WsConnectionState.disconnected;
-    _notifyDisconnected();
-    _scheduleReconnect();
-  }
-
-  void _startHeartbeat() {
-    _heartbeatTimer?.cancel();
-    _heartbeatTimer = Timer.periodic(_heartbeatInterval, (_) {
-      if (_state == WsConnectionState.connected) {
-        _sendRaw({'type': 'ping'});
-      }
+    socket.onConnect((_) {
+      _state = WsConnectionState.connected;
+      _notifyConnected();
+      _resubscribeRooms();
     });
+
+    socket.onReconnectAttempt((attempt) {
+      _state = WsConnectionState.reconnecting;
+      _notifyError('Reconnecting... attempt $attempt');
+    });
+
+    socket.onReconnect((_) {
+      _state = WsConnectionState.connected;
+      _notifyConnected();
+      _resubscribeRooms();
+    });
+
+    socket.onReconnectFailed((_) {
+      _state = WsConnectionState.disconnected;
+      _notifyError('Reconnect failed');
+      _notifyDisconnected();
+    });
+
+    socket.onDisconnect((reason) {
+      if (reason == 'io client disconnect') {
+        _state = WsConnectionState.disconnected;
+        _notifyDisconnected();
+        return;
+      }
+
+      _state = WsConnectionState.reconnecting;
+      _notifyError('Socket disconnected: $reason');
+    });
+
+    socket.onConnectError((error) {
+      _state = WsConnectionState.reconnecting;
+      _notifyError(error.toString());
+    });
+
+    socket.onError((error) {
+      _notifyError(error.toString());
+    });
+
+    socket.on('presence_change', (data) {
+      final map = _toMap(data);
+      final userId = map['userId']?.toString() ?? '';
+      final status = map['status']?.toString() ?? 'offline';
+      if (userId.isEmpty) return;
+      _notifyPresenceUpdate(userId, status == 'online');
+    });
+
+    socket.on('user_typing', (data) {
+      final map = _toMap(data);
+      final userId = map['userId']?.toString() ?? '';
+      if (userId.isEmpty) return;
+      _notifyTyping(userId, map['isTyping'] == true);
+    });
+
+    socket.on('new_message', (data) {
+      final map = _toMap(data);
+      _notifyMessage(
+        WsMessage(
+          type: WsMessageType.message,
+          channel: WsChannel.messages.name,
+          data: map,
+        ),
+      );
+    });
+
+    socket.connect();
   }
 
-  void _scheduleReconnect() {
-    if (_reconnectAttempts >= _maxReconnectAttempts) {
-      _state = WsConnectionState.disconnected;
-      _notifyError('Max reconnection attempts reached');
+  Map<String, dynamic> _toMap(dynamic data) {
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) {
+      return Map<String, dynamic>.fromEntries(
+        data.entries.map((entry) => MapEntry(entry.key.toString(), entry.value)),
+      );
+    }
+    if (data is String) {
+      try {
+        final decoded = jsonDecode(data);
+        if (decoded is Map<String, dynamic>) return decoded;
+        if (decoded is Map) {
+          return Map<String, dynamic>.fromEntries(
+            decoded.entries.map(
+              (entry) => MapEntry(entry.key.toString(), entry.value),
+            ),
+          );
+        }
+      } catch (_) {}
+    }
+    return <String, dynamic>{};
+  }
+
+  void _resubscribeRooms() {
+    for (final channel in _subscribedChannels) {
+      if (channel == WsChannel.messages) {
+        for (final conversationId in _joinedConversations) {
+          _socket?.emit('join_conversation', conversationId);
+        }
+      }
+    }
+  }
+
+  void _disposeSocket() {
+    _socket?.disconnect();
+    _socket?.dispose();
+    _socket = null;
+  }
+
+  /// Join a conversation room for message and typing events.
+  void joinConversation(String conversationId) {
+    if (conversationId.isEmpty) return;
+    _joinedConversations.add(conversationId);
+    _socket?.emit('join_conversation', conversationId);
+  }
+
+  /// Leave a conversation room.
+  void leaveConversation(String conversationId) {
+    if (conversationId.isEmpty) return;
+    _joinedConversations.remove(conversationId);
+    _socket?.emit('leave_conversation', conversationId);
+  }
+
+  /// Send message to a channel.
+  void send(String channel, Map<String, dynamic> data) {
+    final socket = _socket;
+    if (socket == null || channel.isEmpty) {
       return;
     }
 
-    _state = WsConnectionState.reconnecting;
-    _reconnectAttempts++;
-
-    // Exponential backoff with jitter
-    final delay = _baseReconnectDelay * (1 << _reconnectAttempts.clamp(0, 5));
-    final cappedDelay = delay > _maxReconnectDelay ? _maxReconnectDelay : delay;
-    final jitter = Duration(milliseconds: (cappedDelay.inMilliseconds * 0.1 * (DateTime.now().millisecondsSinceEpoch % 100) / 100).round());
-
-    _reconnectTimer?.cancel();
-    _reconnectTimer = Timer(cappedDelay + jitter, () {
-      if (_token != null) {
-        _doConnect();
-      }
-    });
-  }
-
-  void _sendRaw(Map<String, dynamic> data) {
-    if (_channel != null && _state == WsConnectionState.connected) {
-      _channel!.sink.add(jsonEncode(data));
+    switch (channel) {
+      case 'messages':
+        if (data['type']?.toString() == 'typing') {
+          socket.emit('typing', data);
+        } else {
+          socket.emit('send_message', data);
+        }
+        break;
+      default:
+        socket.emit(channel, data);
     }
   }
 
-  void _resubscribeChannels() {
-    for (final channel in _subscribedChannels) {
-      _sendRaw({'type': 'subscribe', 'channel': channel.name});
-    }
-  }
-
-  /// Send message to a channel
-  void send(String channel, Map<String, dynamic> data) {
-    _sendRaw({
-      'type': 'message',
-      'channel': channel,
-      'data': data,
-    });
-  }
-
-  /// Subscribe to a channel (notifications, messages, presence, posts)
+  /// Subscribe to a channel (notifications, messages, presence, posts).
   void subscribe(WsChannel channel) {
-    if (_state == WsConnectionState.connected) {
-      _sendRaw({'type': 'subscribe', 'channel': channel.name});
-      _subscribedChannels.add(channel);
-    }
+    _subscribedChannels.add(channel);
   }
 
-  /// Unsubscribe from a channel
+  /// Unsubscribe from a channel.
   void unsubscribe(WsChannel channel) {
-    if (_state == WsConnectionState.connected) {
-      _sendRaw({'type': 'unsubscribe', 'channel': channel.name});
-      _subscribedChannels.remove(channel);
-    }
+    _subscribedChannels.remove(channel);
   }
 
-  /// Disconnect and cleanup
+  /// Disconnect and cleanup.
   void disconnect() {
-    _reconnectTimer?.cancel();
-    _heartbeatTimer?.cancel();
-    _subscription?.cancel();
-    _channel?.sink.close();
-    _channel = null;
+    _disposeSocket();
     _token = null;
     _state = WsConnectionState.disconnected;
     _subscribedChannels.clear();
+    _joinedConversations.clear();
     _notifyDisconnected();
   }
 
-  /// Add listener for WebSocket events
+  /// Add listener for WebSocket events.
   void addListener(WebSocketServiceListener listener) {
     _listeners.add(listener);
   }
 
-  /// Remove listener
+  /// Remove listener.
   void removeListener(WebSocketServiceListener listener) {
     _listeners.remove(listener);
   }
@@ -307,6 +329,18 @@ class WebSocketService {
   void _notifyError(String error) {
     for (final listener in _listeners) {
       listener.onWsError(error);
+    }
+  }
+
+  void _notifyPresenceUpdate(String userId, bool isOnline) {
+    for (final listener in _listeners) {
+      listener.onWsPresenceUpdate(userId, isOnline);
+    }
+  }
+
+  void _notifyTyping(String userId, bool isTyping) {
+    for (final listener in _listeners) {
+      listener.onWsTyping(userId, isTyping);
     }
   }
 }

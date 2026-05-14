@@ -13,7 +13,12 @@ class SyncResult {
   final int pushed;
   final String? error;
 
-  const SyncResult({required this.success, this.pulled = 0, this.pushed = 0, this.error});
+  const SyncResult({
+    required this.success,
+    this.pulled = 0,
+    this.pushed = 0,
+    this.error,
+  });
 
   factory SyncResult.success({int pulled = 0, int pushed = 0}) =>
       SyncResult(success: true, pulled: pulled, pushed: pushed);
@@ -26,11 +31,9 @@ class SyncResult {
 /// It operates offline-first: reads always hit local DB; writes are queued and
 /// replayed to the API when connectivity is available.  Server wins on conflict.
 class SyncService {
-  SyncService({
-    AppDatabase? database,
-    NetworkInfo? networkInfo,
-  })  : _database = database ?? AppDatabase.instance,
-        _networkInfo = networkInfo ?? NetworkInfoImpl();
+  SyncService({AppDatabase? database, NetworkInfo? networkInfo})
+    : _database = database ?? AppDatabase.instance,
+      _networkInfo = networkInfo ?? NetworkInfoImpl();
 
   final AppDatabase _database;
   final NetworkInfo _networkInfo;
@@ -57,13 +60,20 @@ class SyncService {
         return SyncResult.success(); // offline – nothing to pull
       }
       int pulled = 0;
-      await _pullUsers(); pulled++;
-      await _pullPosts(); pulled++;
-      await _pullComments(); pulled++;
-      await _pullProjects(); pulled++;
-      await _pullJobs(); pulled++;
-      await _pullConversations(); pulled++;
-      await _pullNotifications(); pulled++;
+      await _pullUsers();
+      pulled++;
+      await _pullPosts();
+      pulled++;
+      await _pullComments();
+      pulled++;
+      await _pullProjects();
+      pulled++;
+      await _pullJobs();
+      pulled++;
+      await _pullConversations();
+      pulled++;
+      await _pullNotifications();
+      pulled++;
       _lastSyncTime = DateTime.now();
       return SyncResult.success(pulled: pulled);
     } catch (e) {
@@ -105,20 +115,26 @@ class SyncService {
   // ---------------------------------------------------------------------------
 
   Future<void> _pullUsers() async {
-    final data = await _api.getAny('/api/users');
+    final data = await _api.getAny('/users');
     final db = await _database.database;
     await db.transaction((txn) async {
       await txn.delete('users');
       for (final json in data) {
-        await txn.insert('users', _userToRow(_mapApiUser(json)),
-            conflictAlgorithm: ConflictAlgorithm.replace);
+        await txn.insert(
+          'users',
+          _userToRow(_mapApiUser(json)),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
       }
     });
   }
 
   Future<void> _pullPosts() async {
-    final data = await _api.getAny('/api/posts');
-    final items = data is List ? data : ((data as Map<String, dynamic>)['data'] as List? ?? []);
+    final data = await _api.getAny('/posts');
+    final items =
+        data is List
+            ? data
+            : ((data as Map<String, dynamic>)['data'] as List? ?? []);
     final db = await _database.database;
     await db.transaction((txn) async {
       // Only delete posts that are synced (not pending upload)
@@ -155,15 +171,21 @@ class SyncService {
     for (final postRow in postRows) {
       final postId = postRow['id'] as String;
       try {
-        final data = await _api.getAny('/api/posts/$postId/comments');
+        final data = await _api.getAny('/posts/$postId/comments');
         await db.transaction((txn) async {
           // Remove old synced comments for this post only
-          await txn.delete('comments', where: 'post_id = ? AND is_pending_sync = 0', whereArgs: [postId]);
+          await txn.delete(
+            'comments',
+            where: 'post_id = ? AND is_pending_sync = 0',
+            whereArgs: [postId],
+          );
           for (final json in data) {
-            final authorId = (json['author'] as Map<String, dynamic>?)?['id'] ?? '';
+            final authorId =
+                (json['author'] as Map<String, dynamic>?)?['id'] ?? '';
             await txn.insert('comments', {
               'id': json['id'],
               'post_id': postId,
+              'parent_id': json['parentId'] ?? json['parent_id'],
               'author_id': authorId,
               'content': json['content'] ?? '',
               'depth': json['depth'] ?? 0,
@@ -172,7 +194,8 @@ class SyncService {
               'is_best': (json['isBest'] == true) ? 1 : 0,
               'is_pending_sync': 0,
               'sync_dirty': 0,
-              'created_at': json['createdAt'] ?? DateTime.now().toIso8601String(),
+              'created_at':
+                  json['createdAt'] ?? DateTime.now().toIso8601String(),
             }, conflictAlgorithm: ConflictAlgorithm.replace);
           }
         });
@@ -183,7 +206,7 @@ class SyncService {
   }
 
   Future<void> _pullProjects() async {
-    final data = await _api.getAny('/api/projects');
+    final data = await _api.getAny('/projects');
     final db = await _database.database;
     await db.transaction((txn) async {
       await txn.delete('projects');
@@ -205,7 +228,7 @@ class SyncService {
   }
 
   Future<void> _pullJobs() async {
-    final data = await _api.getAny('/api/jobs');
+    final data = await _api.getAny('/jobs');
     final db = await _database.database;
     await db.transaction((txn) async {
       await txn.delete('jobs');
@@ -227,12 +250,13 @@ class SyncService {
   }
 
   Future<void> _pullConversations() async {
-    final data = await _api.getAny('/api/conversations');
+    final data = await _api.getAny('/conversations');
     final db = await _database.database;
     await db.transaction((txn) async {
       await txn.delete('conversations');
       for (final json in data) {
-        final otherUserId = (json['otherUser'] as Map<String, dynamic>?)?['id'] ?? '';
+        final otherUserId =
+            (json['otherUser'] as Map<String, dynamic>?)?['id'] ?? '';
         await txn.insert('conversations', {
           'id': json['id'],
           'other_user_id': otherUserId,
@@ -245,7 +269,7 @@ class SyncService {
   }
 
   Future<void> _pullNotifications() async {
-    final data = await _api.getAny('/api/notifications');
+    final data = await _api.getAny('/notifications');
     final db = await _database.database;
     await db.transaction((txn) async {
       await txn.delete('notifications');
@@ -269,18 +293,27 @@ class SyncService {
 
   Future<int> _pushPendingPosts() async {
     final db = await _database.database;
-    final pending = await db.query('posts', where: 'is_pending_sync = 1', limit: 50);
+    final pending = await db.query(
+      'posts',
+      where: 'is_pending_sync = 1',
+      limit: 50,
+    );
     int pushed = 0;
     for (final row in pending) {
       try {
-        await _api.post('/api/posts', {
+        await _api.post('/posts', {
           'title': row['title'],
           'content': row['content'],
           'authorId': row['author_id'],
           'type': row['type'],
           'tags': (row['tags'] as String?)?.split('|') ?? [],
         });
-        await db.update('posts', {'is_pending_sync': 0}, where: 'id = ?', whereArgs: [row['id']]);
+        await db.update(
+          'posts',
+          {'is_pending_sync': 0},
+          where: 'id = ?',
+          whereArgs: [row['id']],
+        );
         pushed++;
       } catch (_) {}
     }
@@ -289,16 +322,25 @@ class SyncService {
 
   Future<int> _pushPendingComments() async {
     final db = await _database.database;
-    final pending = await db.query('comments', where: 'is_pending_sync = 1', limit: 50);
+    final pending = await db.query(
+      'comments',
+      where: 'is_pending_sync = 1',
+      limit: 50,
+    );
     int pushed = 0;
     for (final row in pending) {
       try {
         final postId = row['post_id'] as String;
-        await _api.post('/api/posts/$postId/comments', {
+        await _api.post('/posts/$postId/comments', {
           'content': row['content'],
           'authorId': row['author_id'],
         });
-        await db.update('comments', {'is_pending_sync': 0}, where: 'id = ?', whereArgs: [row['id']]);
+        await db.update(
+          'comments',
+          {'is_pending_sync': 0},
+          where: 'id = ?',
+          whereArgs: [row['id']],
+        );
         pushed++;
       } catch (_) {}
     }

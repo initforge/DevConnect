@@ -83,7 +83,7 @@ class AuthService {
       _api.setToken(_token);
       return AuthState(
         status: AuthStatus.authenticated,
-        userId: prefs.user?['id'],
+        userId: prefs.userId,
         token: _token,
       );
     }

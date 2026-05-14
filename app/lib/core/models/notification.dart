@@ -16,6 +16,10 @@ class AppNotification extends Equatable {
   final bool isRead;
   @JsonKey(name: 'createdAt')
   final DateTime createdAt;
+  @JsonKey(name: 'mergedCount', defaultValue: 1)
+  final int mergedCount;
+  @JsonKey(name: 'targetPostId')
+  final String? targetPostId;
 
   const AppNotification({
     required this.id,
@@ -25,6 +29,8 @@ class AppNotification extends Equatable {
     this.fromUser,
     this.isRead = false,
     required this.createdAt,
+    this.mergedCount = 1,
+    this.targetPostId,
   });
 
   factory AppNotification.fromJson(Map<String, dynamic> json) => _$AppNotificationFromJson(json);

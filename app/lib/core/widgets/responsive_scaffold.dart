@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../localization/app_strings.dart';
 import '../navigation/feature_destination.dart';
 import '../theme/app_colors.dart';
 import '../utils/responsive_utils.dart';
@@ -43,20 +44,22 @@ class ResponsiveScaffold extends StatelessWidget {
         children: [
           Container(
             width: sidebarWidth,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
               border: Border(
-                right: BorderSide(color: AppColors.border, width: 1),
+                right: BorderSide(
+                  color: Theme.of(context).dividerColor,
+                  width: 1,
+                ),
               ),
             ),
             child: Column(
               children: [
                 _SidebarHeader(expanded: expanded),
-                const Divider(height: 1),
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    children: _buildSidebarSections(expanded),
+                    children: _buildSidebarSections(context, expanded),
                   ),
                 ),
               ],
@@ -77,7 +80,11 @@ class ResponsiveScaffold extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildSidebarSections(bool expanded) {
+  List<Widget> _buildSidebarSections(BuildContext context, bool expanded) {
+    final strings = AppStrings.current();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final groupLabelColor = isDark ? AppColors.darkTextTertiary : AppColors.textTertiary;
+    final dividerColor = isDark ? AppColors.darkBorder.withValues(alpha: 0.4) : AppColors.divider.withValues(alpha: 0.5);
     final groups = <FeatureDestinationGroup, List<FeatureDestination>>{};
     for (final item in FeatureDestinations.sidebar) {
       groups.putIfAbsent(item.group, () => <FeatureDestination>[]).add(item);
@@ -88,32 +95,50 @@ class ResponsiveScaffold extends StatelessWidget {
       if (expanded && entry.key != FeatureDestinationGroup.primary) {
         widgets.add(
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
-            child: Text(
-              FeatureDestinations.groupLabel(entry.key).toUpperCase(),
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textTertiary,
-              ),
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+            child: Row(
+              children: [
+                Container(
+                  width: 3,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: (isDark ? AppColors.primaryLight : AppColors.primary).withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  strings.group(entry.key.name).toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                    color: groupLabelColor,
+                  ),
+                ),
+              ],
             ),
           ),
         );
       } else if (!expanded && entry.key != FeatureDestinationGroup.primary) {
-        widgets.add(const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          child: Divider(height: 1),
-        ));
-      }
-      widgets.addAll(entry.value.map((item) {
-        final selected = item.matchesRoute(currentRoute);
-        return _SidebarItem(
-          destination: item,
-          selected: selected,
-          expanded: expanded,
-          onTap: () => onDestinationSelected?.call(item),
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Divider(height: 1, color: dividerColor),
+          ),
         );
-      }));
+      }
+      widgets.addAll(
+        entry.value.map((item) {
+          final selected = item.matchesRoute(currentRoute);
+          return _SidebarItem(
+            destination: item,
+            selected: selected,
+            expanded: expanded,
+            onTap: () => onDestinationSelected?.call(item),
+          );
+        }),
+      );
       return widgets;
     }).toList();
   }
@@ -123,11 +148,14 @@ class ResponsiveScaffold extends StatelessWidget {
       appBar: appBar,
       body: body,
       floatingActionButton: null,
-      bottomNavigationBar: showBottomNav ? _MobileNav(
-        currentRoute: currentRoute,
-        onDestinationSelected: onDestinationSelected,
-        onCreateSelected: onCreateSelected,
-      ) : null,
+      bottomNavigationBar:
+          showBottomNav
+              ? _MobileNav(
+                currentRoute: currentRoute,
+                onDestinationSelected: onDestinationSelected,
+                onCreateSelected: onCreateSelected,
+              )
+              : null,
     );
   }
 }
@@ -156,13 +184,15 @@ class _SidebarHeader extends StatelessWidget {
           ),
           if (expanded) ...[
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Text(
                 'DevConnect',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.textPrimary,
                 ),
               ),
             ),
@@ -189,36 +219,53 @@ class _SidebarItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final icon = selected ? destination.activeIcon : destination.icon;
+    final strings = AppStrings.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       child: Tooltip(
-        message: expanded ? '' : destination.label,
+        message: expanded ? '' : strings.nav(destination.id),
         child: Material(
-          color: selected ? AppColors.primaryLight : Colors.transparent,
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(12),
-            child: Padding(
+            hoverColor: selected ? null : (Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkSurfaceAlt
+                : AppColors.primarySurface),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
               padding: EdgeInsets.symmetric(
                 horizontal: expanded ? 16 : 12,
                 vertical: 12,
               ),
+              decoration: BoxDecoration(
+                color: selected ? AppColors.primary : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: selected
+                    ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))]
+                    : null,
+              ),
               child: Row(
                 mainAxisAlignment:
-                    expanded ? MainAxisAlignment.start : MainAxisAlignment.center,
+                    expanded
+                        ? MainAxisAlignment.start
+                        : MainAxisAlignment.center,
                 children: [
                   Icon(
                     icon,
                     size: 22,
-                    color:
-                        selected ? AppColors.primary : AppColors.textSecondary,
+                    color: selected
+                        ? Colors.white
+                        : (Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.textSecondary),
                   ),
                   if (expanded) ...[
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        destination.label,
+                        strings.nav(destination.id),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -226,8 +273,10 @@ class _SidebarItem extends StatelessWidget {
                           fontWeight:
                               selected ? FontWeight.w700 : FontWeight.w500,
                           color: selected
-                              ? AppColors.primary
-                              : AppColors.textPrimary,
+                              ? Colors.white
+                              : (Theme.of(context).brightness == Brightness.dark
+                                  ? AppColors.darkTextPrimary
+                                  : AppColors.textPrimary),
                         ),
                       ),
                     ),
@@ -258,6 +307,7 @@ class _MobileNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final destinations = FeatureDestinations.mobile;
+    final strings = AppStrings.of(context);
     final selectedIndex = _selectedIndex(destinations);
 
     return NavigationBar(
@@ -267,34 +317,35 @@ class _MobileNav extends StatelessWidget {
           onCreateSelected?.call();
           return;
         }
-        final destination = index < 2 ? destinations[index] : destinations[index - 1];
+        final destination =
+            index < 2 ? destinations[index] : destinations[index - 1];
         onDestinationSelected?.call(destination);
       },
       destinations: [
         NavigationDestination(
           icon: Icon(destinations[0].icon),
           selectedIcon: Icon(destinations[0].activeIcon),
-          label: destinations[0].label,
+          label: strings.nav(destinations[0].id),
         ),
         NavigationDestination(
           icon: Icon(destinations[1].icon),
           selectedIcon: Icon(destinations[1].activeIcon),
-          label: destinations[1].label,
+          label: strings.nav(destinations[1].id),
         ),
-        const NavigationDestination(
+        NavigationDestination(
           icon: Icon(Icons.add_circle_outline),
           selectedIcon: Icon(Icons.add_circle),
-          label: 'Post',
+          label: strings.t('common.post'),
         ),
         NavigationDestination(
           icon: Icon(destinations[2].icon),
           selectedIcon: Icon(destinations[2].activeIcon),
-          label: destinations[2].label,
+          label: strings.nav(destinations[2].id),
         ),
         NavigationDestination(
           icon: Icon(destinations[3].icon),
           selectedIcon: Icon(destinations[3].activeIcon),
-          label: destinations[3].label,
+          label: strings.nav(destinations[3].id),
         ),
       ],
     );
@@ -315,6 +366,7 @@ class _PreviewBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
@@ -322,8 +374,8 @@ class _PreviewBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: const Color(0xFFFED7AA)),
       ),
-      child: const Text(
-        'Preview',
+      child: Text(
+        strings.t('common.preview'),
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,

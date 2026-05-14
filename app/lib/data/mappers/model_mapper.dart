@@ -10,18 +10,26 @@ class ModelMappers {
     return User(
       id: json['id']?.toString() ?? '',
       username: json['username']?.toString() ?? '',
-      displayName: json['displayName']?.toString() ?? json['display_name']?.toString() ?? '',
+      displayName:
+          json['displayName']?.toString() ??
+          json['display_name']?.toString() ??
+          '',
       email: json['email']?.toString() ?? '',
-      avatarUrl: json['avatarUrl']?.toString() ?? json['avatar_url']?.toString(),
+      avatarUrl:
+          json['avatarUrl']?.toString() ?? json['avatar_url']?.toString(),
       bio: json['bio']?.toString(),
       skills: _parseStringList(json['skills']),
       followerCount: _parseInt(json['followerCount'] ?? json['follower_count']),
-      followingCount: _parseInt(json['followingCount'] ?? json['following_count']),
+      followingCount: _parseInt(
+        json['followingCount'] ?? json['following_count'],
+      ),
       postCount: _parseInt(json['postCount'] ?? json['post_count']),
       reputation: _parseInt(json['reputation']),
       isOnline: _parseBool(json['isOnline'] ?? json['is_online']),
       isMentor: _parseBool(json['isMentor'] ?? json['is_mentor']),
-      isFollowedByMe: _parseBool(json['isFollowedByMe'] ?? json['is_followed_by_me']),
+      isFollowedByMe: _parseBool(
+        json['isFollowedByMe'] ?? json['is_followed_by_me'],
+      ),
       createdAt: _parseDateTime(json['createdAt'] ?? json['created_at']),
     );
   }
@@ -62,7 +70,9 @@ class ModelMappers {
       isOnline: (row['is_online'] as int?) == 1,
       isMentor: (row['is_mentor'] as int?) == 1,
       isFollowedByMe: (row['is_followed_by_me'] as int?) == 1,
-      createdAt: DateTime.tryParse(row['created_at']?.toString() ?? '') ?? DateTime.now(),
+      createdAt:
+          DateTime.tryParse(row['created_at']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 
@@ -83,8 +93,12 @@ class ModelMappers {
       commentCount: _parseInt(json['commentCount'] ?? json['comment_count']),
       bookmarkCount: _parseInt(json['bookmarkCount'] ?? json['bookmark_count']),
       isLikedByMe: _parseBool(json['isLikedByMe'] ?? json['is_liked_by_me']),
-      isBookmarkedByMe: _parseBool(json['isBookmarkedByMe'] ?? json['is_bookmarked_by_me']),
+      isBookmarkedByMe: _parseBool(
+        json['isBookmarkedByMe'] ?? json['is_bookmarked_by_me'],
+      ),
       createdAt: _parseDateTime(json['createdAt'] ?? json['created_at']),
+      highlightedTitle: json['highlightedTitle']?.toString(),
+      highlightedContent: json['highlightedContent']?.toString(),
     );
   }
 
@@ -122,7 +136,9 @@ class ModelMappers {
       bookmarkCount: row['bookmark_count'] as int? ?? 0,
       isLikedByMe: (row['is_liked_by_me'] as int?) == 1,
       isBookmarkedByMe: (row['is_bookmarked_by_me'] as int?) == 1,
-      createdAt: DateTime.tryParse(row['created_at']?.toString() ?? '') ?? DateTime.now(),
+      createdAt:
+          DateTime.tryParse(row['created_at']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 
@@ -132,6 +148,7 @@ class ModelMappers {
     final authorJson = json['author'] as Map<String, dynamic>? ?? {};
     return Comment(
       id: json['id']?.toString() ?? '',
+      parentId: json['parentId']?.toString() ?? json['parent_id']?.toString(),
       author: userFromJson(authorJson),
       content: json['content']?.toString() ?? '',
       depth: _parseInt(json['depth']),
@@ -146,6 +163,7 @@ class ModelMappers {
     return {
       'id': comment.id,
       'post_id': postId,
+      'parent_id': comment.parentId,
       'author_id': comment.author.id,
       'content': comment.content,
       'depth': comment.depth,
@@ -159,11 +177,17 @@ class ModelMappers {
   // ==================== Conversation Mappers ====================
 
   static Conversation conversationFromJson(Map<String, dynamic> json) {
-    final userJson = json['otherUser'] as Map<String, dynamic>? ?? json['other_user'] as Map<String, dynamic>? ?? {};
+    final userJson =
+        json['otherUser'] as Map<String, dynamic>? ??
+        json['other_user'] as Map<String, dynamic>? ??
+        {};
     return Conversation(
       id: json['id']?.toString() ?? '',
       otherUser: userFromJson(userJson),
-      lastMessage: json['lastMessage']?.toString() ?? json['last_message']?.toString() ?? '',
+      lastMessage:
+          json['lastMessage']?.toString() ??
+          json['last_message']?.toString() ??
+          '',
       unreadCount: _parseInt(json['unreadCount'] ?? json['unread_count']),
       updatedAt: _parseDateTime(json['updatedAt'] ?? json['updated_at']),
     );
@@ -172,7 +196,9 @@ class ModelMappers {
   // ==================== Notification Mappers ====================
 
   static AppNotification notificationFromJson(Map<String, dynamic> json) {
-    final userJson = json['fromUser'] as Map<String, dynamic>? ?? json['from_user'] as Map<String, dynamic>?;
+    final userJson =
+        json['fromUser'] as Map<String, dynamic>? ??
+        json['from_user'] as Map<String, dynamic>?;
     return AppNotification(
       id: json['id']?.toString() ?? '',
       type: json['type']?.toString() ?? '',
@@ -181,6 +207,10 @@ class ModelMappers {
       fromUser: userJson != null ? userFromJson(userJson) : null,
       isRead: _parseBool(json['isRead'] ?? json['is_read']),
       createdAt: _parseDateTime(json['createdAt'] ?? json['created_at']),
+      mergedCount:
+          _parseInt(
+            json['mergedCount'] ?? json['merged_count'],
+          ).clamp(1, 1 << 31).toInt(),
     );
   }
 
@@ -224,7 +254,10 @@ class ModelMappers {
       title: json['title']?.toString() ?? '',
       location: json['location']?.toString() ?? '',
       remote: _parseBool(json['remote']),
-      salaryRange: json['salaryRange']?.toString() ?? json['salary_range']?.toString() ?? '',
+      salaryRange:
+          json['salaryRange']?.toString() ??
+          json['salary_range']?.toString() ??
+          '',
       techStack: _parseStringList(json['techStack'] ?? json['tech_stack']),
       experience: json['experience']?.toString() ?? '',
       matchPercent: _parseInt(json['matchPercent'] ?? json['match_percent']),
@@ -252,7 +285,8 @@ class ModelMappers {
   static List<String> _parseStringList(dynamic value) {
     if (value == null) return [];
     if (value is List) return value.map((e) => e.toString()).toList();
-    if (value is String) return value.split('|').where((e) => e.isNotEmpty).toList();
+    if (value is String)
+      return value.split('|').where((e) => e.isNotEmpty).toList();
     return [];
   }
 
