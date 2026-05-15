@@ -181,12 +181,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               strings.t('notifications.title'),
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
-            actions: const [
-              Padding(
-                padding: EdgeInsets.only(right: 14),
-                child: Icon(Icons.tune, size: 20),
-              ),
-            ],
+            actions: const [],
           ),
           body: DecorativeBackground(
             child:

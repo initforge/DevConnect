@@ -79,8 +79,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     Expanded(
                       child: InkWell(
                         borderRadius: BorderRadius.circular(20),
-                        onTap:
-                            () => context.push('${AppRoutes.search}?q=flutter'),
+                        onTap: () => context.push(AppRoutes.search),
                         child: Container(
                           height: 40,
                           padding: const EdgeInsets.symmetric(horizontal: 14),

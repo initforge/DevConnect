@@ -523,11 +523,26 @@ class _ChatScreenState extends State<ChatScreen>
             ),
           ],
         ),
-        actions: const [
-          Icon(Icons.videocam_outlined, size: 20),
-          SizedBox(width: 16),
-          Icon(Icons.call_outlined, size: 20),
-          SizedBox(width: 20),
+        actions: [
+          IconButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Video call — coming soon')),
+              );
+            },
+            icon: const Icon(Icons.videocam_outlined, size: 20),
+            tooltip: 'Video call',
+          ),
+          IconButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Voice call — coming soon')),
+              );
+            },
+            icon: const Icon(Icons.call_outlined, size: 20),
+            tooltip: 'Voice call',
+          ),
+          const SizedBox(width: 4),
         ],
       ),
       body: Center(
@@ -584,11 +599,26 @@ class _ChatScreenState extends State<ChatScreen>
             ),
           ],
         ),
-        actions: const [
-          Icon(Icons.videocam_outlined, size: 20),
-          SizedBox(width: 16),
-          Icon(Icons.call_outlined, size: 20),
-          SizedBox(width: 12),
+        actions: [
+          IconButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Video call — coming soon')),
+              );
+            },
+            icon: const Icon(Icons.videocam_outlined, size: 20),
+            tooltip: 'Video call',
+          ),
+          IconButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Voice call — coming soon')),
+              );
+            },
+            icon: const Icon(Icons.call_outlined, size: 20),
+            tooltip: 'Voice call',
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: _buildChatArea(context, otherUser, messages, isDesktop: false),
@@ -975,4 +1005,3 @@ class _MessageBubble extends StatelessWidget {
     );
   }
 }
-

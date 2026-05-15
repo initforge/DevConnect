@@ -351,17 +351,46 @@ class _LiveCodeScreenState extends State<LiveCodeScreen> {
                   color: Colors.white,
                   border: Border(top: BorderSide(color: Color(0xFFE7EAF3))),
                 ),
-                child: const SafeArea(
+                child: SafeArea(
                   top: false,
                   child: Row(
                     children: [
-                      _ActionCircle(Icons.mic_none),
-                      SizedBox(width: 12),
-                      _ActionCircle(Icons.videocam_outlined),
-                      SizedBox(width: 12),
-                      _ActionCircle(Icons.screen_share_outlined),
-                      Spacer(),
-                      _ActionCircle(Icons.chat_bubble_outline, primary: true),
+                      _ActionCircle(
+                        Icons.mic_none,
+                        onTap:
+                            () => ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Mic — demo only')),
+                            ),
+                      ),
+                      const SizedBox(width: 12),
+                      _ActionCircle(
+                        Icons.videocam_outlined,
+                        onTap:
+                            () => ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Camera — demo only'),
+                              ),
+                            ),
+                      ),
+                      const SizedBox(width: 12),
+                      _ActionCircle(
+                        Icons.screen_share_outlined,
+                        onTap:
+                            () => ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Screen share — demo only'),
+                              ),
+                            ),
+                      ),
+                      const Spacer(),
+                      _ActionCircle(
+                        Icons.chat_bubble_outline,
+                        primary: true,
+                        onTap:
+                            () => ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Chat — demo only')),
+                            ),
+                      ),
                     ],
                   ),
                 ),
@@ -436,24 +465,28 @@ class _ParticipantAvatar extends StatelessWidget {
 }
 
 class _ActionCircle extends StatelessWidget {
-  const _ActionCircle(this.icon, {this.primary = false});
+  const _ActionCircle(this.icon, {this.primary = false, this.onTap});
 
   final IconData icon;
   final bool primary;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        color: primary ? const Color(0xFF5B53F6) : const Color(0xFFF4F6FA),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        icon,
-        size: 20,
-        color: primary ? Colors.white : AppColors.textPrimary,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: primary ? const Color(0xFF5B53F6) : const Color(0xFFF4F6FA),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: primary ? Colors.white : AppColors.textPrimary,
+        ),
       ),
     );
   }
