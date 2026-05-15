@@ -43,7 +43,7 @@ void main() {
         'email': 'test@test.com',
       };
       await preferences.saveUser(userData);
-      
+
       final retrieved = preferences.user;
       expect(retrieved, isNotNull);
       expect(retrieved!['id'], 'u1');
@@ -73,7 +73,7 @@ void main() {
       };
       await preferences.saveUser(userData);
       final retrieved = preferences.user;
-      
+
       expect(retrieved!['id'], 'u1');
       expect(retrieved['metadata'], isA<Map>());
       expect(retrieved['metadata']['roles'], ['admin', 'user']);
@@ -84,9 +84,9 @@ void main() {
     test('clearAuth() removes both token and user', () async {
       await preferences.saveToken('test_token');
       await preferences.saveUser({'id': 'u1'});
-      
+
       await preferences.clearAuth();
-      
+
       expect(preferences.token, isNull);
       expect(preferences.user, isNull);
     });
@@ -100,7 +100,7 @@ void main() {
     test('darkMode can be set and retrieved', () async {
       await preferences.setDarkMode(true);
       expect(preferences.darkMode, true);
-      
+
       await preferences.setDarkMode(false);
       expect(preferences.darkMode, false);
     });
@@ -168,7 +168,7 @@ void main() {
         frameworks: ['Flutter', 'FastAPI'],
         topics: ['Mobile', 'Backend'],
       );
-      
+
       final data = preferences.onboardingData;
       expect(data, isNotNull);
       expect(data!['languages'], ['Dart', 'Python']);
@@ -182,7 +182,7 @@ void main() {
         frameworks: ['React'],
         topics: ['Frontend'],
       );
-      
+
       final prefs2 = await AppPreferences.getInstance();
       final data = prefs2.onboardingData;
       expect(data!['languages'], ['JavaScript']);
@@ -195,9 +195,9 @@ void main() {
         frameworks: [],
         topics: [],
       );
-      
+
       await preferences.clearOnboarding();
-      
+
       expect(preferences.onboardingCompleted, false);
       expect(preferences.onboardingData, isNull);
     });
@@ -231,7 +231,7 @@ void main() {
       };
       await preferences.saveUser(userData);
       final retrieved = preferences.user;
-      
+
       expect(retrieved!['name'], contains('Test User'));
     });
 
@@ -241,7 +241,7 @@ void main() {
         frameworks: [],
         topics: [],
       );
-      
+
       final data = preferences.onboardingData;
       expect(data!['languages'], isEmpty);
       expect(data['frameworks'], isEmpty);

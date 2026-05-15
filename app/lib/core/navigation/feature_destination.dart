@@ -109,7 +109,6 @@ class FeatureDestinations {
     group: FeatureDestinationGroup.opportunities,
   );
 
-
   static const playground = FeatureDestination(
     id: 'playground',
     label: 'Playground',
@@ -147,6 +146,15 @@ class FeatureDestinations {
     status: FeatureDestinationStatus.preview,
   );
 
+  static const mentorship = FeatureDestination(
+    id: 'mentorship',
+    label: 'Mentorship',
+    icon: Icons.school_outlined,
+    activeIcon: Icons.school,
+    route: AppRoutes.mentorship,
+    group: FeatureDestinationGroup.tools,
+  );
+
   static const settings = FeatureDestination(
     id: 'settings',
     label: 'Settings',
@@ -156,12 +164,7 @@ class FeatureDestinations {
     group: FeatureDestinationGroup.system,
   );
 
-  static const mobile = <FeatureDestination>[
-    home,
-    explore,
-    chat,
-    more,
-  ];
+  static const mobile = <FeatureDestination>[home, explore, chat, more];
 
   static const sidebar = <FeatureDestination>[
     home,
@@ -175,6 +178,7 @@ class FeatureDestinations {
     analytics,
     leaderboard,
     liveCode,
+    mentorship,
     settings,
   ];
 
@@ -187,6 +191,7 @@ class FeatureDestinations {
     analytics,
     playground,
     liveCode,
+    mentorship,
     settings,
   ];
 

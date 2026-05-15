@@ -192,183 +192,183 @@ class _LiveCodeScreenState extends State<LiveCodeScreen> {
       backgroundColor: const Color(0xFFF7F8FC),
       body: DecorativeBackground(
         child: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.fiber_manual_record,
-                    size: 12,
-                    color: _isConnected ? Colors.green : AppColors.error,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _isConnected ? 'Live Session' : 'Connecting...',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const Spacer(),
-                  const _HeaderPill(
-                    icon: Icons.schedule,
-                    label: '23:45',
-                    color: Color(0xFFF3F0FF),
-                    textColor: Color(0xFF5B53F6),
-                  ),
-                  const SizedBox(width: 8),
-                  const _HeaderPill(
-                    icon: Icons.call_end,
-                    label: 'End',
-                    color: Color(0xFFFFEFEF),
-                    textColor: AppColors.error,
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(14, 8, 14, 18),
-                children: [
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _ParticipantAvatar(
-                        label: _avatarLabel(_localName),
-                        color: AppColors.primary,
-                      ),
-                      ..._remoteCursors.values.map(
-                        (cursor) => _ParticipantAvatar(
-                          label: _avatarLabel(cursor.name),
-                          color: cursor.color,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(28),
-                      border: Border.all(color: const Color(0xFFE7EAF3)),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFF9FAFD),
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(28),
-                            ),
-                          ),
-                          child: const Row(
-                            children: [
-                              _Dot(Color(0xFFF87171)),
-                              SizedBox(width: 6),
-                              _Dot(Color(0xFFFBBF24)),
-                              SizedBox(width: 6),
-                              _Dot(Color(0xFF34D399)),
-                            ],
-                          ),
-                        ),
-                        Stack(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: TextField(
-                                controller: _codeCtrl,
-                                maxLines: null,
-                                onChanged: _onCodeChanged,
-                                style: const TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 13,
-                                  height: 1.5,
-                                  color: Color(0xFF1E293B),
-                                ),
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                              ),
-                            ),
-                            Positioned.fill(
-                              child: IgnorePointer(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: _RemoteCursorOverlay(
-                                    cursors: _remoteCursors.values.toList(),
-                                    code: _codeCtrl.text,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              right: 12,
-                              top: 12,
-                              child: _CursorPresenceBar(
-                                cursors: _remoteCursors.values.toList(),
-                                code: _codeCtrl.text,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Container(
-                      width: 220,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF5B53F6),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: const Text(
-                        'Let me use the new API hook so we can keep state in sync.',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Color(0xFFE7EAF3))),
-              ),
-              child: const SafeArea(
-                top: false,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
                 child: Row(
                   children: [
-                    _ActionCircle(Icons.mic_none),
-                    SizedBox(width: 12),
-                    _ActionCircle(Icons.videocam_outlined),
-                    SizedBox(width: 12),
-                    _ActionCircle(Icons.screen_share_outlined),
-                    Spacer(),
-                    _ActionCircle(Icons.chat_bubble_outline, primary: true),
+                    Icon(
+                      Icons.fiber_manual_record,
+                      size: 12,
+                      color: _isConnected ? Colors.green : AppColors.error,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _isConnected ? 'Live Session' : 'Connecting...',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Spacer(),
+                    const _HeaderPill(
+                      icon: Icons.schedule,
+                      label: '23:45',
+                      color: Color(0xFFF3F0FF),
+                      textColor: Color(0xFF5B53F6),
+                    ),
+                    const SizedBox(width: 8),
+                    const _HeaderPill(
+                      icon: Icons.call_end,
+                      label: 'End',
+                      color: Color(0xFFFFEFEF),
+                      textColor: AppColors.error,
+                    ),
                   ],
                 ),
               ),
-            ),
-          ],
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(14, 8, 14, 18),
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _ParticipantAvatar(
+                          label: _avatarLabel(_localName),
+                          color: AppColors.primary,
+                        ),
+                        ..._remoteCursors.values.map(
+                          (cursor) => _ParticipantAvatar(
+                            label: _avatarLabel(cursor.name),
+                            color: cursor.color,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(color: const Color(0xFFE7EAF3)),
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF9FAFD),
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(28),
+                              ),
+                            ),
+                            child: const Row(
+                              children: [
+                                _Dot(Color(0xFFF87171)),
+                                SizedBox(width: 6),
+                                _Dot(Color(0xFFFBBF24)),
+                                SizedBox(width: 6),
+                                _Dot(Color(0xFF34D399)),
+                              ],
+                            ),
+                          ),
+                          Stack(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: TextField(
+                                  controller: _codeCtrl,
+                                  maxLines: null,
+                                  onChanged: _onCodeChanged,
+                                  style: const TextStyle(
+                                    fontFamily: 'monospace',
+                                    fontSize: 13,
+                                    height: 1.5,
+                                    color: Color(0xFF1E293B),
+                                  ),
+                                  decoration: const InputDecoration(
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                ),
+                              ),
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: _RemoteCursorOverlay(
+                                      cursors: _remoteCursors.values.toList(),
+                                      code: _codeCtrl.text,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                right: 12,
+                                top: 12,
+                                child: _CursorPresenceBar(
+                                  cursors: _remoteCursors.values.toList(),
+                                  code: _codeCtrl.text,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        width: 220,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF5B53F6),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: const Text(
+                          'Let me use the new API hook so we can keep state in sync.',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(top: BorderSide(color: Color(0xFFE7EAF3))),
+                ),
+                child: const SafeArea(
+                  top: false,
+                  child: Row(
+                    children: [
+                      _ActionCircle(Icons.mic_none),
+                      SizedBox(width: 12),
+                      _ActionCircle(Icons.videocam_outlined),
+                      SizedBox(width: 12),
+                      _ActionCircle(Icons.screen_share_outlined),
+                      Spacer(),
+                      _ActionCircle(Icons.chat_bubble_outline, primary: true),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

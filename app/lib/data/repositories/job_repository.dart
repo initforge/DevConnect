@@ -7,26 +7,37 @@ import '../mappers/model_mapper.dart';
 
 class JobRepository {
   JobRepository({AppDatabase? database, bool useApi = true})
-      : _database = database ?? AppDatabase.instance,
-        _useApi = useApi;
+    : _database = database ?? AppDatabase.instance,
+      _useApi = useApi;
 
   final AppDatabase _database;
   final bool _useApi;
 
   Future<List<Job>> getJobs({int limit = 50}) async {
     if (_useApi) {
-      final data = await ApiService.instance.get('/jobs', queryParams: {'limit': limit});
-      final jobs = data.map((json) {
-        final job = ModelMappers.jobFromJson(json as Map<String, dynamic>);
-        final currentUser = _getCurrentUser();
-        final computedMatch = currentUser != null ? _computeMatchPercent(job, currentUser) : job.matchPercent;
-        return job.copyWith(matchPercent: computedMatch);
-      }).toList();
+      final data = await ApiService.instance.get(
+        '/jobs',
+        queryParams: {'limit': limit},
+      );
+      final jobs =
+          data.map((json) {
+            final job = ModelMappers.jobFromJson(json as Map<String, dynamic>);
+            final currentUser = _getCurrentUser();
+            final computedMatch =
+                currentUser != null
+                    ? _computeMatchPercent(job, currentUser)
+                    : job.matchPercent;
+            return job.copyWith(matchPercent: computedMatch);
+          }).toList();
       await _saveJobsToDb(jobs);
       return jobs;
     }
     final db = await _database.database;
-    final rows = await db.query('jobs', orderBy: 'created_at DESC', limit: limit);
+    final rows = await db.query(
+      'jobs',
+      orderBy: 'created_at DESC',
+      limit: limit,
+    );
     return _jobsFromRows(rows);
   }
 
@@ -36,7 +47,12 @@ class JobRepository {
       return ModelMappers.jobFromJson(data);
     }
     final db = await _database.database;
-    final rows = await db.query('jobs', where: 'id = ?', whereArgs: [id], limit: 1);
+    final rows = await db.query(
+      'jobs',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
     if (rows.isEmpty) return null;
     return _jobsFromRows(rows).first;
   }
@@ -49,10 +65,16 @@ class JobRepository {
     if (_useApi) {
       final params = <String, dynamic>{};
       if (query != null) params['q'] = query;
-      if (techStack != null && techStack.isNotEmpty) params['tech'] = techStack.join(',');
+      if (techStack != null && techStack.isNotEmpty)
+        params['tech'] = techStack.join(',');
       if (remote != null) params['remote'] = remote;
-      final data = await ApiService.instance.get('/jobs/search', queryParams: params);
-      return data.map((json) => ModelMappers.jobFromJson(json as Map<String, dynamic>)).toList();
+      final data = await ApiService.instance.get(
+        '/jobs/search',
+        queryParams: params,
+      );
+      return data
+          .map((json) => ModelMappers.jobFromJson(json as Map<String, dynamic>))
+          .toList();
     }
     final db = await _database.database;
     final rows = await db.query(
@@ -101,7 +123,9 @@ class JobRepository {
 
   Future<List<Application>> getMyApplications() async {
     final data = await ApiService.instance.get('/users/me/applications');
-    return data.map((json) => Application.fromJson(json as Map<String, dynamic>)).toList();
+    return data
+        .map((json) => Application.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 
   int _computeMatchPercent(Job job, User currentUser) {
@@ -109,7 +133,9 @@ class JobRepository {
     final userSkills = currentUser.skills.map((s) => s.toLowerCase()).toSet();
     final jobSkills = job.techStack.map((s) => s.toLowerCase()).toSet();
     final overlap = userSkills.intersection(jobSkills);
-    return jobSkills.isNotEmpty ? ((overlap.length / jobSkills.length) * 100).round() : 0;
+    return jobSkills.isNotEmpty
+        ? ((overlap.length / jobSkills.length) * 100).round()
+        : 0;
   }
 
   User? _getCurrentUser() {
@@ -126,24 +152,37 @@ class JobRepository {
     final db = await _database.database;
     await db.transaction((txn) async {
       for (final job in jobs) {
-        await txn.insert('jobs', ModelMappers.jobToRow(job),
-            conflictAlgorithm: ConflictAlgorithm.replace);
+        await txn.insert(
+          'jobs',
+          ModelMappers.jobToRow(job),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
       }
     });
   }
 
   List<Job> _jobsFromRows(List<Map<String, Object?>> rows) {
-    return rows.map((row) => Job(
-      id: row['id']?.toString() ?? '',
-      company: row['company']?.toString() ?? '',
-      title: row['title']?.toString() ?? '',
-      location: row['location']?.toString() ?? '',
-      remote: (row['remote'] as int?) == 1,
-      salaryRange: row['salary_range']?.toString() ?? '',
-      techStack: (row['tech_stack']?.toString() ?? '').split('|').where((e) => e.isNotEmpty).toList(),
-      experience: row['experience']?.toString() ?? '',
-      matchPercent: row['match_percent'] as int? ?? 0,
-      createdAt: DateTime.tryParse(row['created_at']?.toString() ?? '') ?? DateTime.now(),
-    )).toList();
+    return rows
+        .map(
+          (row) => Job(
+            id: row['id']?.toString() ?? '',
+            company: row['company']?.toString() ?? '',
+            title: row['title']?.toString() ?? '',
+            location: row['location']?.toString() ?? '',
+            remote: (row['remote'] as int?) == 1,
+            salaryRange: row['salary_range']?.toString() ?? '',
+            techStack:
+                (row['tech_stack']?.toString() ?? '')
+                    .split('|')
+                    .where((e) => e.isNotEmpty)
+                    .toList(),
+            experience: row['experience']?.toString() ?? '',
+            matchPercent: row['match_percent'] as int? ?? 0,
+            createdAt:
+                DateTime.tryParse(row['created_at']?.toString() ?? '') ??
+                DateTime.now(),
+          ),
+        )
+        .toList();
   }
 }

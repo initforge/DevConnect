@@ -96,9 +96,7 @@ class _CodeSnippetCard extends StatelessWidget {
           // Title bar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1E1E2E),
-            ),
+            decoration: const BoxDecoration(color: Color(0xFF1E1E2E)),
             child: Row(
               children: [
                 const Row(
@@ -112,7 +110,10 @@ class _CodeSnippetCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF313244),
                     borderRadius: BorderRadius.circular(6),
@@ -135,7 +136,11 @@ class _CodeSnippetCard extends StatelessWidget {
                       const SnackBar(content: Text('Code copied')),
                     );
                   },
-                  child: const Icon(Icons.copy_outlined, size: 14, color: Color(0xFF6C7086)),
+                  child: const Icon(
+                    Icons.copy_outlined,
+                    size: 14,
+                    color: Color(0xFF6C7086),
+                  ),
                 ),
               ],
             ),
@@ -188,7 +193,10 @@ class _CodeSnippetCard extends StatelessWidget {
 
   String _extractCodeSnippet(Post post) {
     // Try to extract fenced code block
-    final fencedMatch = RegExp(r'```\w*\n?(.*?)```', dotAll: true).firstMatch(post.content);
+    final fencedMatch = RegExp(
+      r'```\w*\n?(.*?)```',
+      dotAll: true,
+    ).firstMatch(post.content);
     if (fencedMatch != null) return fencedMatch.group(1)?.trim() ?? '';
 
     // Fallback: generate a representative snippet from post metadata
@@ -208,9 +216,14 @@ class _CodeSnippetCard extends StatelessWidget {
   String _detectLanguage(Post post) {
     final content = post.content.toLowerCase();
     final tags = post.tags.map((t) => t.toLowerCase()).toList();
-    if (tags.contains('python') || content.contains('def ') || content.contains('import ')) return 'python';
-    if (tags.contains('typescript') || tags.contains('nestjs')) return 'typescript';
-    if (tags.contains('javascript') || tags.contains('react')) return 'javascript';
+    if (tags.contains('python') ||
+        content.contains('def ') ||
+        content.contains('import '))
+      return 'python';
+    if (tags.contains('typescript') || tags.contains('nestjs'))
+      return 'typescript';
+    if (tags.contains('javascript') || tags.contains('react'))
+      return 'javascript';
     if (tags.contains('dart') || tags.contains('flutter')) return 'dart';
     if (tags.contains('go') || tags.contains('golang')) return 'go';
     if (tags.contains('rust')) return 'rust';
@@ -223,7 +236,11 @@ class _Dot2 extends StatelessWidget {
   final Color color;
   @override
   Widget build(BuildContext context) {
-    return Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle));
+    return Container(
+      width: 10,
+      height: 10,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
   }
 }
 
@@ -245,13 +262,29 @@ class _MetaRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _MetaChip(icon: Icons.visibility_outlined, label: '${_fmt(post.viewCount)} views', color: const Color(0xFF6366F1)),
+          _MetaChip(
+            icon: Icons.visibility_outlined,
+            label: '${_fmt(post.viewCount)} views',
+            color: const Color(0xFF6366F1),
+          ),
           const SizedBox(width: 16),
-          _MetaChip(icon: Icons.chat_bubble_outline, label: '${_fmt(post.commentCount)} comments', color: const Color(0xFF10B981)),
+          _MetaChip(
+            icon: Icons.chat_bubble_outline,
+            label: '${_fmt(post.commentCount)} comments',
+            color: const Color(0xFF10B981),
+          ),
           const SizedBox(width: 16),
-          _MetaChip(icon: Icons.favorite_border, label: '${_fmt(post.likeCount)} likes', color: const Color(0xFFEF4444)),
+          _MetaChip(
+            icon: Icons.favorite_border,
+            label: '${_fmt(post.likeCount)} likes',
+            color: const Color(0xFFEF4444),
+          ),
           const Spacer(),
-          _MetaChip(icon: Icons.bookmark_border, label: _fmt(post.bookmarkCount), color: const Color(0xFFF59E0B)),
+          _MetaChip(
+            icon: Icons.bookmark_border,
+            label: _fmt(post.bookmarkCount),
+            color: const Color(0xFFF59E0B),
+          ),
         ],
       ),
     );
@@ -259,7 +292,11 @@ class _MetaRow extends StatelessWidget {
 }
 
 class _MetaChip extends StatelessWidget {
-  const _MetaChip({required this.icon, required this.label, required this.color});
+  const _MetaChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
   final IconData icon;
   final String label;
   final Color color;
@@ -270,7 +307,14 @@ class _MetaChip extends StatelessWidget {
       children: [
         Icon(icon, size: 15, color: color),
         const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: color)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
       ],
     );
   }

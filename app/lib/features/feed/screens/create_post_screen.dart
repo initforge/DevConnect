@@ -92,7 +92,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to upload image. Please try again.')),
+        const SnackBar(
+          content: Text('Failed to upload image. Please try again.'),
+        ),
       );
     }
   }
@@ -414,7 +416,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                             color: Colors.white,
                           ),
                         )
-                        : Text(AppStrings.of(context).t('feed.post'), style: const TextStyle(fontSize: 12)),
+                        : Text(
+                          AppStrings.of(context).t('feed.post'),
+                          style: const TextStyle(fontSize: 12),
+                        ),
               ),
             ),
           ),
@@ -533,7 +538,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       children: [
                         // Editor title bar
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
                           color: const Color(0xFF1E1E2E),
                           child: Row(
                             children: [
@@ -548,13 +556,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                               ),
                               const Spacer(),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF313244),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  _type == PostType.snippet ? 'SNIPPET' : 'CONTENT',
+                                  _type == PostType.snippet
+                                      ? 'SNIPPET'
+                                      : 'CONTENT',
                                   style: const TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w700,
@@ -1055,6 +1068,10 @@ class _EditorDot extends StatelessWidget {
   final Color color;
   @override
   Widget build(BuildContext context) {
-    return Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle));
+    return Container(
+      width: 10,
+      height: 10,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
   }
 }

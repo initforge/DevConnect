@@ -66,8 +66,18 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
   String _formatDate(DateTime? date) {
     if (date == null) return '';
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -82,10 +92,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                AppColors.primary.withOpacity(0.06),
-                Colors.transparent,
-              ],
+              colors: [AppColors.primary.withOpacity(0.06), Colors.transparent],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -141,7 +148,8 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                   EmptyState(
                     icon: Icons.work_outline,
                     title: 'No applications yet',
-                    subtitle: 'Browse the job board and apply to positions you like.',
+                    subtitle:
+                        'Browse the job board and apply to positions you like.',
                     actionLabel: 'Browse Jobs',
                     onAction: () {
                       context.go(AppRoutes.jobs);
@@ -152,9 +160,12 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
             );
           }
 
-          final pending = applications.where((a) => a.status == 'PENDING').length;
-          final accepted = applications.where((a) => a.status == 'ACCEPTED').length;
-          final rejected = applications.where((a) => a.status == 'REJECTED').length;
+          final pending =
+              applications.where((a) => a.status == 'PENDING').length;
+          final accepted =
+              applications.where((a) => a.status == 'ACCEPTED').length;
+          final rejected =
+              applications.where((a) => a.status == 'REJECTED').length;
 
           return RefreshIndicator(
             onRefresh: _refresh,
@@ -180,7 +191,10 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                         children: [
                           const Row(
                             children: [
-                              Icon(Icons.work_history_outlined, color: Color(0xFF5B53F6)),
+                              Icon(
+                                Icons.work_history_outlined,
+                                color: Color(0xFF5B53F6),
+                              ),
                               SizedBox(width: 8),
                               Text(
                                 'Application Summary',
@@ -322,7 +336,9 @@ class _ApplicationCard extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  application.company.isEmpty ? '?' : application.company[0].toUpperCase(),
+                  application.company.isEmpty
+                      ? '?'
+                      : application.company[0].toUpperCase(),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -360,7 +376,8 @@ class _ApplicationCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  application.status[0] + application.status.substring(1).toLowerCase(),
+                  application.status[0] +
+                      application.status.substring(1).toLowerCase(),
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -385,12 +402,25 @@ class _ApplicationCard extends StatelessWidget {
             runSpacing: 8,
             children: [
               _ApplicationMeta(
-                icon: application.remote ? Icons.home_work_outlined : Icons.location_on_outlined,
-                label: '${application.location}${application.remote ? ' · Remote' : ''}',
+                icon:
+                    application.remote
+                        ? Icons.home_work_outlined
+                        : Icons.location_on_outlined,
+                label:
+                    '${application.location}${application.remote ? ' · Remote' : ''}',
               ),
-              _ApplicationMeta(icon: Icons.payments_outlined, label: application.salaryRange),
-              _ApplicationMeta(icon: Icons.timeline_outlined, label: application.experience),
-              _ApplicationMeta(icon: Icons.calendar_today_outlined, label: formatDate(application.createdAt)),
+              _ApplicationMeta(
+                icon: Icons.payments_outlined,
+                label: application.salaryRange,
+              ),
+              _ApplicationMeta(
+                icon: Icons.timeline_outlined,
+                label: application.experience,
+              ),
+              _ApplicationMeta(
+                icon: Icons.calendar_today_outlined,
+                label: formatDate(application.createdAt),
+              ),
             ],
           ),
           if (application.coverNote.isNotEmpty) ...[
@@ -427,10 +457,7 @@ class _ApplicationMeta extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-          ),
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
       ],
     );

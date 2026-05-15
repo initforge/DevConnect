@@ -168,6 +168,11 @@ final appRouter = GoRouter(
           builder: (_, __) => const LiveCodeScreen(),
         ),
         GoRoute(
+          path: AppRoutes.mentorship,
+          name: AppRoutes.nameMentorship,
+          builder: (_, __) => const _MentorshipPlaceholderScreen(),
+        ),
+        GoRoute(
           path: AppRoutes.more,
           name: AppRoutes.nameMore,
           builder: (_, __) => const MoreScreen(),
@@ -239,8 +244,11 @@ class _MainShellState extends ConsumerState<_MainShell> {
   @override
   Widget build(BuildContext context) {
     final path = GoRouterState.of(context).uri.toString();
-    final showFab = !kScreenshotMode &&
-        (path == AppRoutes.home || path == AppRoutes.explore || path == AppRoutes.profile);
+    final showFab =
+        !kScreenshotMode &&
+        (path == AppRoutes.home ||
+            path == AppRoutes.explore ||
+            path == AppRoutes.profile);
     return ResponsiveScaffold(
       body: widget.child,
       currentRoute: path,
@@ -266,6 +274,33 @@ class _MainShellState extends ConsumerState<_MainShell> {
                 child: const Icon(Icons.edit),
               )
               : null,
+    );
+  }
+}
+
+/// Placeholder screen for Mentorship feature (plan: feature-01-mentorship-paid-sessions.md)
+class _MentorshipPlaceholderScreen extends StatelessWidget {
+  const _MentorshipPlaceholderScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Mentorship')),
+      body: const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.school_outlined, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'Mentorship',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+            ),
+            SizedBox(height: 8),
+            Text('Coming soon', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      ),
     );
   }
 }

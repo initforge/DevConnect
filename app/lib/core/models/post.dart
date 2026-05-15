@@ -67,7 +67,6 @@ class Post extends Equatable {
     this.highlightedContent,
   });
 
-
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);
   Map<String, dynamic> toJson() => _$PostToJson(this);
 

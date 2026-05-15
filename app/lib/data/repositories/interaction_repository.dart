@@ -6,20 +6,13 @@ import '../../core/services/api_service.dart';
 import '../../core/services/app_preferences.dart';
 
 /// Interaction types tracked for recommendation engine.
-enum InteractionType {
-  view,
-  like,
-  comment,
-  bookmark,
-}
+enum InteractionType { view, like, comment, bookmark }
 
 /// Repository for user-post interactions — offline-first with API sync.
 class InteractionRepository {
-  InteractionRepository({
-    AppDatabase? database,
-    bool useApi = true,
-  })  : _database = database ?? AppDatabase.instance,
-        _useApi = useApi;
+  InteractionRepository({AppDatabase? database, bool useApi = true})
+    : _database = database ?? AppDatabase.instance,
+      _useApi = useApi;
 
   final AppDatabase _database;
   final bool _useApi;
@@ -42,10 +35,9 @@ class InteractionRepository {
         // Map to existing backend endpoints that implicitly track
         switch (type) {
           case InteractionType.view:
-            await ApiService.instance.post(
-              '/posts/$postId/view',
-              {'userId': userId},
-            );
+            await ApiService.instance.post('/posts/$postId/view', {
+              'userId': userId,
+            });
           case InteractionType.like:
           case InteractionType.comment:
           case InteractionType.bookmark:
@@ -71,9 +63,7 @@ class InteractionRepository {
 
     if (_useApi) {
       try {
-        final data = await ApiService.instance.get(
-          '/users/me/interactions',
-        );
+        final data = await ApiService.instance.get('/users/me/interactions');
         return List<Map<String, dynamic>>.from(data);
       } catch (error) {
         debugPrint('InteractionRepository.getUserInteractions API: $error');
@@ -112,16 +102,12 @@ class InteractionRepository {
     InteractionType type,
   ) async {
     final db = await _database.database;
-    await db.insert(
-      'user_post_interactions',
-      {
-        'user_id': userId,
-        'post_id': postId,
-        'interaction_type': type.name,
-        'created_at': DateTime.now().toIso8601String(),
-      },
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
+    await db.insert('user_post_interactions', {
+      'user_id': userId,
+      'post_id': postId,
+      'interaction_type': type.name,
+      'created_at': DateTime.now().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 
   Future<List<Map<String, dynamic>>> _fetchLocalInteractions(

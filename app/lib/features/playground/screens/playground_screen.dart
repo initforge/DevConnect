@@ -82,7 +82,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveUtils.isDesktop(context);
-    
+
     final editor = _EditorCard(controller: _codeCtrl, language: _language);
     final output = _OutputCard(output: _output, running: _running);
     final strings = AppStrings.of(context);
@@ -108,41 +108,42 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       ],
     );
 
-    final content = isDesktop
-        ? Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(flex: 3, child: editor),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 2,
-                child: Column(
-                  children: [
-                    Expanded(child: output),
-                    const SizedBox(height: 16),
-                    aiCards,
-                  ],
+    final content =
+        isDesktop
+            ? Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 3, child: editor),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    children: [
+                      Expanded(child: output),
+                      const SizedBox(height: 16),
+                      aiCards,
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          )
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(flex: 3, child: editor),
-              const SizedBox(height: 12),
-              Expanded(
-                flex: 2,
-                child: Column(
-                  children: [
-                    Expanded(child: output),
-                    const SizedBox(height: 12),
-                    aiCards,
-                  ],
+              ],
+            )
+            : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 3, child: editor),
+                const SizedBox(height: 12),
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    children: [
+                      Expanded(child: output),
+                      const SizedBox(height: 12),
+                      aiCards,
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          );
+              ],
+            );
 
     final body = Padding(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
@@ -154,7 +155,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: DropdownButtonHideUnderline(
@@ -226,10 +228,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                AppColors.primary.withOpacity(0.06),
-                Colors.transparent,
-              ],
+              colors: [AppColors.primary.withOpacity(0.06), Colors.transparent],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -252,24 +251,28 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: Text(_running ? strings.t('playground.running') : strings.t('playground.run')),
+              child: Text(
+                _running
+                    ? strings.t('playground.running')
+                    : strings.t('playground.run'),
+              ),
             ),
           ),
         ],
       ),
       body: DecorativeBackground(
-        child: isDesktop
-          ? Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1100),
-                child: body,
-              ),
-            )
-          : body,
+        child:
+            isDesktop
+                ? Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1100),
+                    child: body,
+                  ),
+                )
+                : body,
       ),
     );
-
   }
 }
 

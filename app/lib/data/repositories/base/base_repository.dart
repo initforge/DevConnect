@@ -9,10 +9,10 @@ abstract class BaseRepository<T> {
     required String tableName,
     required Map<String, dynamic> Function(T) toRow,
     required T Function(Map<String, Object?>) fromRow,
-  })  : _database = database ?? AppDatabase.instance,
-        _tableName = tableName,
-        _toRow = toRow,
-        _fromRow = fromRow;
+  }) : _database = database ?? AppDatabase.instance,
+       _tableName = tableName,
+       _toRow = toRow,
+       _fromRow = fromRow;
 
   final AppDatabase _database;
   final String _tableName;
@@ -20,11 +20,7 @@ abstract class BaseRepository<T> {
   final T Function(Map<String, Object?>) _fromRow;
 
   /// Get all items from local DB
-  Future<List<T>> getAll({
-    String? orderBy,
-    int? limit,
-    int? offset,
-  }) async {
+  Future<List<T>> getAll({String? orderBy, int? limit, int? offset}) async {
     final db = await _database.database;
     final rows = await db.query(
       _tableName,
@@ -75,11 +71,7 @@ abstract class BaseRepository<T> {
   /// Delete item by ID
   Future<void> delete(String id) async {
     final db = await _database.database;
-    await db.delete(
-      _tableName,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete(_tableName, where: 'id = ?', whereArgs: [id]);
   }
 
   /// Delete all items

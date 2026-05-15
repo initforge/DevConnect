@@ -101,10 +101,7 @@ class AppTheme {
       type: BottomNavigationBarType.fixed,
       elevation: 8,
     ),
-    dividerTheme: const DividerThemeData(
-      color: AppColors.border,
-      thickness: 1,
-    ),
+    dividerTheme: const DividerThemeData(color: AppColors.border, thickness: 1),
   );
 
   // ===== DARK THEME =====
@@ -191,16 +188,35 @@ class AppTheme {
 
   // ===== TEXT THEME =====
   static TextTheme get _textTheme => TextTheme(
-    displayLarge: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -0.5),
-    displayMedium: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+    displayLarge: GoogleFonts.inter(
+      fontSize: 32,
+      fontWeight: FontWeight.w800,
+      letterSpacing: -0.5,
+    ),
+    displayMedium: GoogleFonts.inter(
+      fontSize: 28,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.5,
+    ),
     headlineLarge: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w700),
-    headlineMedium: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w600),
+    headlineMedium: GoogleFonts.inter(
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+    ),
     headlineSmall: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600),
     titleLarge: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
     titleMedium: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
     titleSmall: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
-    bodyLarge: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w400, height: 1.5),
-    bodyMedium: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w400, height: 1.5),
+    bodyLarge: GoogleFonts.inter(
+      fontSize: 16,
+      fontWeight: FontWeight.w400,
+      height: 1.5,
+    ),
+    bodyMedium: GoogleFonts.inter(
+      fontSize: 14,
+      fontWeight: FontWeight.w400,
+      height: 1.5,
+    ),
     bodySmall: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w400),
     labelLarge: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
     labelMedium: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500),

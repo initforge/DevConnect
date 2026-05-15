@@ -40,14 +40,16 @@ class Application extends Equatable {
       location: json['location']?.toString() ?? '',
       remote: json['remote'] == true,
       salaryRange: json['salaryRange']?.toString() ?? '',
-      techStack: json['techStack'] is List
-          ? (json['techStack'] as List).map((e) => e.toString()).toList()
-          : [],
+      techStack:
+          json['techStack'] is List
+              ? (json['techStack'] as List).map((e) => e.toString()).toList()
+              : [],
       experience: json['experience']?.toString() ?? '',
       coverNote: json['coverNote']?.toString() ?? '',
       resumeUrl: json['resumeUrl']?.toString() ?? '',
       status: json['status']?.toString() ?? 'PENDING',
-      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+      createdAt:
+          DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
           DateTime.now(),
     );
   }

@@ -160,13 +160,19 @@ class _ChatScreenState extends State<ChatScreen>
 
   Future<void> _pickAndSendImage() async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
     if (image == null || !mounted) return;
 
     setState(() => _isSending = true);
     try {
       final bytes = await image.readAsBytes();
-      final name = image.name.isNotEmpty ? image.name : 'image_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final name =
+          image.name.isNotEmpty
+              ? image.name
+              : 'image_${DateTime.now().millisecondsSinceEpoch}.jpg';
       debugPrint('[Chat] Uploading image: $name (${bytes.length} bytes)');
       final result = await ApiService.instance.uploadFileBytes(
         '/media/upload',
@@ -187,9 +193,9 @@ class _ChatScreenState extends State<ChatScreen>
     } catch (e) {
       debugPrint('[Chat] Image send failed: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send image: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to send image: $e')));
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
@@ -313,7 +319,9 @@ class _ChatScreenState extends State<ChatScreen>
       if (!mounted) return;
       setState(() => _messages = before);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.of(context).t('chat.unableReaction'))),
+        SnackBar(
+          content: Text(AppStrings.of(context).t('chat.unableReaction')),
+        ),
       );
     }
   }
@@ -500,7 +508,9 @@ class _ChatScreenState extends State<ChatScreen>
                   ),
                 ),
                 Text(
-                  otherUser.isOnline ? AppStrings.of(context).t('chat.online') : AppStrings.of(context).t('chat.offline'),
+                  otherUser.isOnline
+                      ? AppStrings.of(context).t('chat.online')
+                      : AppStrings.of(context).t('chat.offline'),
                   style: TextStyle(
                     fontSize: 11,
                     color:
@@ -558,7 +568,9 @@ class _ChatScreenState extends State<ChatScreen>
                     ),
                   ),
                   Text(
-                    otherUser.isOnline ? AppStrings.of(context).t('chat.online') : AppStrings.of(context).t('chat.offline'),
+                    otherUser.isOnline
+                        ? AppStrings.of(context).t('chat.online')
+                        : AppStrings.of(context).t('chat.offline'),
                     style: TextStyle(
                       fontSize: 11,
                       color:
@@ -825,11 +837,16 @@ class _MessageBubble extends StatelessWidget {
                     vertical: isCode ? 0 : 12,
                   ),
                   decoration: BoxDecoration(
-                    color: isCode
-                        ? Theme.of(context).colorScheme.surfaceContainerHighest
-                        : isMe
+                    color:
+                        isCode
+                            ? Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest
+                            : isMe
                             ? AppColors.primary
-                            : Theme.of(context).colorScheme.surfaceContainerHighest,
+                            : Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(18),
                       topRight: const Radius.circular(18),
@@ -837,50 +854,66 @@ class _MessageBubble extends StatelessWidget {
                       bottomRight: Radius.circular(isMe ? 6 : 18),
                     ),
                   ),
-                  child: isCode
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF2D2B55),
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    (msg.codeLanguage ?? 'Code').toUpperCase(),
-                                    style: const TextStyle(fontSize: 9, color: Colors.white70, fontWeight: FontWeight.w700),
+                  child:
+                      isCode
+                          ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF2D2B55),
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(18),
                                   ),
-                                  const Spacer(),
-                                  const Icon(Icons.code, size: 12, color: Colors.white54),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Text(
-                                msg.content,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  height: 1.5,
-                                  color: Color(0xFF6E59F7),
-                                  fontFamily: 'monospace',
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      (msg.codeLanguage ?? 'Code')
+                                          .toUpperCase(),
+                                      style: const TextStyle(
+                                        fontSize: 9,
+                                        color: Colors.white70,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    const Icon(
+                                      Icons.code,
+                                      size: 12,
+                                      color: Colors.white54,
+                                    ),
+                                  ],
                                 ),
                               ),
+                              Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Text(
+                                  msg.content,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    height: 1.5,
+                                    color: Color(0xFF6E59F7),
+                                    fontFamily: 'monospace',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                          : Text(
+                            msg.content,
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              height: 1.45,
+                              color:
+                                  isMe ? Colors.white : AppColors.textPrimary,
                             ),
-                          ],
-                        )
-                      : Text(
-                          msg.content,
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            height: 1.45,
-                            color: isMe ? Colors.white : AppColors.textPrimary,
                           ),
-                        ),
                 ),
               ),
               if (msg.reactions.isNotEmpty) ...[

@@ -38,9 +38,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _detailLoader = widget.initialProject != null
-        ? Future.value(widget.initialProject)
-        : _repository.getProjectById(widget.projectId);
+    _detailLoader =
+        widget.initialProject != null
+            ? Future.value(widget.initialProject)
+            : _repository.getProjectById(widget.projectId);
     _loadMembers();
   }
 
@@ -72,9 +73,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       if (joined) {
         _loadMembers();
         _refresh();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Joined project!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Joined project!')));
       }
     } catch (_) {
       if (!mounted) return;
@@ -100,9 +101,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       if (left) {
         _loadMembers();
         _refresh();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Left project')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Left project')));
       }
     } catch (_) {
       if (!mounted) return;
@@ -251,19 +252,20 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: saving
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
+                      child:
+                          saving
+                              ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : const Text(
+                                'Save Changes',
+                                style: TextStyle(fontWeight: FontWeight.w700),
                               ),
-                            )
-                          : const Text(
-                              'Save Changes',
-                              style: TextStyle(fontWeight: FontWeight.w700),
-                            ),
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -283,23 +285,24 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   Future<void> _deleteProject(String projectId) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: const Text('Delete Project'),
-        content: const Text(
-          'Are you sure you want to delete this project? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx, false),
-            child: const Text('Cancel'),
+      builder:
+          (dialogCtx) => AlertDialog(
+            title: const Text('Delete Project'),
+            content: const Text(
+              'Are you sure you want to delete this project? This action cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogCtx, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogCtx, true),
+                style: TextButton.styleFrom(foregroundColor: AppColors.error),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
     );
 
     if (confirmed != true) return;
@@ -308,14 +311,14 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       await _repository.deleteProject(projectId);
       if (!mounted) return;
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Project deleted')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Project deleted')));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to delete project')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to delete project')));
     }
   }
 
@@ -362,10 +365,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                AppColors.primary.withOpacity(0.06),
-                Colors.transparent,
-              ],
+              colors: [AppColors.primary.withOpacity(0.06), Colors.transparent],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -474,8 +474,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: _getStatusColor(project.status)
-                                      .withValues(alpha: 0.1),
+                                  color: _getStatusColor(
+                                    project.status,
+                                  ).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(999),
                                 ),
                                 child: Text(
@@ -591,74 +592,80 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           );
         },
       ),
-      bottomSheet: _kScreenshotMode
-          ? null
-          : FutureBuilder<Project?>(
-              future: _detailLoader,
-              builder: (context, snapshot) {
-                final project = snapshot.data;
-                if (project == null) return const SizedBox.shrink();
-                final isOwner = _isCurrentUserOwner(project.owner);
-                if (isOwner) return const SizedBox.shrink();
+      bottomSheet:
+          _kScreenshotMode
+              ? null
+              : FutureBuilder<Project?>(
+                future: _detailLoader,
+                builder: (context, snapshot) {
+                  final project = snapshot.data;
+                  if (project == null) return const SizedBox.shrink();
+                  final isOwner = _isCurrentUserOwner(project.owner);
+                  if (isOwner) return const SizedBox.shrink();
 
-                return Container(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(24),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
-                        blurRadius: 16,
-                        offset: const Offset(0, -4),
+                  return Container(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(24),
                       ),
-                    ],
-                  ),
-                  child: SafeArea(
-                    top: false,
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed:
-                            _isLoadingJoin || _isLoadingLeave
-                                ? null
-                                : _hasJoined
-                                ? _leaveProject
-                                : _joinProject,
-                        style: ElevatedButton.styleFrom(
-                          elevation: 0,
-                          backgroundColor:
-                              _hasJoined ? AppColors.error : AppColors.primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 16,
+                          offset: const Offset(0, -4),
                         ),
-                        child: _isLoadingJoin
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                _hasJoined ? 'Leave Project' : 'Join Project',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
+                      ],
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed:
+                              _isLoadingJoin || _isLoadingLeave
+                                  ? null
+                                  : _hasJoined
+                                  ? _leaveProject
+                                  : _joinProject,
+                          style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            backgroundColor:
+                                _hasJoined
+                                    ? AppColors.error
+                                    : AppColors.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child:
+                              _isLoadingJoin
+                                  ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                  : Text(
+                                    _hasJoined
+                                        ? 'Leave Project'
+                                        : 'Join Project',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
     );
   }
 }
@@ -756,7 +763,10 @@ class _OwnerCard extends StatelessWidget {
                     Icon(
                       owner.isOnline ? Icons.circle : Icons.circle_outlined,
                       size: 10,
-                      color: owner.isOnline ? AppColors.success : AppColors.disabled,
+                      color:
+                          owner.isOnline
+                              ? AppColors.success
+                              : AppColors.disabled,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -821,8 +831,18 @@ class _ProjectStats extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -847,18 +867,12 @@ class _StatItem extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-          ),
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 2),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 11,
-            color: AppColors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
           textAlign: TextAlign.center,
         ),
       ],

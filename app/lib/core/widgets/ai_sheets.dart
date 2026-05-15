@@ -278,7 +278,6 @@ Future<void> showAiExplainSheet(
   );
 }
 
-
 class _InfoBlock extends StatelessWidget {
   const _InfoBlock({required this.title, required this.items});
 

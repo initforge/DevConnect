@@ -4,11 +4,7 @@ import '../app_preferences.dart';
 import 'package:devconnect/core/constants/app_constants.dart';
 
 /// Authentication state
-enum AuthStatus {
-  unknown,
-  authenticated,
-  unauthenticated,
-}
+enum AuthStatus { unknown, authenticated, unauthenticated }
 
 /// Auth state class
 class AuthState {
@@ -97,10 +93,10 @@ class AuthService {
     required String password,
   }) async {
     try {
-      final response = await _api.post(
-        AppConstants.apiAuthLogin,
-        {'email': email, 'password': password},
-      );
+      final response = await _api.post(AppConstants.apiAuthLogin, {
+        'email': email,
+        'password': password,
+      });
 
       _token = response['token'] as String?;
       _refreshToken = response['refreshToken'] as String?;
@@ -121,15 +117,9 @@ class AuthService {
         error: 'Invalid response from server',
       );
     } on ApiException catch (e) {
-      return AuthState(
-        status: AuthStatus.unauthenticated,
-        error: e.message,
-      );
+      return AuthState(status: AuthStatus.unauthenticated, error: e.message);
     } catch (e) {
-      return AuthState(
-        status: AuthStatus.unauthenticated,
-        error: e.toString(),
-      );
+      return AuthState(status: AuthStatus.unauthenticated, error: e.toString());
     }
   }
 
@@ -141,15 +131,12 @@ class AuthService {
     required String displayName,
   }) async {
     try {
-      final response = await _api.post(
-        AppConstants.apiAuthRegister,
-        {
-          'email': email,
-          'password': password,
-          'username': username,
-          'displayName': displayName,
-        },
-      );
+      final response = await _api.post(AppConstants.apiAuthRegister, {
+        'email': email,
+        'password': password,
+        'username': username,
+        'displayName': displayName,
+      });
 
       _token = response['token'] as String?;
       _refreshToken = response['refreshToken'] as String?;
@@ -170,15 +157,9 @@ class AuthService {
         error: 'Registration failed',
       );
     } on ApiException catch (e) {
-      return AuthState(
-        status: AuthStatus.unauthenticated,
-        error: e.message,
-      );
+      return AuthState(status: AuthStatus.unauthenticated, error: e.message);
     } catch (e) {
-      return AuthState(
-        status: AuthStatus.unauthenticated,
-        error: e.toString(),
-      );
+      return AuthState(status: AuthStatus.unauthenticated, error: e.toString());
     }
   }
 
@@ -187,10 +168,9 @@ class AuthService {
     if (_refreshToken == null) return false;
 
     try {
-      final response = await _api.post(
-        AppConstants.apiAuthRefresh,
-        {'refreshToken': _refreshToken},
-      );
+      final response = await _api.post(AppConstants.apiAuthRefresh, {
+        'refreshToken': _refreshToken,
+      });
 
       _token = response['token'] as String?;
       if (_token != null) {

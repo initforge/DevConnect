@@ -61,9 +61,13 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
       setState(() => _joinedProjects.add(project.id));
       _loadFeeds();
       setState(() {});
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${AppStrings.current().t('projects.joined')} ${project.title}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${AppStrings.current().t('projects.joined')} ${project.title}',
+          ),
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -109,7 +113,10 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
 
               if (title.isEmpty || description.isEmpty) {
                 setSheetState(
-                  () => error = AppStrings.of(context).t('projects.titleDescRequired'),
+                  () =>
+                      error = AppStrings.of(
+                        context,
+                      ).t('projects.titleDescRequired'),
                 );
                 return;
               }
@@ -132,7 +139,9 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
                 _loadFeeds();
                 setState(() {});
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(AppStrings.of(context).t('projects.created'))),
+                  SnackBar(
+                    content: Text(AppStrings.of(context).t('projects.created')),
+                  ),
                 );
               } catch (e) {
                 setSheetState(() {
@@ -146,7 +155,8 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
               return InputDecoration(
                 hintText: hint,
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                fillColor:
+                    Theme.of(context).colorScheme.surfaceContainerHighest,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
@@ -175,7 +185,10 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
                 children: [
                   Text(
                     AppStrings.of(context).t('projects.createProject'),
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -188,25 +201,33 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: titleCtrl,
-                    decoration: decoration(AppStrings.of(context).t('projects.projectTitle')),
+                    decoration: decoration(
+                      AppStrings.of(context).t('projects.projectTitle'),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: descriptionCtrl,
                     minLines: 3,
                     maxLines: 4,
-                    decoration: decoration(AppStrings.of(context).t('projects.projectDescription')),
+                    decoration: decoration(
+                      AppStrings.of(context).t('projects.projectDescription'),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: techStackCtrl,
-                    decoration: decoration(AppStrings.of(context).t('projects.techStack')),
+                    decoration: decoration(
+                      AppStrings.of(context).t('projects.techStack'),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: maxMembersCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: decoration(AppStrings.of(context).t('projects.maxMembers')),
+                    decoration: decoration(
+                      AppStrings.of(context).t('projects.maxMembers'),
+                    ),
                   ),
                   if (error != null) ...[
                     const SizedBox(height: 12),
@@ -239,7 +260,9 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                              : Text(AppStrings.of(context).t('projects.create')),
+                              : Text(
+                                AppStrings.of(context).t('projects.create'),
+                              ),
                     ),
                   ),
                 ],
@@ -268,10 +291,7 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                AppColors.primary.withOpacity(0.06),
-                Colors.transparent,
-              ],
+              colors: [AppColors.primary.withOpacity(0.06), Colors.transparent],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -288,7 +308,10 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
         foregroundColor: Colors.white,
         elevation: 2,
         icon: const Icon(Icons.add, size: 20),
-        label: Text(AppStrings.of(context).t('projects.createProject'), style: const TextStyle(fontWeight: FontWeight.w700)),
+        label: Text(
+          AppStrings.of(context).t('projects.createProject'),
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
       ),
       body: FutureBuilder<List<Project>>(
         future: _loader,
@@ -328,74 +351,107 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
             onRefresh: _refresh,
             child: DecorativeBackground(
               child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: ResponsiveUtils.getContentMaxWidth(context),
-              ),
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 110),
-                children: [
-                  ScreenGradientHeader(
-                    title: AppStrings.of(context).t('projects.marketplace'),
-                    subtitle: AppStrings.of(context).t('projects.marketplaceSubtitle'),
-                    icon: Icons.rocket_launch_outlined,
-                    gradientColors: [Color(0xFF5B53F6), Color(0xFF00D9A6)],
-                  ),
-                  const SizedBox(height: 14),
-                  // Search bar
-                  TextField(
-                    onChanged: (v) => setState(() => _searchQuery = v),
-                    decoration: InputDecoration(
-                      hintText: AppStrings.of(context).t('explore.searchPlaceholder'),
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      filled: true,
-                      fillColor: Theme.of(context).colorScheme.surface,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Theme.of(context).dividerColor)),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Theme.of(context).dividerColor)),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.primary)),
+                constraints: BoxConstraints(
+                  maxWidth: ResponsiveUtils.getContentMaxWidth(context),
+                ),
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 110),
+                  children: [
+                    ScreenGradientHeader(
+                      title: AppStrings.of(context).t('projects.marketplace'),
+                      subtitle: AppStrings.of(
+                        context,
+                      ).t('projects.marketplaceSubtitle'),
+                      icon: Icons.rocket_launch_outlined,
+                      gradientColors: [Color(0xFF5B53F6), Color(0xFF00D9A6)],
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  // Status filter chips
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _ShowcaseFilterChip(
-                        label: AppStrings.of(context).t('projects.all'),
-                        selected: _selectedFilter == 0,
-                        onTap: () => setState(() => _selectedFilter = 0),
+                    const SizedBox(height: 14),
+                    // Search bar
+                    TextField(
+                      onChanged: (v) => setState(() => _searchQuery = v),
+                      decoration: InputDecoration(
+                        hintText: AppStrings.of(
+                          context,
+                        ).t('explore.searchPlaceholder'),
+                        prefixIcon: const Icon(Icons.search, size: 20),
+                        filled: true,
+                        fillColor: Theme.of(context).colorScheme.surface,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 0,
+                          horizontal: 16,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: Theme.of(context).dividerColor,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: Theme.of(context).dividerColor,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                          ),
+                        ),
                       ),
-                      _ShowcaseFilterChip(
-                        label: AppStrings.of(context).t('projects.lookingForDevs'),
-                        selected: _selectedFilter == 1,
-                        onTap: () => setState(() => _selectedFilter = 1),
-                      ),
-                      _ShowcaseFilterChip(
-                        label: AppStrings.of(context).t('projects.openSource'),
-                        selected: _selectedFilter == 2,
-                        onTap: () => setState(() => _selectedFilter = 2),
-                      ),
-                      // Tech stack filter badges (dynamic from data)
-                      ..._extractTechTags(projects).map((tag) => _ShowcaseFilterChip(
-                        label: tag,
-                        selected: _selectedTech == tag,
-                        onTap: () => setState(() => _selectedTech = _selectedTech == tag ? '' : tag),
-                      )),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  ...filtered.map(
-                    (project) => _ProjectCard(
-                      project: project,
-                      joined: _joinedProjects.contains(project.id),
-                      onJoin: () => _joinProject(project),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 10),
+                    // Status filter chips
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _ShowcaseFilterChip(
+                          label: AppStrings.of(context).t('projects.all'),
+                          selected: _selectedFilter == 0,
+                          onTap: () => setState(() => _selectedFilter = 0),
+                        ),
+                        _ShowcaseFilterChip(
+                          label: AppStrings.of(
+                            context,
+                          ).t('projects.lookingForDevs'),
+                          selected: _selectedFilter == 1,
+                          onTap: () => setState(() => _selectedFilter = 1),
+                        ),
+                        _ShowcaseFilterChip(
+                          label: AppStrings.of(
+                            context,
+                          ).t('projects.openSource'),
+                          selected: _selectedFilter == 2,
+                          onTap: () => setState(() => _selectedFilter = 2),
+                        ),
+                        // Tech stack filter badges (dynamic from data)
+                        ..._extractTechTags(projects).map(
+                          (tag) => _ShowcaseFilterChip(
+                            label: tag,
+                            selected: _selectedTech == tag,
+                            onTap:
+                                () => setState(
+                                  () =>
+                                      _selectedTech =
+                                          _selectedTech == tag ? '' : tag,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    ...filtered.map(
+                      (project) => _ProjectCard(
+                        project: project,
+                        joined: _joinedProjects.contains(project.id),
+                        onJoin: () => _joinProject(project),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
             ),
           );
         },
@@ -409,19 +465,27 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
     // Search
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
-      filtered = filtered.where((project) =>
-        project.title.toLowerCase().contains(q) ||
-        project.description.toLowerCase().contains(q) ||
-        project.techStack.any((t) => t.toLowerCase().contains(q))
-      ).toList();
+      filtered =
+          filtered
+              .where(
+                (project) =>
+                    project.title.toLowerCase().contains(q) ||
+                    project.description.toLowerCase().contains(q) ||
+                    project.techStack.any((t) => t.toLowerCase().contains(q)),
+              )
+              .toList();
     }
 
     // Tech stack filter
     if (_selectedTech.isNotEmpty) {
       final tech = _selectedTech.toLowerCase();
-      filtered = filtered.where((project) =>
-        project.techStack.any((t) => t.toLowerCase() == tech)
-      ).toList();
+      filtered =
+          filtered
+              .where(
+                (project) =>
+                    project.techStack.any((t) => t.toLowerCase() == tech),
+              )
+              .toList();
     }
 
     // Status filter

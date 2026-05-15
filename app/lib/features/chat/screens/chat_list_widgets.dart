@@ -334,7 +334,10 @@ class _NewChatAvatar extends StatelessWidget {
           child: const Icon(Icons.add, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 6),
-        Text(AppStrings.of(context).t('chat.new'), style: const TextStyle(fontSize: 11)),
+        Text(
+          AppStrings.of(context).t('chat.new'),
+          style: const TextStyle(fontSize: 11),
+        ),
       ],
     );
   }

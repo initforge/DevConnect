@@ -137,14 +137,11 @@ class ProjectRepository {
     required List<String> techStack,
   }) async {
     if (_useApi) {
-      final data = await ApiService.instance.patch(
-        '/projects/$projectId',
-        {
-          'title': title,
-          'description': description,
-          'techStack': techStack,
-        },
-      );
+      final data = await ApiService.instance.patch('/projects/$projectId', {
+        'title': title,
+        'description': description,
+        'techStack': techStack,
+      });
       final project = ModelMappers.projectFromJson(data);
       await _saveProjectsToDb([project]);
       return project;
@@ -155,9 +152,7 @@ class ProjectRepository {
 
   Future<bool> deleteProject(String projectId) async {
     if (_useApi) {
-      final result = await ApiService.instance.delete(
-        '/projects/$projectId',
-      );
+      final result = await ApiService.instance.delete('/projects/$projectId');
       return result['success'] == true;
     }
 

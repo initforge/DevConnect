@@ -89,4 +89,3 @@ class User extends Equatable {
     );
   }
 }
-

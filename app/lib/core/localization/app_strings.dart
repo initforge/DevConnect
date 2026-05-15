@@ -198,8 +198,10 @@ class AppStrings {
     'profile.mentor': 'Mentor',
     'profile.availableForGuidance': 'Available for guidance',
     'profile.quitProject': 'Quit Project',
-    'profile.quitProjectConfirm': 'Are you sure you want to leave this project?',
-    'profile.deleteProjectConfirm': 'Are you sure you want to delete this project? This cannot be undone.',
+    'profile.quitProjectConfirm':
+        'Are you sure you want to leave this project?',
+    'profile.deleteProjectConfirm':
+        'Are you sure you want to delete this project? This cannot be undone.',
     'profile.editSkills': 'Edit Skills',
     'profile.addSkillsHint': 'Tap edit to add your skills',
     'profile.noSkills': 'No skills listed',
@@ -283,7 +285,8 @@ class AppStrings {
     // Projects
     'projects.title': 'Projects',
     'projects.marketplace': 'Project Marketplace',
-    'projects.marketplaceSubtitle': 'Discover open-source projects and find collaborators',
+    'projects.marketplaceSubtitle':
+        'Discover open-source projects and find collaborators',
     'projects.all': 'All',
     'projects.lookingForDevs': 'Looking for Devs',
     'projects.openSource': 'Open Source',
@@ -295,7 +298,8 @@ class AppStrings {
     'projects.unableJoin': 'Unable to join project right now',
     'projects.members': 'members',
     'projects.createProject': 'Create Project',
-    'projects.createSubtitle': 'Set up a new collaboration workspace for the community.',
+    'projects.createSubtitle':
+        'Set up a new collaboration workspace for the community.',
     'projects.projectTitle': 'Project title',
     'projects.projectDescription': 'Describe what you are building',
     'projects.techStack': 'Tech stack (comma separated)',
@@ -336,7 +340,8 @@ class AppStrings {
     'jobs.techStackHint': 'Tech stack (comma separated)',
     'jobs.posted': 'Job posted!',
     'jobs.titleCompanyRequired': 'Title and company are required',
-    'jobs.matchExplain': 'Match % is computed by comparing your skills against the job\'s required tech stack. More skills overlap = higher match.',
+    'jobs.matchExplain':
+        'Match % is computed by comparing your skills against the job\'s required tech stack. More skills overlap = higher match.',
     'jobs.search': 'Search jobs...',
     // Explore
     'explore.title': 'Explore',
@@ -370,7 +375,8 @@ class AppStrings {
     'chat.new': 'New',
     'chat.chooseContact': 'Choose a contact',
     'chat.deleteConversation': 'Delete conversation?',
-    'chat.deleteConversationBody': 'This removes your thread with {name} from the inbox.',
+    'chat.deleteConversationBody':
+        'This removes your thread with {name} from the inbox.',
     'chat.cancel': 'Cancel',
     'chat.delete': 'Delete',
     'chat.deletedChat': 'Deleted chat with {name}',
@@ -398,10 +404,12 @@ class AppStrings {
     // Leaderboard
     'leaderboard.title': 'Leaderboard',
     'leaderboard.heroTitle': "This week's most valuable builders",
-    'leaderboard.heroSubtitle': 'Rankings combine reputation, engagement, and consistency across the community.',
+    'leaderboard.heroSubtitle':
+        'Rankings combine reputation, engagement, and consistency across the community.',
     'leaderboard.unableLoad': 'Unable to load leaderboard.\nPull to try again.',
     'leaderboard.noData': 'No ranking data',
-    'leaderboard.noDataSubtitle': 'Leaderboard will appear once activity is recorded.',
+    'leaderboard.noDataSubtitle':
+        'Leaderboard will appear once activity is recorded.',
     'leaderboard.howScores': 'How Scores Are Calculated',
     'leaderboard.colWeight': 'Wt',
     'leaderboard.colMetric': 'Metric',
@@ -412,7 +420,8 @@ class AppStrings {
     'playground.running': 'Running...',
     'playground.consoleOutput': 'Console Output',
     'playground.aiReview': 'AI Review',
-    'playground.aiReviewDesc': 'Highlight risky logic and suggest cleaner structure.',
+    'playground.aiReviewDesc':
+        'Highlight risky logic and suggest cleaner structure.',
     'playground.aiExplain': 'AI Explain',
     'playground.aiExplainDesc': 'Break down the snippet in plain language.',
     'playground.runError': 'Error: unable to run code right now.',
@@ -433,10 +442,14 @@ class AppStrings {
     'analytics.cacheBreakdown': 'Cache Breakdown',
     'analytics.topPosts': 'Top Posts',
     'analytics.howItWorks': 'How it works',
-    'analytics.recExplain': '• What it does: Suggests posts you might like based on your past activity.\n• How: The system tracks what you like, bookmark, and comment on to build a "taste profile".\n• Algorithm: It uses SVD (a math technique) to find hidden patterns — e.g., if you like Flutter posts and so does another user, you\'ll see posts they liked too.\n• Fallback: If you\'re new (fewer than 5 interactions), you\'ll see popular posts instead until the system learns your preferences.\n• Updates: Your recommendations refresh every time you interact with content.',
-    'analytics.cacheExplain': '• What it does: Speeds up the app by storing frequently-accessed data in fast memory (Redis).\n• Why: Without cache, every request would query the database — which is slow. Cache serves data instantly.\n• How it works: When you open your feed, the app checks cache first. If data exists and is fresh, it\'s served immediately (a "hit"). Otherwise, it fetches from the database (a "miss").\n• Expiration: Feed cache lasts 60 seconds, leaderboard 5 minutes, AI results 1 hour.\n• Hit Rate: Shows what percentage of requests are served from cache. Higher = faster app.',
-    'analytics.queueExplain': '• What it does: Handles heavy tasks (like AI processing) in the background so the app stays fast.\n• How: When you request an AI code review, the job enters a queue. A background worker picks it up, processes it, and sends back the result.\n• Why queues: AI tasks take 5-15 seconds. Without queues, your app would freeze while waiting.\n• Counters explained:\n  - Completed: Jobs finished successfully\n  - Failed: Jobs that encountered errors (auto-retried up to 3 times)\n  - Waiting: Jobs currently in line to be processed',
-    'analytics.engageExplain': '• What it does: Measures how well your content performs across the platform.\n• Metrics:\n  - Views: Unique visitors who saw your post (counted by IP address)\n  - Likes: People who clicked the heart button\n  - Comments: Replies on your posts\n  - Followers: People subscribed to your updates\n• Trending score formula: likes×3 + comments×5 + bookmarks×2 + log(views)\n• Top Posts: Your best-performing content ranked by the trending score above.',
+    'analytics.recExplain':
+        '• What it does: Suggests posts you might like based on your past activity.\n• How: The system tracks what you like, bookmark, and comment on to build a "taste profile".\n• Algorithm: It uses SVD (a math technique) to find hidden patterns — e.g., if you like Flutter posts and so does another user, you\'ll see posts they liked too.\n• Fallback: If you\'re new (fewer than 5 interactions), you\'ll see popular posts instead until the system learns your preferences.\n• Updates: Your recommendations refresh every time you interact with content.',
+    'analytics.cacheExplain':
+        '• What it does: Speeds up the app by storing frequently-accessed data in fast memory (Redis).\n• Why: Without cache, every request would query the database — which is slow. Cache serves data instantly.\n• How it works: When you open your feed, the app checks cache first. If data exists and is fresh, it\'s served immediately (a "hit"). Otherwise, it fetches from the database (a "miss").\n• Expiration: Feed cache lasts 60 seconds, leaderboard 5 minutes, AI results 1 hour.\n• Hit Rate: Shows what percentage of requests are served from cache. Higher = faster app.',
+    'analytics.queueExplain':
+        '• What it does: Handles heavy tasks (like AI processing) in the background so the app stays fast.\n• How: When you request an AI code review, the job enters a queue. A background worker picks it up, processes it, and sends back the result.\n• Why queues: AI tasks take 5-15 seconds. Without queues, your app would freeze while waiting.\n• Counters explained:\n  - Completed: Jobs finished successfully\n  - Failed: Jobs that encountered errors (auto-retried up to 3 times)\n  - Waiting: Jobs currently in line to be processed',
+    'analytics.engageExplain':
+        '• What it does: Measures how well your content performs across the platform.\n• Metrics:\n  - Views: Unique visitors who saw your post (counted by IP address)\n  - Likes: People who clicked the heart button\n  - Comments: Replies on your posts\n  - Followers: People subscribed to your updates\n• Trending score formula: likes×3 + comments×5 + bookmarks×2 + log(views)\n• Top Posts: Your best-performing content ranked by the trending score above.',
     'search.title': 'Search',
     'search.recentSearches': 'Recent searches',
     'search.clear': 'Clear',
@@ -525,7 +538,8 @@ class AppStrings {
     'nav.live-code': 'Xem code trực tiếp',
     'nav.settings': 'Cài đặt',
     'settings.title': 'Cài đặt',
-    'settings.subtitle': 'Quản lý tài khoản, quyền riêng tư và tùy chọn của bạn',
+    'settings.subtitle':
+        'Quản lý tài khoản, quyền riêng tư và tùy chọn của bạn',
     'settings.account': 'TÀI KHOẢN',
     'settings.privacy': 'RIÊNG TƯ',
     'settings.notifications': 'THÔNG BÁO',
@@ -620,7 +634,8 @@ class AppStrings {
     'profile.mentor': 'Cố vấn',
     'profile.quitProject': 'Rời dự án',
     'profile.quitProjectConfirm': 'Bạn có chắc chắn muốn rời khỏi dự án này?',
-    'profile.deleteProjectConfirm': 'Bạn có chắc chắn muốn xóa dự án này? Không thể hoàn tác.',
+    'profile.deleteProjectConfirm':
+        'Bạn có chắc chắn muốn xóa dự án này? Không thể hoàn tác.',
     'profile.editSkills': 'Chỉnh sửa kỹ năng',
     'profile.addSkillsHint': 'Nhấn chỉnh sửa để thêm kỹ năng',
     'profile.noSkills': 'Chưa có kỹ năng',
@@ -702,7 +717,8 @@ class AppStrings {
     // Projects
     'projects.title': 'Dự án',
     'projects.marketplace': 'Chợ dự án',
-    'projects.marketplaceSubtitle': 'Khám phá dự án mã nguồn mở và tìm cộng tác viên',
+    'projects.marketplaceSubtitle':
+        'Khám phá dự án mã nguồn mở và tìm cộng tác viên',
     'projects.all': 'Tất cả',
     'projects.lookingForDevs': 'Tìm lập trình viên',
     'projects.openSource': 'Mã nguồn mở',
@@ -755,7 +771,8 @@ class AppStrings {
     'jobs.techStackHint': 'Công nghệ yêu cầu (ngăn cách bằng dấu phẩy)',
     'jobs.posted': 'Đã đăng việc!',
     'jobs.titleCompanyRequired': 'Tên vị trí và công ty là bắt buộc',
-    'jobs.matchExplain': '% phù hợp được tính bằng cách so sánh kỹ năng của bạn với tech stack của việc làm. Càng nhiều kỹ năng trùng = % càng cao.',
+    'jobs.matchExplain':
+        '% phù hợp được tính bằng cách so sánh kỹ năng của bạn với tech stack của việc làm. Càng nhiều kỹ năng trùng = % càng cao.',
     'jobs.search': 'Tìm việc làm...',
     // Explore
     'explore.title': 'Khám phá',
@@ -789,7 +806,8 @@ class AppStrings {
     'chat.new': 'Mới',
     'chat.chooseContact': 'Chọn liên hệ',
     'chat.deleteConversation': 'Xóa cuộc trò chuyện?',
-    'chat.deleteConversationBody': 'Thao tác này sẽ xóa cuộc trò chuyện với {name} khỏi hộp thư.',
+    'chat.deleteConversationBody':
+        'Thao tác này sẽ xóa cuộc trò chuyện với {name} khỏi hộp thư.',
     'chat.cancel': 'Hủy',
     'chat.delete': 'Xóa',
     'chat.deletedChat': 'Đã xóa cuộc trò chuyện với {name}',
@@ -817,8 +835,10 @@ class AppStrings {
     // Leaderboard
     'leaderboard.title': 'Bảng xếp hạng',
     'leaderboard.heroTitle': 'Những nhà phát triển xuất sắc nhất tuần',
-    'leaderboard.heroSubtitle': 'Xếp hạng dựa trên uy tín, tương tác và sự đóng góp liên tục trong cộng đồng.',
-    'leaderboard.unableLoad': 'Không thể tải bảng xếp hạng.\nKéo xuống để thử lại.',
+    'leaderboard.heroSubtitle':
+        'Xếp hạng dựa trên uy tín, tương tác và sự đóng góp liên tục trong cộng đồng.',
+    'leaderboard.unableLoad':
+        'Không thể tải bảng xếp hạng.\nKéo xuống để thử lại.',
     'leaderboard.noData': 'Chưa có dữ liệu xếp hạng',
     'leaderboard.noDataSubtitle': 'Bảng xếp hạng sẽ hiển thị khi có hoạt động.',
     'leaderboard.howScores': 'Cách tính điểm',
@@ -831,7 +851,8 @@ class AppStrings {
     'playground.running': 'Đang chạy...',
     'playground.consoleOutput': 'Kết quả',
     'playground.aiReview': 'AI Review',
-    'playground.aiReviewDesc': 'Phát hiện logic rủi ro và gợi ý cấu trúc tốt hơn.',
+    'playground.aiReviewDesc':
+        'Phát hiện logic rủi ro và gợi ý cấu trúc tốt hơn.',
     'playground.aiExplain': 'AI Giải thích',
     'playground.aiExplainDesc': 'Phân tích đoạn mã bằng ngôn ngữ dễ hiểu.',
     'playground.runError': 'Lỗi: không thể chạy mã lúc này.',
@@ -852,10 +873,14 @@ class AppStrings {
     'analytics.cacheBreakdown': 'Phân tích cache',
     'analytics.topPosts': 'Bài viết nổi bật',
     'analytics.howItWorks': 'Cách hoạt động',
-    'analytics.recExplain': '• Chức năng: Gợi ý bài viết bạn có thể thích dựa trên hoạt động trước đó.\n• Cách hoạt động: Hệ thống theo dõi những gì bạn thích, lưu và bình luận để xây dựng "hồ sơ sở thích".\n• Thuật toán: Dùng SVD (kỹ thuật toán học) để tìm xu hướng ẩn — ví dụ: nếu bạn thích bài về Flutter và một người khác cũng vậy, bạn sẽ thấy bài họ thích.\n• Khi mới dùng: Nếu bạn chưa có đủ 5 tương tác, hệ thống sẽ hiển thị bài viết phổ biến cho đến khi hiểu sở thích của bạn.\n• Cập nhật: Gợi ý được làm mới mỗi khi bạn tương tác với nội dung.',
-    'analytics.cacheExplain': '• Chức năng: Tăng tốc ứng dụng bằng cách lưu dữ liệu hay dùng vào bộ nhớ nhanh (Redis).\n• Tại sao cần: Nếu không có cache, mỗi yêu cầu đều phải truy vấn cơ sở dữ liệu — rất chậm. Cache phục vụ dữ liệu tức thì.\n• Cách hoạt động: Khi bạn mở feed, ứng dụng kiểm tra cache trước. Nếu dữ liệu còn mới, sẽ hiển thị ngay ("hit"). Nếu không, sẽ lấy từ cơ sở dữ liệu ("miss").\n• Thời hạn: Cache feed hết hạn sau 60 giây, bảng xếp hạng 5 phút, kết quả AI 1 giờ.\n• Tỷ lệ Hit: Phần trăm yêu cầu được phục vụ từ cache. Càng cao = ứng dụng càng nhanh.',
-    'analytics.queueExplain': '• Chức năng: Xử lý các tác vụ nặng (như AI) ở nền để ứng dụng không bị đơ.\n• Cách hoạt động: Khi bạn yêu cầu AI review code, công việc được xếp vào hàng đợi. Một worker nền sẽ nhận và xử lý, rồi trả kết quả.\n• Tại sao cần hàng đợi: Các tác vụ AI mất 5-15 giây. Không có hàng đợi, ứng dụng sẽ đứng yên trong lúc chờ.\n• Ý nghĩa các số:\n  - Hoàn thành: Công việc xử lý thành công\n  - Thất bại: Công việc gặp lỗi (tự động thử lại tối đa 3 lần)\n  - Đang chờ: Công việc đang xếp hàng chờ xử lý',
-    'analytics.engageExplain': '• Chức năng: Đo lường hiệu suất nội dung của bạn trên nền tảng.\n• Các chỉ số:\n  - Lượt xem: Số người khác nhau đã xem bài viết (đếm theo địa chỉ IP)\n  - Lượt thích: Số người bấm nút tim\n  - Bình luận: Số phản hồi trên bài viết\n  - Người theo dõi: Số người đăng ký nhận cập nhật từ bạn\n• Công thức điểm xu hướng: thích×3 + bình luận×5 + lưu×2 + log(lượt xem)\n• Bài viết hàng đầu: Nội dung tốt nhất của bạn xếp theo công thức trên.',
+    'analytics.recExplain':
+        '• Chức năng: Gợi ý bài viết bạn có thể thích dựa trên hoạt động trước đó.\n• Cách hoạt động: Hệ thống theo dõi những gì bạn thích, lưu và bình luận để xây dựng "hồ sơ sở thích".\n• Thuật toán: Dùng SVD (kỹ thuật toán học) để tìm xu hướng ẩn — ví dụ: nếu bạn thích bài về Flutter và một người khác cũng vậy, bạn sẽ thấy bài họ thích.\n• Khi mới dùng: Nếu bạn chưa có đủ 5 tương tác, hệ thống sẽ hiển thị bài viết phổ biến cho đến khi hiểu sở thích của bạn.\n• Cập nhật: Gợi ý được làm mới mỗi khi bạn tương tác với nội dung.',
+    'analytics.cacheExplain':
+        '• Chức năng: Tăng tốc ứng dụng bằng cách lưu dữ liệu hay dùng vào bộ nhớ nhanh (Redis).\n• Tại sao cần: Nếu không có cache, mỗi yêu cầu đều phải truy vấn cơ sở dữ liệu — rất chậm. Cache phục vụ dữ liệu tức thì.\n• Cách hoạt động: Khi bạn mở feed, ứng dụng kiểm tra cache trước. Nếu dữ liệu còn mới, sẽ hiển thị ngay ("hit"). Nếu không, sẽ lấy từ cơ sở dữ liệu ("miss").\n• Thời hạn: Cache feed hết hạn sau 60 giây, bảng xếp hạng 5 phút, kết quả AI 1 giờ.\n• Tỷ lệ Hit: Phần trăm yêu cầu được phục vụ từ cache. Càng cao = ứng dụng càng nhanh.',
+    'analytics.queueExplain':
+        '• Chức năng: Xử lý các tác vụ nặng (như AI) ở nền để ứng dụng không bị đơ.\n• Cách hoạt động: Khi bạn yêu cầu AI review code, công việc được xếp vào hàng đợi. Một worker nền sẽ nhận và xử lý, rồi trả kết quả.\n• Tại sao cần hàng đợi: Các tác vụ AI mất 5-15 giây. Không có hàng đợi, ứng dụng sẽ đứng yên trong lúc chờ.\n• Ý nghĩa các số:\n  - Hoàn thành: Công việc xử lý thành công\n  - Thất bại: Công việc gặp lỗi (tự động thử lại tối đa 3 lần)\n  - Đang chờ: Công việc đang xếp hàng chờ xử lý',
+    'analytics.engageExplain':
+        '• Chức năng: Đo lường hiệu suất nội dung của bạn trên nền tảng.\n• Các chỉ số:\n  - Lượt xem: Số người khác nhau đã xem bài viết (đếm theo địa chỉ IP)\n  - Lượt thích: Số người bấm nút tim\n  - Bình luận: Số phản hồi trên bài viết\n  - Người theo dõi: Số người đăng ký nhận cập nhật từ bạn\n• Công thức điểm xu hướng: thích×3 + bình luận×5 + lưu×2 + log(lượt xem)\n• Bài viết hàng đầu: Nội dung tốt nhất của bạn xếp theo công thức trên.',
     'search.title': 'Tìm kiếm',
     'search.recentSearches': 'Tìm kiếm gần đây',
     'search.clear': 'Xóa',

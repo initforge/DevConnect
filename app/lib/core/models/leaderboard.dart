@@ -19,7 +19,8 @@ class LeaderboardEntry extends Equatable {
     this.rankChange = 0,
   });
 
-  factory LeaderboardEntry.fromJson(Map<String, dynamic> json) => _$LeaderboardEntryFromJson(json);
+  factory LeaderboardEntry.fromJson(Map<String, dynamic> json) =>
+      _$LeaderboardEntryFromJson(json);
   Map<String, dynamic> toJson() => _$LeaderboardEntryToJson(this);
 
   @override

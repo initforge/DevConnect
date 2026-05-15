@@ -180,7 +180,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return [
       _buildCenteredPostsList(context, data.posts, isMe: data.isMe),
       _buildCenteredProjects(context, user, isMe: data.isMe),
-      _buildCenteredAbout(context, user, isMe: data.isMe, githubConnected: data.githubConnected),
+      _buildCenteredAbout(
+        context,
+        user,
+        isMe: data.isMe,
+        githubConnected: data.githubConnected,
+      ),
     ];
   }
 
@@ -195,7 +200,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildCenteredPostsList(BuildContext context, List<Post> posts, {bool isMe = false}) {
+  Widget _buildCenteredPostsList(
+    BuildContext context,
+    List<Post> posts, {
+    bool isMe = false,
+  }) {
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -209,14 +218,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         PostCard(
                           post: post,
-                          onTap: () => context.push('${AppRoutes.postBase}/${post.id}'),
+                          onTap:
+                              () => context.push(
+                                '${AppRoutes.postBase}/${post.id}',
+                              ),
                         ),
                         if (isMe)
                           Positioned(
                             top: 10,
                             right: 10,
                             child: PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert, size: 18, color: AppColors.textSecondary),
+                              icon: const Icon(
+                                Icons.more_vert,
+                                size: 18,
+                                color: AppColors.textSecondary,
+                              ),
                               onSelected: (value) {
                                 if (value == 'edit') {
                                   _showEditPostDialog(post);
@@ -224,28 +240,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   _confirmDeletePost(post);
                                 }
                               },
-                              itemBuilder: (_) => [
-                                PopupMenuItem(
-                                  value: 'edit',
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.edit, size: 16),
-                                      const SizedBox(width: 8),
-                                      Text(AppStrings.of(context).t('common.edit')),
-                                    ],
-                                  ),
-                                ),
-                                PopupMenuItem(
-                                  value: 'delete',
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.delete_outline, size: 16, color: AppColors.error),
-                                      const SizedBox(width: 8),
-                                      Text(AppStrings.of(context).t('common.delete'), style: const TextStyle(color: AppColors.error)),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                              itemBuilder:
+                                  (_) => [
+                                    PopupMenuItem(
+                                      value: 'edit',
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.edit, size: 16),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            AppStrings.of(
+                                              context,
+                                            ).t('common.edit'),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'delete',
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.delete_outline,
+                                            size: 16,
+                                            color: AppColors.error,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            AppStrings.of(
+                                              context,
+                                            ).t('common.delete'),
+                                            style: const TextStyle(
+                                              color: AppColors.error,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                             ),
                           ),
                       ],
@@ -262,34 +294,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final contentCtrl = TextEditingController(text: post.content);
     final saved = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(AppStrings.of(context).t('common.edit')),
-        content: SizedBox(
-          width: 400,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleCtrl,
-                decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
+      builder:
+          (ctx) => AlertDialog(
+            title: Text(AppStrings.of(context).t('common.edit')),
+            content: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Title',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: contentCtrl,
+                    maxLines: 6,
+                    decoration: const InputDecoration(
+                      labelText: 'Content',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: contentCtrl,
-                maxLines: 6,
-                decoration: const InputDecoration(labelText: 'Content', border: OutlineInputBorder()),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(AppStrings.of(context).t('common.cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: Text(AppStrings.of(context).t('common.save')),
               ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(AppStrings.of(context).t('common.cancel'))),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(AppStrings.of(context).t('common.save')),
-          ),
-        ],
-      ),
     );
     if (saved != true) return;
     try {
@@ -300,9 +342,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       if (!mounted) return;
       setState(() => _loader = _loadProfile());
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Post updated')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Post updated')));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -314,17 +356,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _confirmDeletePost(Post post) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(AppStrings.of(context).t('common.delete')),
-        content: Text(AppStrings.of(context).t('feed.deletePostConfirm')),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(AppStrings.of(context).t('common.cancel'))),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(AppStrings.of(context).t('common.delete'), style: const TextStyle(color: AppColors.error)),
+      builder:
+          (ctx) => AlertDialog(
+            title: Text(AppStrings.of(context).t('common.delete')),
+            content: Text(AppStrings.of(context).t('feed.deletePostConfirm')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(AppStrings.of(context).t('common.cancel')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: Text(
+                  AppStrings.of(context).t('common.delete'),
+                  style: const TextStyle(color: AppColors.error),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
     if (confirmed != true) return;
     try {
@@ -342,7 +391,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Widget _buildCenteredProjects(BuildContext context, User user, {bool isMe = false}) {
+  Widget _buildCenteredProjects(
+    BuildContext context,
+    User user, {
+    bool isMe = false,
+  }) {
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -352,7 +405,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildCenteredAbout(BuildContext context, User user, {bool isMe = false, bool githubConnected = false}) {
+  Widget _buildCenteredAbout(
+    BuildContext context,
+    User user, {
+    bool isMe = false,
+    bool githubConnected = false,
+  }) {
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -439,10 +497,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _handleMessage(User user) async {
     try {
-      final result = await ApiService.instance.post(
-        '/chat/conversations',
-        {'otherUserId': user.id},
-      );
+      final result = await ApiService.instance.post('/chat/conversations', {
+        'otherUserId': user.id,
+      });
       if (!mounted) return;
       final conversationId = result['id']?.toString();
       if (conversationId != null && conversationId.isNotEmpty) {
@@ -620,8 +677,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       if (isMe) ...[const SizedBox(height: 8)],
                       Text(
-                        user.bio ??
-                            strings.t('profile.noBio'),
+                        user.bio ?? strings.t('profile.noBio'),
                         style: const TextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,
@@ -831,7 +887,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
         final allProjects = snapshot.data ?? [];
         // Show projects the user owns or is a member of
-        final myProjects = allProjects.where((p) => p.owner.id == user.id).toList();
+        final myProjects =
+            allProjects.where((p) => p.owner.id == user.id).toList();
 
         if (myProjects.isEmpty) {
           return ListView(
@@ -848,86 +905,129 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         return ListView(
           padding: const EdgeInsets.all(16),
-          children: myProjects.map((project) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Theme.of(context).dividerColor),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+          children:
+              myProjects.map((project) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text(
-                          project.title,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: project.status == 'LOOKING_FOR_MEMBERS'
-                              ? const Color(0xFFF3F0FF) : const Color(0xFFEFF7FF),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          project.status == 'LOOKING_FOR_MEMBERS' ? 'Open' : 'Active',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: project.status == 'LOOKING_FOR_MEMBERS'
-                                ? const Color(0xFF5B53F6) : const Color(0xFF2279FF),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              project.title,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  project.status == 'LOOKING_FOR_MEMBERS'
+                                      ? const Color(0xFFF3F0FF)
+                                      : const Color(0xFFEFF7FF),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              project.status == 'LOOKING_FOR_MEMBERS'
+                                  ? 'Open'
+                                  : 'Active',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color:
+                                    project.status == 'LOOKING_FOR_MEMBERS'
+                                        ? const Color(0xFF5B53F6)
+                                        : const Color(0xFF2279FF),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        project.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children:
+                            project.techStack
+                                .take(4)
+                                .map((t) => TechChip(label: t))
+                                .toList(),
+                      ),
+                      if (isMe) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Text(
+                              '${project.memberCount}/${project.maxMembers} members',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (project.owner.id == user.id)
+                              TextButton.icon(
+                                onPressed: () => _confirmDeleteProject(project),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 14,
+                                  color: AppColors.error,
+                                ),
+                                label: Text(
+                                  strings.t('common.delete'),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.error,
+                                  ),
+                                ),
+                              )
+                            else
+                              TextButton.icon(
+                                onPressed: () => _leaveProject(project),
+                                icon: const Icon(
+                                  Icons.exit_to_app,
+                                  size: 14,
+                                  color: AppColors.warning,
+                                ),
+                                label: Text(
+                                  strings.t('profile.quitProject'),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.warning,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    project.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: project.techStack.take(4).map((t) => TechChip(label: t)).toList(),
-                  ),
-                  if (isMe) ...[
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Text(
-                          '${project.memberCount}/${project.maxMembers} members',
-                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                        ),
-                        const Spacer(),
-                        if (project.owner.id == user.id)
-                          TextButton.icon(
-                            onPressed: () => _confirmDeleteProject(project),
-                            icon: const Icon(Icons.delete_outline, size: 14, color: AppColors.error),
-                            label: Text(strings.t('common.delete'), style: const TextStyle(fontSize: 11, color: AppColors.error)),
-                          )
-                        else
-                          TextButton.icon(
-                            onPressed: () => _leaveProject(project),
-                            icon: const Icon(Icons.exit_to_app, size: 14, color: AppColors.warning),
-                            label: Text(strings.t('profile.quitProject'), style: const TextStyle(fontSize: 11, color: AppColors.warning)),
-                          ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            );
-          }).toList(),
+                );
+              }).toList(),
         );
       },
     );
@@ -937,17 +1037,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final strings = AppStrings.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(strings.t('profile.quitProject')),
-        content: Text(strings.t('profile.quitProjectConfirm')),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(strings.t('common.cancel'))),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(strings.t('profile.quitProject'), style: const TextStyle(color: AppColors.warning)),
+      builder:
+          (ctx) => AlertDialog(
+            title: Text(strings.t('profile.quitProject')),
+            content: Text(strings.t('profile.quitProjectConfirm')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(strings.t('common.cancel')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: Text(
+                  strings.t('profile.quitProject'),
+                  style: const TextStyle(color: AppColors.warning),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
     if (confirmed != true) return;
     try {
@@ -956,9 +1063,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() => _loader = _loadProfile());
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(strings.t('common.error'))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(strings.t('common.error'))));
     }
   }
 
@@ -966,17 +1073,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final strings = AppStrings.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(strings.t('common.delete')),
-        content: Text(strings.t('profile.deleteProjectConfirm')),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(strings.t('common.cancel'))),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(strings.t('common.delete'), style: const TextStyle(color: AppColors.error)),
+      builder:
+          (ctx) => AlertDialog(
+            title: Text(strings.t('common.delete')),
+            content: Text(strings.t('profile.deleteProjectConfirm')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(strings.t('common.cancel')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: Text(
+                  strings.t('common.delete'),
+                  style: const TextStyle(color: AppColors.error),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
     if (confirmed != true) return;
     try {
@@ -985,9 +1099,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() => _loader = _loadProfile());
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(strings.t('common.error'))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(strings.t('common.error'))));
     }
   }
 
@@ -1005,7 +1119,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Widget _buildAbout(User user, {bool isMe = false, bool githubConnected = false}) {
+  Widget _buildAbout(
+    User user, {
+    bool isMe = false,
+    bool githubConnected = false,
+  }) {
     final strings = AppStrings.of(context);
     return FutureBuilder<List<dynamic>>(
       future: githubConnected ? _loadRepos() : Future.value(<dynamic>[]),
@@ -1018,33 +1136,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Text(
                   strings.t('common.skills'),
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const Spacer(),
                 if (isMe)
                   TextButton.icon(
                     onPressed: _showEditSkillsDialog,
                     icon: const Icon(Icons.edit, size: 14),
-                    label: Text(strings.t('common.edit'), style: const TextStyle(fontSize: 12)),
+                    label: Text(
+                      strings.t('common.edit'),
+                      style: const TextStyle(fontSize: 12),
+                    ),
                   ),
               ],
             ),
             const SizedBox(height: 10),
             user.skills.isEmpty
                 ? Text(
-                    isMe ? strings.t('profile.addSkillsHint') : strings.t('profile.noSkills'),
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                  )
-                : Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: user.skills.map((skill) => TechChip(label: skill)).toList(),
+                  isMe
+                      ? strings.t('profile.addSkillsHint')
+                      : strings.t('profile.noSkills'),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
                   ),
+                )
+                : Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children:
+                      user.skills
+                          .map((skill) => TechChip(label: skill))
+                          .toList(),
+                ),
             if (repos.isNotEmpty) ...[
               const SizedBox(height: 20),
               Text(
                 strings.t('common.repos'),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 10),
               ...repos
@@ -1056,7 +1191,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Theme.of(context).dividerColor),
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1115,37 +1252,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
     final result = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(strings.t('profile.editSkills')),
-        content: TextField(
-          controller: ctrl,
-          decoration: InputDecoration(
-            hintText: 'Flutter, React, TypeScript...',
-            border: const OutlineInputBorder(),
+      builder:
+          (ctx) => AlertDialog(
+            title: Text(strings.t('profile.editSkills')),
+            content: TextField(
+              controller: ctrl,
+              decoration: InputDecoration(
+                hintText: 'Flutter, React, TypeScript...',
+                border: const OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(strings.t('common.cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(ctrl.text),
+                child: Text(strings.t('common.save')),
+              ),
+            ],
           ),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(strings.t('common.cancel'))),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(ctrl.text),
-            child: Text(strings.t('common.save')),
-          ),
-        ],
-      ),
     );
     ctrl.dispose();
     if (result == null) return;
-    final skills = result.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    final skills =
+        result
+            .split(',')
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
     try {
       await ApiService.instance.patch('/users/me', {'skills': skills});
       if (!mounted) return;
       setState(() => _loader = _loadProfile());
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(strings.t('common.error'))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(strings.t('common.error'))));
     }
   }
 }

@@ -27,7 +27,9 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildTestScaffold(screenSize: const Size(390, 844)));
+      await tester.pumpWidget(
+        buildTestScaffold(screenSize: const Size(390, 844)),
+      );
 
       expect(find.text('Test Body'), findsOneWidget);
       expect(find.byType(NavigationBar), findsOneWidget);
@@ -38,7 +40,9 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildTestScaffold(screenSize: const Size(1440, 900)));
+      await tester.pumpWidget(
+        buildTestScaffold(screenSize: const Size(1440, 900)),
+      );
 
       expect(find.text('Test Body'), findsOneWidget);
       expect(find.byType(NavigationBar), findsNothing);
@@ -50,7 +54,9 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildTestScaffold(screenSize: const Size(768, 1024)));
+      await tester.pumpWidget(
+        buildTestScaffold(screenSize: const Size(768, 1024)),
+      );
 
       expect(find.text('DevConnect'), findsNothing);
     });
@@ -96,7 +102,9 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildLayoutTest(screenSize: const Size(390, 844)));
+      await tester.pumpWidget(
+        buildLayoutTest(screenSize: const Size(390, 844)),
+      );
 
       expect(find.text('Mobile'), findsOneWidget);
       expect(find.text('Tablet'), findsNothing);
@@ -108,7 +116,9 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildLayoutTest(screenSize: const Size(768, 1024)));
+      await tester.pumpWidget(
+        buildLayoutTest(screenSize: const Size(768, 1024)),
+      );
 
       expect(find.text('Tablet'), findsOneWidget);
       expect(find.text('Mobile'), findsNothing);
@@ -119,7 +129,9 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildLayoutTest(screenSize: const Size(1440, 900)));
+      await tester.pumpWidget(
+        buildLayoutTest(screenSize: const Size(1440, 900)),
+      );
 
       expect(find.text('Desktop'), findsOneWidget);
     });
@@ -140,7 +152,10 @@ void main() {
     });
 
     test('notifications destination matches /notifications route', () {
-      expect(FeatureDestinations.notifications.matchesRoute('/notifications'), isTrue);
+      expect(
+        FeatureDestinations.notifications.matchesRoute('/notifications'),
+        isTrue,
+      );
     });
 
     test('profile destination matches /profile route', () {
@@ -176,7 +191,10 @@ void main() {
 
     test('sidebar list is non-empty', () {
       expect(FeatureDestinations.sidebar, isNotEmpty);
-      expect(FeatureDestinations.sidebar.length, greaterThan(FeatureDestinations.mobile.length));
+      expect(
+        FeatureDestinations.sidebar.length,
+        greaterThan(FeatureDestinations.mobile.length),
+      );
     });
 
     test('moreItems list contains all non-primary destinations', () {
@@ -195,7 +213,10 @@ void main() {
     test('fromRoute finds correct destination', () {
       expect(FeatureDestinations.fromRoute('/home')?.id, equals('home'));
       expect(FeatureDestinations.fromRoute('/explore')?.id, equals('explore'));
-      expect(FeatureDestinations.fromRoute('/settings')?.id, equals('settings'));
+      expect(
+        FeatureDestinations.fromRoute('/settings')?.id,
+        equals('settings'),
+      );
       expect(FeatureDestinations.fromRoute('/nonexistent'), isNull);
     });
   });

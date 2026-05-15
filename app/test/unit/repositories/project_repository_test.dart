@@ -84,7 +84,12 @@ void main() {
         createdAt: DateTime(2024, 1, 1),
       );
 
-      final statuses = ['LOOKING_FOR_MEMBERS', 'ACTIVE', 'COMPLETED', 'ON_HOLD'];
+      final statuses = [
+        'LOOKING_FOR_MEMBERS',
+        'ACTIVE',
+        'COMPLETED',
+        'ON_HOLD',
+      ];
       for (final status in statuses) {
         final project = Project(
           id: 'proj1',

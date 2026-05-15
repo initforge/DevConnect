@@ -33,6 +33,7 @@ class AppRoutes {
   static const String analytics = '/analytics';
   static const String playground = '/playground';
   static const String liveCode = '/live-code';
+  static const String mentorship = '/mentorship';
   static const String settings = '/settings';
   static const String search = '/search';
   static const String more = '/more';
@@ -71,5 +72,6 @@ class AppRoutes {
   static const String nameSearch = 'search';
   static const String nameMore = 'more';
   static const String nameMyApplications = 'myApplications';
+  static const String nameMentorship = 'mentorship';
   static const String nameShotLab = 'shotLab';
 }

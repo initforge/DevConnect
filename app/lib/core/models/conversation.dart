@@ -24,7 +24,8 @@ class Conversation extends Equatable {
     required this.updatedAt,
   });
 
-  factory Conversation.fromJson(Map<String, dynamic> json) => _$ConversationFromJson(json);
+  factory Conversation.fromJson(Map<String, dynamic> json) =>
+      _$ConversationFromJson(json);
   Map<String, dynamic> toJson() => _$ConversationToJson(this);
 
   @override

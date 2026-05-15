@@ -124,48 +124,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
       backgroundColor: const Color(0xFFF5F7FC),
       body: DecorativeBackground(
         child: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(6, 8, 10, 0),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed:
-                        _step == 0
-                            ? () => context.pop()
-                            : () => setState(() => _step -= 1),
-                    icon: const Icon(Icons.arrow_back, size: 20),
-                  ),
-                  Expanded(
-                    child: Text(
-                      _step == 2 ? 'Account Created' : 'Create Account',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(6, 8, 10, 0),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed:
+                          _step == 0
+                              ? () => context.pop()
+                              : () => setState(() => _step -= 1),
+                      icon: const Icon(Icons.arrow_back, size: 20),
+                    ),
+                    Expanded(
+                      child: Text(
+                        _step == 2 ? 'Account Created' : 'Create Account',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 44),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            _ProgressDots(currentStep: _step),
-            const SizedBox(height: 18),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  child: _buildStepBody(),
+                    const SizedBox(width: 44),
+                  ],
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              _ProgressDots(currentStep: _step),
+              const SizedBox(height: 18),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    child: _buildStepBody(),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

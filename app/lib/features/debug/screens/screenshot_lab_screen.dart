@@ -26,10 +26,7 @@ class ScreenshotLabScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Screenshot Lab'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Screenshot Lab'), centerTitle: true),
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: items.length,
@@ -42,7 +39,10 @@ class ScreenshotLabScreen extends StatelessWidget {
               onPressed: () => context.push(item.route),
               child: Text(
                 item.label,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           );

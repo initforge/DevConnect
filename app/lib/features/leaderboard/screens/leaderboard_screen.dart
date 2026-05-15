@@ -57,10 +57,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                AppColors.primary.withOpacity(0.06),
-                Colors.transparent,
-              ],
+              colors: [AppColors.primary.withOpacity(0.06), Colors.transparent],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -110,44 +107,40 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             onRefresh: _refresh,
             child: DecorativeBackground(
               child: Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: ResponsiveUtils.getContentMaxWidth(context),
-                ),
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 40),
-                  children: [
-                    const _LeaderboardHero(),
-                    const SizedBox(height: 14),
-                    _Podium(topThree: topThree),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: const Color(0xFFE8EAF2)),
-                      ),
-                      child: Column(
-                        children:
-                            rest
-                                .map(
-                                  (entry) => _RankRow(
-                                    entry: entry,
-                                  ),
-                                )
-                                .toList(),
-                      ),
-                    ),
-                    if (_scoringWeights != null) ...[
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: ResponsiveUtils.getContentMaxWidth(context),
+                  ),
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 40),
+                    children: [
+                      const _LeaderboardHero(),
+                      const SizedBox(height: 14),
+                      _Podium(topThree: topThree),
                       const SizedBox(height: 16),
-                      _ScoringBreakdown(data: _scoringWeights!),
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(color: const Color(0xFFE8EAF2)),
+                        ),
+                        child: Column(
+                          children:
+                              rest
+                                  .map((entry) => _RankRow(entry: entry))
+                                  .toList(),
+                        ),
+                      ),
+                      if (_scoringWeights != null) ...[
+                        const SizedBox(height: 16),
+                        _ScoringBreakdown(data: _scoringWeights!),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
             ),
           );
         },
@@ -393,7 +386,8 @@ class _ScoringBreakdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final formula = data['formula'] as String? ?? '';
-    final weights = (data['weights'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final weights =
+        (data['weights'] as List?)?.cast<Map<String, dynamic>>() ?? [];
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -411,7 +405,10 @@ class _ScoringBreakdown extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 AppStrings.of(context).t('leaderboard.howScores'),
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -444,15 +441,45 @@ class _ScoringBreakdown extends StatelessWidget {
               children: [
                 // Table header
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF3F0FF),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
                   ),
+                  decoration: const BoxDecoration(color: Color(0xFFF3F0FF)),
                   child: Row(
                     children: [
-                      SizedBox(width: 44, child: Text(AppStrings.of(context).t('leaderboard.colWeight'), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF5B53F6)))),
-                      Expanded(child: Text(AppStrings.of(context).t('leaderboard.colMetric'), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF5B53F6)))),
-                      SizedBox(width: 140, child: Text(AppStrings.of(context).t('leaderboard.colDesc'), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF5B53F6)))),
+                      SizedBox(
+                        width: 44,
+                        child: Text(
+                          AppStrings.of(context).t('leaderboard.colWeight'),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF5B53F6),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          AppStrings.of(context).t('leaderboard.colMetric'),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF5B53F6),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 140,
+                        child: Text(
+                          AppStrings.of(context).t('leaderboard.colDesc'),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF5B53F6),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -461,10 +488,15 @@ class _ScoringBreakdown extends StatelessWidget {
                   final w = entry.value;
                   final isEven = entry.key.isEven;
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: isEven ? Colors.white : const Color(0xFFF9FAFC),
-                      border: const Border(top: BorderSide(color: Color(0xFFEEF0F5), width: 0.5)),
+                      border: const Border(
+                        top: BorderSide(color: Color(0xFFEEF0F5), width: 0.5),
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -489,14 +521,20 @@ class _ScoringBreakdown extends StatelessWidget {
                         Expanded(
                           child: Text(
                             w['metric'] as String? ?? '',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                         SizedBox(
                           width: 140,
                           child: Text(
                             w['description'] as String? ?? '',
-                            style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ),
                       ],

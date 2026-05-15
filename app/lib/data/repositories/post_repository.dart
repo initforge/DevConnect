@@ -498,7 +498,12 @@ class PostRepository {
       }
     }
     final db = await _database.database;
-    await db.update('posts', {'title': title, 'content': content}, where: 'id = ?', whereArgs: [postId]);
+    await db.update(
+      'posts',
+      {'title': title, 'content': content},
+      where: 'id = ?',
+      whereArgs: [postId],
+    );
   }
 
   Future<void> deletePost(String postId) async {

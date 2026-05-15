@@ -33,7 +33,8 @@ class AppNotification extends Equatable {
     this.targetPostId,
   });
 
-  factory AppNotification.fromJson(Map<String, dynamic> json) => _$AppNotificationFromJson(json);
+  factory AppNotification.fromJson(Map<String, dynamic> json) =>
+      _$AppNotificationFromJson(json);
   Map<String, dynamic> toJson() => _$AppNotificationToJson(this);
 
   @override

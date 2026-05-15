@@ -50,10 +50,14 @@ class _AnimatedCardState extends State<AnimatedCard>
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: kAnimationNormal);
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0)
-        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     Future.delayed(widget.delay * widget.index, () {
       if (mounted) _controller.forward();
@@ -100,8 +104,10 @@ class _PressableScaleState extends State<PressableScale>
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: kAnimationFast);
-    _scaleAnimation = Tween<double>(begin: 1.0, end: widget.scaleFactor)
-        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: widget.scaleFactor,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -267,7 +273,10 @@ class _AnimatedBookmarkButtonState extends State<AnimatedBookmarkButton>
             child: Icon(
               widget.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
               size: 20,
-              color: widget.isBookmarked ? AppColors.warning : AppColors.textSecondary,
+              color:
+                  widget.isBookmarked
+                      ? AppColors.warning
+                      : AppColors.textSecondary,
             ),
           ),
           const SizedBox(width: 4),
@@ -275,7 +284,10 @@ class _AnimatedBookmarkButtonState extends State<AnimatedBookmarkButton>
             _formatCount(widget.count),
             style: TextStyle(
               fontSize: 13,
-              color: widget.isBookmarked ? AppColors.warning : AppColors.textSecondary,
+              color:
+                  widget.isBookmarked
+                      ? AppColors.warning
+                      : AppColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -318,13 +330,13 @@ class UserAvatar extends StatelessWidget {
           child:
               imageUrl == null
                   ? Text(
-                      name.isNotEmpty ? name[0].toUpperCase() : '?',
-                      style: TextStyle(
-                        fontSize: size * 0.4,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                      ),
-                    )
+                    name.isNotEmpty ? name[0].toUpperCase() : '?',
+                    style: TextStyle(
+                      fontSize: size * 0.4,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  )
                   : null,
         ),
         if (isOnline)
@@ -464,8 +476,10 @@ class _ShimmerBoxState extends State<ShimmerBox>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat();
-    _animation = Tween<double>(begin: -2, end: 2)
-        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _animation = Tween<double>(
+      begin: -2,
+      end: 2,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -597,9 +611,9 @@ class EmptyState extends StatelessWidget {
               const SizedBox(height: kSpacingSm),
               Text(
                 subtitle!,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textTertiary,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppColors.textTertiary),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -646,9 +660,9 @@ class ErrorState extends StatelessWidget {
             const SizedBox(height: kSpacingLg),
             Text(
               message,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColors.textPrimary,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(color: AppColors.textPrimary),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[
@@ -709,7 +723,8 @@ class EmptyNotifications extends StatelessWidget {
     return const EmptyState(
       icon: Icons.notifications_none_outlined,
       title: 'Chua co thong bao nao',
-      subtitle: 'Cac thong bao ve likes, comments va followers se xuat hien o day.',
+      subtitle:
+          'Cac thong bao ve likes, comments va followers se xuat hien o day.',
     );
   }
 }
@@ -786,7 +801,10 @@ class FuturePhaseBanner extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(999),

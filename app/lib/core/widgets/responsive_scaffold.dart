@@ -83,8 +83,12 @@ class ResponsiveScaffold extends StatelessWidget {
   List<Widget> _buildSidebarSections(BuildContext context, bool expanded) {
     final strings = AppStrings.current();
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final groupLabelColor = isDark ? AppColors.darkTextTertiary : AppColors.textTertiary;
-    final dividerColor = isDark ? AppColors.darkBorder.withValues(alpha: 0.4) : AppColors.divider.withValues(alpha: 0.5);
+    final groupLabelColor =
+        isDark ? AppColors.darkTextTertiary : AppColors.textTertiary;
+    final dividerColor =
+        isDark
+            ? AppColors.darkBorder.withValues(alpha: 0.4)
+            : AppColors.divider.withValues(alpha: 0.5);
     final groups = <FeatureDestinationGroup, List<FeatureDestination>>{};
     for (final item in FeatureDestinations.sidebar) {
       groups.putIfAbsent(item.group, () => <FeatureDestination>[]).add(item);
@@ -102,7 +106,8 @@ class ResponsiveScaffold extends StatelessWidget {
                   width: 3,
                   height: 12,
                   decoration: BoxDecoration(
-                    color: (isDark ? AppColors.primaryLight : AppColors.primary).withValues(alpha: 0.4),
+                    color: (isDark ? AppColors.primaryLight : AppColors.primary)
+                        .withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -190,9 +195,10 @@ class _SidebarHeader extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.darkTextPrimary
-                      : AppColors.textPrimary,
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.textPrimary,
                 ),
               ),
             ),
@@ -230,9 +236,12 @@ class _SidebarItem extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(12),
-            hoverColor: selected ? null : (Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkSurfaceAlt
-                : AppColors.primarySurface),
+            hoverColor:
+                selected
+                    ? null
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.darkSurfaceAlt
+                        : AppColors.primarySurface),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: EdgeInsets.symmetric(
@@ -242,9 +251,16 @@ class _SidebarItem extends StatelessWidget {
               decoration: BoxDecoration(
                 color: selected ? AppColors.primary : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: selected
-                    ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))]
-                    : null,
+                boxShadow:
+                    selected
+                        ? [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                        : null,
               ),
               child: Row(
                 mainAxisAlignment:
@@ -255,11 +271,12 @@ class _SidebarItem extends StatelessWidget {
                   Icon(
                     icon,
                     size: 22,
-                    color: selected
-                        ? Colors.white
-                        : (Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.darkTextSecondary
-                            : AppColors.textSecondary),
+                    color:
+                        selected
+                            ? Colors.white
+                            : (Theme.of(context).brightness == Brightness.dark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.textSecondary),
                   ),
                   if (expanded) ...[
                     const SizedBox(width: 12),
@@ -272,11 +289,13 @@ class _SidebarItem extends StatelessWidget {
                           fontSize: 14,
                           fontWeight:
                               selected ? FontWeight.w700 : FontWeight.w500,
-                          color: selected
-                              ? Colors.white
-                              : (Theme.of(context).brightness == Brightness.dark
-                                  ? AppColors.darkTextPrimary
-                                  : AppColors.textPrimary),
+                          color:
+                              selected
+                                  ? Colors.white
+                                  : (Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? AppColors.darkTextPrimary
+                                      : AppColors.textPrimary),
                         ),
                       ),
                     ),

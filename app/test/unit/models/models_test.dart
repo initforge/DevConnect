@@ -527,11 +527,7 @@ void main() {
     });
 
     test('LeaderboardEntry default rankChange is zero', () {
-      final entry = LeaderboardEntry(
-        rank: 5,
-        user: user,
-        points: 1000,
-      );
+      final entry = LeaderboardEntry(rank: 5, user: user, points: 1000);
 
       expect(entry.rankChange, 0);
     });

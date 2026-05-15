@@ -173,8 +173,14 @@ void main() {
       });
       final after = DateTime.now();
 
-      expect(user.createdAt.isAfter(before.subtract(const Duration(seconds: 1))), true);
-      expect(user.createdAt.isBefore(after.add(const Duration(seconds: 1))), true);
+      expect(
+        user.createdAt.isAfter(before.subtract(const Duration(seconds: 1))),
+        true,
+      );
+      expect(
+        user.createdAt.isBefore(after.add(const Duration(seconds: 1))),
+        true,
+      );
     });
   });
 

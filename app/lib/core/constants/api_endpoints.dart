@@ -79,5 +79,4 @@ class ApiEndpoints {
   // Media
   static const String mediaUpload = '/media/upload';
   static const String mediaById = '/media/:id';
-
 }

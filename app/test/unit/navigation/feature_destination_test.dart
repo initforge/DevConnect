@@ -4,12 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('FeatureDestinations', () {
-    test('mobile nav exposes the expected 4 destinations plus create action', () {
-      expect(
-        FeatureDestinations.mobile.map((item) => item.route),
-        [AppRoutes.home, AppRoutes.explore, AppRoutes.chat, AppRoutes.more],
-      );
-    });
+    test(
+      'mobile nav exposes the expected 4 destinations plus create action',
+      () {
+        expect(FeatureDestinations.mobile.map((item) => item.route), [
+          AppRoutes.home,
+          AppRoutes.explore,
+          AppRoutes.chat,
+          AppRoutes.more,
+        ]);
+      },
+    );
 
     test('more hub exposes non-primary features', () {
       final routes = FeatureDestinations.moreItems.map((item) => item.route);

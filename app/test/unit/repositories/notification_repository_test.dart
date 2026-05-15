@@ -57,8 +57,15 @@ void main() {
     });
 
     test('AppNotification handles all notification types', () {
-      final types = ['LIKE', 'COMMENT', 'FOLLOW', 'MENTION', 'BEST_ANSWER', 'SYSTEM'];
-      
+      final types = [
+        'LIKE',
+        'COMMENT',
+        'FOLLOW',
+        'MENTION',
+        'BEST_ANSWER',
+        'SYSTEM',
+      ];
+
       for (final type in types) {
         final notification = AppNotification(
           id: 'n1',

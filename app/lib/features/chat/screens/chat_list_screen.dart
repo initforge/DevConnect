@@ -181,7 +181,11 @@ class _ChatListScreenState extends State<ChatListScreen>
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${AppStrings.of(context).t('chat.unableLoadChats')}: $error')),
+        SnackBar(
+          content: Text(
+            '${AppStrings.of(context).t('chat.unableLoadChats')}: $error',
+          ),
+        ),
       );
     }
   }
@@ -210,7 +214,9 @@ class _ChatListScreenState extends State<ChatListScreen>
         return AlertDialog(
           title: Text(strings.t('chat.deleteConversation')),
           content: Text(
-            strings.t('chat.deleteConversationBody').replaceAll('{name}', conversation.otherUser.displayName),
+            strings
+                .t('chat.deleteConversationBody')
+                .replaceAll('{name}', conversation.otherUser.displayName),
           ),
           actions: [
             TextButton(
@@ -237,9 +243,15 @@ class _ChatListScreenState extends State<ChatListScreen>
       if (!mounted) return false;
       await _loadData();
       if (!mounted) return true;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(AppStrings.of(context).t('chat.deletedChat').replaceAll('{name}', displayName))));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppStrings.of(
+              context,
+            ).t('chat.deletedChat').replaceAll('{name}', displayName),
+          ),
+        ),
+      );
       return true;
     } catch (e) {
       if (!mounted) return false;
@@ -262,8 +274,12 @@ class _ChatListScreenState extends State<ChatListScreen>
       SnackBar(
         content: Text(
           _mutedConversationIds.contains(conversation.id)
-              ? AppStrings.of(context).t('chat.muted').replaceAll('{name}', conversation.otherUser.displayName)
-              : AppStrings.of(context).t('chat.unmuted').replaceAll('{name}', conversation.otherUser.displayName),
+              ? AppStrings.of(context)
+                  .t('chat.muted')
+                  .replaceAll('{name}', conversation.otherUser.displayName)
+              : AppStrings.of(context)
+                  .t('chat.unmuted')
+                  .replaceAll('{name}', conversation.otherUser.displayName),
         ),
       ),
     );
@@ -299,7 +315,10 @@ class _ChatListScreenState extends State<ChatListScreen>
               Text(
                 AppStrings.of(context).t('chat.chooseContact'),
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 12),
               ...users.map(
@@ -332,10 +351,9 @@ class _ChatListScreenState extends State<ChatListScreen>
     }
     // Create conversation via API
     try {
-      final result = await ApiService.instance.post(
-        '/chat/conversations',
-        {'otherUserId': selectedUser.id},
-      );
+      final result = await ApiService.instance.post('/chat/conversations', {
+        'otherUserId': selectedUser.id,
+      });
       if (!mounted) return;
       final conversationId = result['id']?.toString();
       if (conversationId != null && conversationId.isNotEmpty) {
@@ -345,7 +363,9 @@ class _ChatListScreenState extends State<ChatListScreen>
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.of(context).t('chat.unableLoadChats'))),
+        SnackBar(
+          content: Text(AppStrings.of(context).t('chat.unableLoadChats')),
+        ),
       );
     }
   }
@@ -405,147 +425,148 @@ class _ChatListScreenState extends State<ChatListScreen>
       ),
       body: DecorativeBackground(
         child: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: ResponsiveUtils.getContentMaxWidth(context),
-          ),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: Container(
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF4F6FA),
-                    borderRadius: BorderRadius.circular(21),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 14),
-                      const Icon(
-                        Icons.search,
-                        size: 18,
-                        color: AppColors.textTertiary,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        AppStrings.of(context).t('chat.searchConversations'),
-                        style: const TextStyle(
-                          fontSize: 12,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: ResponsiveUtils.getContentMaxWidth(context),
+            ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: Container(
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF4F6FA),
+                      borderRadius: BorderRadius.circular(21),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 14),
+                        const Icon(
+                          Icons.search,
+                          size: 18,
                           color: AppColors.textTertiary,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    AppStrings.of(context).t('chat.onlineNow'),
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textSecondary,
+                        const SizedBox(width: 8),
+                        Text(
+                          AppStrings.of(context).t('chat.searchConversations'),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: ResponsiveUtils.isDesktop(context) ? 96 : 82,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
+                Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _onlineUsers.length + 1,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
-                  itemBuilder: (_, index) {
-                    if (index == 0) {
-                      return const _NewChatAvatar();
-                    }
-                    final user = _onlineUsers[index - 1];
-                    return GestureDetector(
-                      onTap:
-                          () =>
-                              context.push('${AppRoutes.userBase}/${user.id}'),
-                      child: _OnlineAvatar(user: user),
-                    );
-                  },
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      AppStrings.of(context).t('chat.onlineNow'),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
-                  itemCount: _conversations.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (_, index) {
-                    final conversation = _conversations[index];
-                    return Dismissible(
-                      key: Key(conversation.id),
-                      direction: DismissDirection.horizontal,
-                      confirmDismiss: (direction) {
-                        if (direction == DismissDirection.startToEnd) {
-                          return _muteConversation(conversation);
-                        }
-                        return _deleteConversation(conversation);
-                      },
-                      background: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF5B53F6),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.only(left: 20),
-                        child: Icon(
-                          _mutedConversationIds.contains(conversation.id)
-                              ? Icons.volume_up_outlined
-                              : Icons.volume_off_outlined,
-                          color: Colors.white,
-                        ),
-                      ),
-                      secondaryBackground: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.error,
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 20),
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      child: _ConversationRow(
-                        conversation: conversation,
-                        isMuted: _mutedConversationIds.contains(
-                          conversation.id,
-                        ),
-                        onTap: () async {
-                          _markConversationReadLocally(conversation.id);
-                          unawaited(
-                            _repository.markConversationRead(conversation.id),
-                          );
-                          await context.push(
-                            '${AppRoutes.chatBase}/${conversation.id}',
-                          );
-                          if (mounted) _loadData();
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: ResponsiveUtils.isDesktop(context) ? 96 : 82,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _onlineUsers.length + 1,
+                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    itemBuilder: (_, index) {
+                      if (index == 0) {
+                        return const _NewChatAvatar();
+                      }
+                      final user = _onlineUsers[index - 1];
+                      return GestureDetector(
+                        onTap:
+                            () => context.push(
+                              '${AppRoutes.userBase}/${user.id}',
+                            ),
+                        child: _OnlineAvatar(user: user),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+                    itemCount: _conversations.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (_, index) {
+                      final conversation = _conversations[index];
+                      return Dismissible(
+                        key: Key(conversation.id),
+                        direction: DismissDirection.horizontal,
+                        confirmDismiss: (direction) {
+                          if (direction == DismissDirection.startToEnd) {
+                            return _muteConversation(conversation);
+                          }
+                          return _deleteConversation(conversation);
                         },
-                      ),
-                    );
-                  },
+                        background: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF5B53F6),
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          alignment: Alignment.centerLeft,
+                          padding: const EdgeInsets.only(left: 20),
+                          child: Icon(
+                            _mutedConversationIds.contains(conversation.id)
+                                ? Icons.volume_up_outlined
+                                : Icons.volume_off_outlined,
+                            color: Colors.white,
+                          ),
+                        ),
+                        secondaryBackground: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.error,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          child: const Icon(Icons.delete, color: Colors.white),
+                        ),
+                        child: _ConversationRow(
+                          conversation: conversation,
+                          isMuted: _mutedConversationIds.contains(
+                            conversation.id,
+                          ),
+                          onTap: () async {
+                            _markConversationReadLocally(conversation.id);
+                            unawaited(
+                              _repository.markConversationRead(conversation.id),
+                            );
+                            await context.push(
+                              '${AppRoutes.chatBase}/${conversation.id}',
+                            );
+                            if (mounted) _loadData();
+                          },
+                        ),
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }

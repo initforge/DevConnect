@@ -122,7 +122,6 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       if (!mounted) return;
       setState(() => _recent = AppPreferences.instance.recentSearches);
     } catch (_) {
-
       setState(() {
         _users = const [];
         _posts = const [];
@@ -164,18 +163,26 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             onChanged: _handleQueryChanged,
             decoration: InputDecoration(
               hintText: AppStrings.of(context).t('search.hint'),
-              hintStyle: const TextStyle(fontSize: 13, color: AppColors.textTertiary),
-              prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.textSecondary),
-              suffixIcon: _controller.text.isNotEmpty
-                  ? IconButton(
-                      onPressed: () {
-                        _debounce?.cancel();
-                        _controller.clear();
-                        _handleQueryChanged('');
-                      },
-                      icon: const Icon(Icons.close, size: 18),
-                    )
-                  : null,
+              hintStyle: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textTertiary,
+              ),
+              prefixIcon: const Icon(
+                Icons.search,
+                size: 18,
+                color: AppColors.textSecondary,
+              ),
+              suffixIcon:
+                  _controller.text.isNotEmpty
+                      ? IconButton(
+                        onPressed: () {
+                          _debounce?.cancel();
+                          _controller.clear();
+                          _handleQueryChanged('');
+                        },
+                        icon: const Icon(Icons.close, size: 18),
+                      )
+                      : null,
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(vertical: 10),
             ),
@@ -189,7 +196,12 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: List.generate(4, (index) {
-                final labels = [AppStrings.of(context).t('search.all'), AppStrings.of(context).t('search.posts'), AppStrings.of(context).t('search.people'), AppStrings.of(context).t('search.projects')];
+                final labels = [
+                  AppStrings.of(context).t('search.all'),
+                  AppStrings.of(context).t('search.posts'),
+                  AppStrings.of(context).t('search.people'),
+                  AppStrings.of(context).t('search.projects'),
+                ];
                 final selected = index == _selectedTab;
                 return Expanded(
                   child: InkWell(
@@ -253,7 +265,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               if (!mounted) return;
               setState(() => _recent = const []);
             },
-            child: Text(strings.t('search.clear'), style: const TextStyle(fontSize: 11)),
+            child: Text(
+              strings.t('search.clear'),
+              style: const TextStyle(fontSize: 11),
+            ),
           ),
         ],
       ),
@@ -290,7 +305,11 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.search, size: 12, color: AppColors.textTertiary),
+                            const Icon(
+                              Icons.search,
+                              size: 12,
+                              color: AppColors.textTertiary,
+                            ),
                             const SizedBox(width: 5),
                             Text(item, style: const TextStyle(fontSize: 12)),
                           ],
@@ -316,30 +335,42 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       Wrap(
         spacing: 8,
         runSpacing: 8,
-        children: ['Flutter', 'NestJS', 'Docker', 'React', 'AI'].map((topic) {
-          return GestureDetector(
-            onTap: () {
-              _controller.text = topic;
-              _search(topic);
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFF5F3FF), Color(0xFFEDE9FE)],
+        children:
+            ['Flutter', 'NestJS', 'Docker', 'React', 'AI'].map((topic) {
+              return GestureDetector(
+                onTap: () {
+                  _controller.text = topic;
+                  _search(topic);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFF5F3FF), Color(0xFFEDE9FE)],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '#$topic',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF5B53F6),
+                    ),
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '#$topic',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF5B53F6)),
-              ),
-            ),
-          );
-        }).toList(),
+              );
+            }).toList(),
       ),
       const SizedBox(height: 20),
-      _SectionTitle(title: AppStrings.of(context).t('search.posts'), trailing: '${_posts.length} ${AppStrings.of(context).t('search.results')}'),
+      _SectionTitle(
+        title: AppStrings.of(context).t('search.posts'),
+        trailing:
+            '${_posts.length} ${AppStrings.of(context).t('search.results')}',
+      ),
       const SizedBox(height: 10),
       ..._posts
           .take(2)
@@ -350,7 +381,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             ),
           ),
       const SizedBox(height: 10),
-      _SectionTitle(title: AppStrings.of(context).t('search.people'), trailing: AppStrings.of(context).t('explore.seeAll')),
+      _SectionTitle(
+        title: AppStrings.of(context).t('search.people'),
+        trailing: AppStrings.of(context).t('explore.seeAll'),
+      ),
       const SizedBox(height: 10),
       SizedBox(
         height: 138,
@@ -368,7 +402,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: const Color(0xFFE7EAF2)),
               ),
-                  child: Column(
+              child: Column(
                 children: [
                   UserAvatar(name: user.displayName, size: 46),
                   const SizedBox(height: 8),
@@ -381,7 +415,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                     ),
                   ),
                   _highlightedText(
-                    user.skills.isNotEmpty ? user.skills.first : AppStrings.of(context).t('search.developer'),
+                    user.skills.isNotEmpty
+                        ? user.skills.first
+                        : AppStrings.of(context).t('search.developer'),
                     maxLines: 1,
                     style: const TextStyle(
                       fontSize: 10,
@@ -403,7 +439,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text(AppStrings.of(context).t('search.view'), style: const TextStyle(fontSize: 10)),
+                      child: Text(
+                        AppStrings.of(context).t('search.view'),
+                        style: const TextStyle(fontSize: 10),
+                      ),
                     ),
                   ),
                 ],
@@ -413,7 +452,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
         ),
       ),
       const SizedBox(height: 14),
-      _SectionTitle(title: AppStrings.of(context).t('search.projects'), trailing: AppStrings.of(context).t('explore.title')),
+      _SectionTitle(
+        title: AppStrings.of(context).t('search.projects'),
+        trailing: AppStrings.of(context).t('explore.title'),
+      ),
       const SizedBox(height: 10),
       GridView.builder(
         shrinkWrap: true,
@@ -508,8 +550,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     }
     if (_selectedTab == 2) {
       return _users.map<Widget>((user) {
-            return ListTile(
-              leading: UserAvatar(name: user.displayName, size: 42),
+        return ListTile(
+          leading: UserAvatar(name: user.displayName, size: 42),
           title: _highlightedText(
             user.displayName,
             style: const TextStyle(fontWeight: FontWeight.w600),

@@ -15,7 +15,10 @@ class _SectionCard extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? AppColors.darkBorder.withValues(alpha: 0.5) : Theme.of(context).dividerColor,
+          color:
+              isDark
+                  ? AppColors.darkBorder.withValues(alpha: 0.5)
+                  : Theme.of(context).dividerColor,
         ),
       ),
       child: Column(
@@ -59,16 +62,23 @@ class _ArrowRow extends StatelessWidget {
       leading: Icon(
         icon,
         size: 18,
-        color: titleColor ?? (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
+        color:
+            titleColor ??
+            (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
       ),
       title: Text(
         title,
         style: TextStyle(
           fontSize: 14,
-          color: titleColor ?? (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
+          color:
+              titleColor ??
+              (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
         ),
       ),
-      trailing: Icon(Icons.chevron_right, color: isDark ? AppColors.darkTextTertiary : AppColors.textTertiary),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: isDark ? AppColors.darkTextTertiary : AppColors.textTertiary,
+      ),
       onTap: onTap ?? () {},
     );
   }
@@ -95,8 +105,18 @@ class _StatusRow extends StatelessWidget {
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, size: 18, color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
-      title: Text(title, style: TextStyle(fontSize: 14, color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary)),
+      leading: Icon(
+        icon,
+        size: 18,
+        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 14,
+          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+        ),
+      ),
       onTap: onTap,
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -136,11 +156,24 @@ class _ValueRow extends StatelessWidget {
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, size: 18, color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
-      title: Text(title, style: TextStyle(fontSize: 14, color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary)),
+      leading: Icon(
+        icon,
+        size: 18,
+        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 14,
+          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+        ),
+      ),
       trailing: Text(
         value,
-        style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
+        style: TextStyle(
+          fontSize: 12,
+          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+        ),
       ),
       onTap: onTap,
     );
@@ -166,8 +199,18 @@ class _SwitchRow extends StatelessWidget {
     return SwitchListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
-      secondary: Icon(icon, size: 18, color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
-      title: Text(title, style: TextStyle(fontSize: 14, color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary)),
+      secondary: Icon(
+        icon,
+        size: 18,
+        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 14,
+          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+        ),
+      ),
       value: value,
       activeColor: AppColors.success,
       onChanged: onChanged,

@@ -379,8 +379,12 @@ class ApiService {
       MediaType? contentType;
       final ext = fileName.split('.').last.toLowerCase();
       const mimeMap = {
-        'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png',
-        'gif': 'image/gif', 'webp': 'image/webp', 'bmp': 'image/bmp',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+        'bmp': 'image/bmp',
       };
       if (mimeMap.containsKey(ext)) {
         final parts = mimeMap[ext]!.split('/');
@@ -388,7 +392,11 @@ class ApiService {
       }
 
       final formData = FormData.fromMap({
-        fieldName: MultipartFile.fromBytes(bytes, filename: fileName, contentType: contentType),
+        fieldName: MultipartFile.fromBytes(
+          bytes,
+          filename: fileName,
+          contentType: contentType,
+        ),
         ...?additionalFields,
       });
 

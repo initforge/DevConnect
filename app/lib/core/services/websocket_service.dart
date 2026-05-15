@@ -25,12 +25,7 @@ class WsMessage {
   final Map<String, dynamic>? data;
   final String? error;
 
-  WsMessage({
-    required this.type,
-    this.channel,
-    this.data,
-    this.error,
-  });
+  WsMessage({required this.type, this.channel, this.data, this.error});
 
   factory WsMessage.fromJson(Map<String, dynamic> json) {
     return WsMessage(
@@ -52,20 +47,10 @@ class WsMessage {
 }
 
 /// Channel types for subscription
-enum WsChannel {
-  notifications,
-  messages,
-  presence,
-  posts,
-}
+enum WsChannel { notifications, messages, presence, posts }
 
 /// WebSocket connection state
-enum WsConnectionState {
-  disconnected,
-  connecting,
-  connected,
-  reconnecting,
-}
+enum WsConnectionState { disconnected, connecting, connected, reconnecting }
 
 /// Abstract listener for WebSocket events
 abstract class WebSocketServiceListener {
@@ -209,7 +194,9 @@ class WebSocketService {
     if (data is Map<String, dynamic>) return data;
     if (data is Map) {
       return Map<String, dynamic>.fromEntries(
-        data.entries.map((entry) => MapEntry(entry.key.toString(), entry.value)),
+        data.entries.map(
+          (entry) => MapEntry(entry.key.toString(), entry.value),
+        ),
       );
     }
     if (data is String) {

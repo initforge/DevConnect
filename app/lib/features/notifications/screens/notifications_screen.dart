@@ -97,7 +97,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     await AppPreferences.instance.setTeamInviteState(decision);
     // Persist to backend so it doesn't reappear across devices
     try {
-      await ApiService.instance.post('/notifications/team-invite', {'decision': decision});
+      await ApiService.instance.post('/notifications/team-invite', {
+        'decision': decision,
+      });
     } catch (_) {}
     if (!mounted) return;
 

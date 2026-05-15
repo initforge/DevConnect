@@ -79,7 +79,9 @@ class ResponsiveBuilder extends StatelessWidget {
     final device = ResponsiveUtils.getDeviceType(context);
     switch (device) {
       case DeviceType.desktop:
-        return desktop?.call(context) ?? tablet?.call(context) ?? mobile(context);
+        return desktop?.call(context) ??
+            tablet?.call(context) ??
+            mobile(context);
       case DeviceType.tablet:
         return tablet?.call(context) ?? mobile(context);
       case DeviceType.mobile:

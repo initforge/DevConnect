@@ -205,7 +205,10 @@ class _ShowcaseProjectCardState extends State<_ShowcaseProjectCard> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFF4EEDF),
                           shape: BoxShape.circle,
-                          border: Border.all(color: Theme.of(context).colorScheme.surface, width: 2),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.surface,
+                            width: 2,
+                          ),
                         ),
                         alignment: Alignment.center,
                         child: Text(
@@ -296,10 +299,14 @@ class _ShowcaseFilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Theme.of(context).colorScheme.surface,
+          color:
+              selected
+                  ? AppColors.primary
+                  : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? AppColors.primary : Theme.of(context).dividerColor,
+            color:
+                selected ? AppColors.primary : Theme.of(context).dividerColor,
           ),
         ),
         child: Text(
@@ -331,7 +338,10 @@ class _ProjectCard extends StatelessWidget {
     final isOpen = project.status == 'LOOKING_FOR_MEMBERS';
     return GestureDetector(
       onTap: () {
-        context.pushNamed(AppRoutes.nameProjectDetail, pathParameters: {'id': project.id});
+        context.pushNamed(
+          AppRoutes.nameProjectDetail,
+          pathParameters: {'id': project.id},
+        );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
@@ -344,105 +354,105 @@ class _ProjectCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      project.title,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        project.title,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      project.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        height: 1.45,
-                        color: AppColors.textSecondary,
+                      const SizedBox(height: 4),
+                      Text(
+                        project.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          height: 1.45,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color:
-                      isOpen
-                          ? const Color(0xFFF3F0FF)
-                          : const Color(0xFFEFF7FF),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  isOpen ? 'Open' : 'Active',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
                     color:
                         isOpen
-                            ? const Color(0xFF5B53F6)
-                            : const Color(0xFF2279FF),
+                            ? const Color(0xFFF3F0FF)
+                            : const Color(0xFFEFF7FF),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    isOpen ? 'Open' : 'Active',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color:
+                          isOpen
+                              ? const Color(0xFF5B53F6)
+                              : const Color(0xFF2279FF),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children:
-                project.techStack
-                    .take(4)
-                    .map((tech) => TechChip(label: tech))
-                    .toList(),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              _MiniMembers(project: project),
-              const Spacer(),
-              OutlinedButton(
-                onPressed: joined ? null : onJoin,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor:
-                      joined ? AppColors.success : const Color(0xFF5B53F6),
-                  side: BorderSide(
-                    color:
-                        joined
-                            ? const Color(0xFFB7E6CF)
-                            : const Color(0xFFD9D6FF),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children:
+                  project.techStack
+                      .take(4)
+                      .map((tech) => TechChip(label: tech))
+                      .toList(),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                _MiniMembers(project: project),
+                const Spacer(),
+                OutlinedButton(
+                  onPressed: joined ? null : onJoin,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor:
+                        joined ? AppColors.success : const Color(0xFF5B53F6),
+                    side: BorderSide(
+                      color:
+                          joined
+                              ? const Color(0xFFB7E6CF)
+                              : const Color(0xFFD9D6FF),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                  child: Text(
+                    joined ? 'Joined' : 'Join',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
-                child: Text(
-                  joined ? 'Joined' : 'Join',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 }
@@ -474,7 +484,10 @@ class _MiniMembers extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFFECEEFF),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Theme.of(context).colorScheme.surface, width: 2),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.surface,
+                      width: 2,
+                    ),
                   ),
                   alignment: Alignment.center,
                   child: Text(

@@ -45,17 +45,40 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       bottomNavigationBar: AppBottomNavBar(
         items: [
-          AppBottomNavItem(icon: Icons.home_outlined, selectedIcon: Icons.home, label: strings.nav('home'), route: AppRoutes.home),
-          AppBottomNavItem(icon: Icons.explore_outlined, selectedIcon: Icons.explore, label: strings.nav('explore'), route: AppRoutes.explore),
-          AppBottomNavItem(icon: Icons.bar_chart_outlined, selectedIcon: Icons.bar_chart, label: strings.nav('analytics'), route: AppRoutes.analytics),
-          AppBottomNavItem(icon: Icons.person_outline, selectedIcon: Icons.person, label: strings.nav('profile'), route: AppRoutes.profile),
+          AppBottomNavItem(
+            icon: Icons.home_outlined,
+            selectedIcon: Icons.home,
+            label: strings.nav('home'),
+            route: AppRoutes.home,
+          ),
+          AppBottomNavItem(
+            icon: Icons.explore_outlined,
+            selectedIcon: Icons.explore,
+            label: strings.nav('explore'),
+            route: AppRoutes.explore,
+          ),
+          AppBottomNavItem(
+            icon: Icons.bar_chart_outlined,
+            selectedIcon: Icons.bar_chart,
+            label: strings.nav('analytics'),
+            route: AppRoutes.analytics,
+          ),
+          AppBottomNavItem(
+            icon: Icons.person_outline,
+            selectedIcon: Icons.person,
+            label: strings.nav('profile'),
+            route: AppRoutes.profile,
+          ),
         ],
         selectedIndex: 2,
         currentRoute: AppRoutes.analytics,
         centerCreate: true,
       ),
       appBar: AppBar(
-        title: Text(strings.t('analytics.title'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        title: Text(
+          strings.t('analytics.title'),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        ),
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
@@ -63,13 +86,28 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
           unselectedLabelColor: AppColors.textSecondary,
           indicatorColor: AppColors.primary,
           indicatorSize: TabBarIndicatorSize.label,
-          labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          labelStyle: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
           unselectedLabelStyle: const TextStyle(fontSize: 12),
           tabs: [
-            Tab(icon: const Icon(Icons.auto_awesome, size: 16), text: strings.t('analytics.recommendation')),
-            Tab(icon: const Icon(Icons.speed, size: 16), text: strings.t('analytics.cache')),
-            Tab(icon: const Icon(Icons.queue, size: 16), text: strings.t('analytics.queues')),
-            Tab(icon: const Icon(Icons.trending_up, size: 16), text: strings.t('analytics.engagement')),
+            Tab(
+              icon: const Icon(Icons.auto_awesome, size: 16),
+              text: strings.t('analytics.recommendation'),
+            ),
+            Tab(
+              icon: const Icon(Icons.speed, size: 16),
+              text: strings.t('analytics.cache'),
+            ),
+            Tab(
+              icon: const Icon(Icons.queue, size: 16),
+              text: strings.t('analytics.queues'),
+            ),
+            Tab(
+              icon: const Icon(Icons.trending_up, size: 16),
+              text: strings.t('analytics.engagement'),
+            ),
           ],
         ),
       ),
@@ -86,12 +124,20 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.error_outline, size: 44, color: AppColors.textTertiary),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 44,
+                        color: AppColors.textTertiary,
+                      ),
                       const SizedBox(height: 14),
-                      Text(strings.t('analytics.unableLoad'), style: const TextStyle(color: AppColors.textSecondary)),
+                      Text(
+                        strings.t('analytics.unableLoad'),
+                        style: const TextStyle(color: AppColors.textSecondary),
+                      ),
                       const SizedBox(height: 14),
                       ElevatedButton(
-                        onPressed: () => setState(() => _loader = _loadAnalytics()),
+                        onPressed:
+                            () => setState(() => _loader = _loadAnalytics()),
                         child: Text(strings.t('analytics.tryAgain')),
                       ),
                     ],
@@ -113,10 +159,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
     final bullmq = data['bullmq'] as Map<String, dynamic>? ?? {};
     final engagement = data['userEngagement'] as Map<String, dynamic>? ?? {};
 
-    final cacheBreakdown = redis['cacheBreakdown'] as Map<String, dynamic>? ?? {};
-    final queues = (bullmq['queues'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-    final topPosts = (engagement['topPosts'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-    final topTags = (rec['topTags'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final cacheBreakdown =
+        redis['cacheBreakdown'] as Map<String, dynamic>? ?? {};
+    final queues =
+        (bullmq['queues'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final topPosts =
+        (engagement['topPosts'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final topTags =
+        (rec['topTags'] as List?)?.cast<Map<String, dynamic>>() ?? [];
     final interactions = rec['interactions'] as Map<String, dynamic>? ?? {};
 
     return TabBarView(
@@ -132,32 +182,67 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               children: [
                 Row(
                   children: [
-                    _StatusBadge(label: rec['method']?.toString() ?? 'Unknown', active: rec['svdActive'] == true),
+                    _StatusBadge(
+                      label: rec['method']?.toString() ?? 'Unknown',
+                      active: rec['svdActive'] == true,
+                    ),
                     const Spacer(),
                     Text(
                       'SVD: ${_asInt(rec['svdFactors']?['users'])} users / ${_asInt(rec['svdFactors']?['posts'])} posts',
-                      style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: _MetricTile(label: 'LIKES', value: '${_asInt(interactions['likes'])}')),
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'LIKES',
+                        value: '${_asInt(interactions['likes'])}',
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: _MetricTile(label: 'BOOKMARKS', value: '${_asInt(interactions['bookmarks'])}')),
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'BOOKMARKS',
+                        value: '${_asInt(interactions['bookmarks'])}',
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: _MetricTile(label: 'COMMENTS', value: '${_asInt(interactions['comments'])}')),
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'COMMENTS',
+                        value: '${_asInt(interactions['comments'])}',
+                      ),
+                    ),
                   ],
                 ),
                 if (topTags.isNotEmpty) ...[
                   const SizedBox(height: 10),
-                  Text(strings.t('analytics.topInterestTags'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                  Text(
+                    strings.t('analytics.topInterestTags'),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
-                    children: topTags.map((t) => _TagChip(tag: t['tag']?.toString() ?? '', count: _asInt(t['count']))).toList(),
+                    children:
+                        topTags
+                            .map(
+                              (t) => _TagChip(
+                                tag: t['tag']?.toString() ?? '',
+                                count: _asInt(t['count']),
+                              ),
+                            )
+                            .toList(),
                   ),
                 ],
               ],
@@ -179,21 +264,63 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               children: [
                 Row(
                   children: [
-                    Expanded(child: _MetricTile(label: 'HIT RATE', value: '${_asInt(redis['hitRate'])}%', color: AppColors.success)),
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'HIT RATE',
+                        value: '${_asInt(redis['hitRate'])}%',
+                        color: AppColors.success,
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: _MetricTile(label: 'MEMORY', value: '${redis['memoryUsedMB'] ?? 0} MB')),
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'MEMORY',
+                        value: '${redis['memoryUsedMB'] ?? 0} MB',
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: _MetricTile(label: 'CLIENTS', value: '${_asInt(redis['connectedClients'])}')),
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'CLIENTS',
+                        value: '${_asInt(redis['connectedClients'])}',
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text(strings.t('analytics.cacheBreakdown'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                Text(
+                  strings.t('analytics.cacheBreakdown'),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 6),
-                _CacheBar(label: 'Feed Cache', count: _asInt(cacheBreakdown['feed']), total: _asInt(cacheBreakdown['total'])),
-                _CacheBar(label: 'Leaderboard', count: _asInt(cacheBreakdown['leaderboard']), total: _asInt(cacheBreakdown['total'])),
-                _CacheBar(label: 'SVD Factors', count: _asInt(cacheBreakdown['svd']), total: _asInt(cacheBreakdown['total'])),
-                _CacheBar(label: 'AI Cache', count: _asInt(cacheBreakdown['aiCache']), total: _asInt(cacheBreakdown['total'])),
-                _CacheBar(label: 'Rate Limits', count: _asInt(cacheBreakdown['rateLimit']), total: _asInt(cacheBreakdown['total'])),
+                _CacheBar(
+                  label: 'Feed Cache',
+                  count: _asInt(cacheBreakdown['feed']),
+                  total: _asInt(cacheBreakdown['total']),
+                ),
+                _CacheBar(
+                  label: 'Leaderboard',
+                  count: _asInt(cacheBreakdown['leaderboard']),
+                  total: _asInt(cacheBreakdown['total']),
+                ),
+                _CacheBar(
+                  label: 'SVD Factors',
+                  count: _asInt(cacheBreakdown['svd']),
+                  total: _asInt(cacheBreakdown['total']),
+                ),
+                _CacheBar(
+                  label: 'AI Cache',
+                  count: _asInt(cacheBreakdown['aiCache']),
+                  total: _asInt(cacheBreakdown['total']),
+                ),
+                _CacheBar(
+                  label: 'Rate Limits',
+                  count: _asInt(cacheBreakdown['rateLimit']),
+                  total: _asInt(cacheBreakdown['total']),
+                ),
               ],
             ),
             _ExplainCard(
@@ -213,18 +340,32 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               children: [
                 Row(
                   children: [
-                    Expanded(child: _MetricTile(label: 'COMPLETED', value: '${_asInt(bullmq['totalCompleted'])}', color: AppColors.success)),
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'COMPLETED',
+                        value: '${_asInt(bullmq['totalCompleted'])}',
+                        color: AppColors.success,
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: _MetricTile(label: 'FAILED', value: '${_asInt(bullmq['totalFailed'])}', color: AppColors.error)),
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'FAILED',
+                        value: '${_asInt(bullmq['totalFailed'])}',
+                        color: AppColors.error,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
-                ...queues.map((q) => _QueueRow(
-                  name: q['name']?.toString() ?? '',
-                  completed: _asInt(q['completed']),
-                  failed: _asInt(q['failed']),
-                  waiting: _asInt(q['waiting']),
-                )),
+                ...queues.map(
+                  (q) => _QueueRow(
+                    name: q['name']?.toString() ?? '',
+                    completed: _asInt(q['completed']),
+                    failed: _asInt(q['failed']),
+                    waiting: _asInt(q['waiting']),
+                  ),
+                ),
               ],
             ),
             _ExplainCard(
@@ -244,29 +385,57 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               children: [
                 Row(
                   children: [
-                    Expanded(child: _MetricTile(label: 'VIEWS', value: '${_asInt(engagement['totalViews'])}')),
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'VIEWS',
+                        value: '${_asInt(engagement['totalViews'])}',
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: _MetricTile(label: 'LIKES', value: '${_asInt(engagement['totalLikes'])}')),
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'LIKES',
+                        value: '${_asInt(engagement['totalLikes'])}',
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Expanded(child: _MetricTile(label: 'COMMENTS', value: '${_asInt(engagement['totalComments'])}')),
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'COMMENTS',
+                        value: '${_asInt(engagement['totalComments'])}',
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: _MetricTile(label: 'FOLLOWERS', value: '${_asInt(engagement['followers'])}')),
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'FOLLOWERS',
+                        value: '${_asInt(engagement['followers'])}',
+                      ),
+                    ),
                   ],
                 ),
                 if (topPosts.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  Text(strings.t('analytics.topPosts'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                  Text(
+                    strings.t('analytics.topPosts'),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  ...topPosts.asMap().entries.map((e) => _TopPostRow(
-                    rank: e.key + 1,
-                    title: e.value['title']?.toString() ?? '',
-                    views: _asInt(e.value['views']),
-                    likes: _asInt(e.value['likes']),
-                  )),
+                  ...topPosts.asMap().entries.map(
+                    (e) => _TopPostRow(
+                      rank: e.key + 1,
+                      title: e.value['title']?.toString() ?? '',
+                      views: _asInt(e.value['views']),
+                      likes: _asInt(e.value['likes']),
+                    ),
+                  ),
                 ],
               ],
             ),

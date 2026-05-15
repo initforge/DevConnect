@@ -22,7 +22,8 @@ class ScreenGradientHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = gradientColors ?? [const Color(0xFF5B53F6), const Color(0xFF21B5FF)];
+    final colors =
+        gradientColors ?? [const Color(0xFF5B53F6), const Color(0xFF21B5FF)];
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
@@ -201,10 +202,7 @@ class EnhancedCard extends StatelessWidget {
                   ),
                 ),
               ),
-            Padding(
-              padding: padding ?? const EdgeInsets.all(16),
-              child: child,
-            ),
+            Padding(padding: padding ?? const EdgeInsets.all(16), child: child),
           ],
         ),
       ),
@@ -297,10 +295,7 @@ class SectionTitle extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
         ),
         if (trailing != null) trailing!,
@@ -384,10 +379,12 @@ class MiniStatBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = gradientColors ?? [
-      AppColors.primary.withOpacity(0.1),
-      AppColors.primary.withOpacity(0.05),
-    ];
+    final colors =
+        gradientColors ??
+        [
+          AppColors.primary.withOpacity(0.1),
+          AppColors.primary.withOpacity(0.05),
+        ];
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(

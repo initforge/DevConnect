@@ -11,14 +11,8 @@ class MockPostRepository extends PostRepository {
   final List<Post> mockPosts;
   final bool shouldThrow;
 
-  MockPostRepository({
-    this.mockPosts = const [],
-    this.shouldThrow = false,
-  }) : super(
-          database: null,
-          userRepository: null,
-          useApi: false,
-        );
+  MockPostRepository({this.mockPosts = const [], this.shouldThrow = false})
+    : super(database: null, userRepository: null, useApi: false);
 
   @override
   Future<List<Post>> getForYouPosts({String? cursor, int limit = 20}) async {

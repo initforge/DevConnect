@@ -42,7 +42,11 @@ class _HomeScreenState extends State<HomeScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     final s = AppStrings.of(context);
-    _tabLabels = [s.t('feed.forYou'), s.t('feed.following'), s.t('feed.trending')];
+    _tabLabels = [
+      s.t('feed.forYou'),
+      s.t('feed.following'),
+      s.t('feed.trending'),
+    ];
   }
 
   void _loadFeeds() {
@@ -113,11 +117,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.code,
-                color: Colors.white,
-                size: 14,
-              ),
+              child: const Icon(Icons.code, color: Colors.white, size: 14),
             ),
             const SizedBox(width: 8),
             const Text(

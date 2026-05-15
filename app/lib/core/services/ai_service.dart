@@ -83,7 +83,6 @@ class AiService {
       },
     );
   }
-
 }
 
 class AiCodeReview {
@@ -198,7 +197,6 @@ class AiCodeExplanation {
     );
   }
 }
-
 
 String _currentLocaleCode() {
   try {

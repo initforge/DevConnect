@@ -24,10 +24,11 @@ class _MoreScreenState extends State<MoreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final items = FeatureDestinations.moreItems.where((item) {
-      if (_query.isEmpty) return true;
-      return item.label.toLowerCase().contains(_query.toLowerCase());
-    }).toList();
+    final items =
+        FeatureDestinations.moreItems.where((item) {
+          if (_query.isEmpty) return true;
+          return item.label.toLowerCase().contains(_query.toLowerCase());
+        }).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FC),
@@ -35,10 +36,7 @@ class _MoreScreenState extends State<MoreScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                AppColors.primary.withOpacity(0.06),
-                Colors.transparent,
-              ],
+              colors: [AppColors.primary.withOpacity(0.06), Colors.transparent],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -51,52 +49,54 @@ class _MoreScreenState extends State<MoreScreen> {
       ),
       body: DecorativeBackground(
         child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-        children: [
-          const ScreenGradientHeader(
-            title: 'More Features',
-            subtitle: 'Explore all tools and features available in DevConnect',
-            icon: Icons.apps_outlined,
-            gradientColors: [Color(0xFF5B53F6), Color(0xFF21B5FF)],
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _queryController,
-            onChanged: (value) => setState(() => _query = value.trim()),
-            decoration: InputDecoration(
-              hintText: 'Find a feature',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _query.isEmpty
-                  ? null
-                  : IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () {
-                        _queryController.clear();
-                        setState(() => _query = '');
-                      },
-                    ),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide.none,
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+          children: [
+            const ScreenGradientHeader(
+              title: 'More Features',
+              subtitle:
+                  'Explore all tools and features available in DevConnect',
+              icon: Icons.apps_outlined,
+              gradientColors: [Color(0xFF5B53F6), Color(0xFF21B5FF)],
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _queryController,
+              onChanged: (value) => setState(() => _query = value.trim()),
+              decoration: InputDecoration(
+                hintText: 'Find a feature',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon:
+                    _query.isEmpty
+                        ? null
+                        : IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () {
+                            _queryController.clear();
+                            setState(() => _query = '');
+                          },
+                        ),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 18),
-          ...FeatureDestinationGroup.values
-              .where((group) => group != FeatureDestinationGroup.primary)
-              .map((group) {
-            final groupItems =
-                items.where((item) => item.group == group).toList();
-            if (groupItems.isEmpty) return const SizedBox.shrink();
-            return _FeatureGroup(
-              title: FeatureDestinations.groupLabel(group),
-              items: groupItems,
-            );
-          }),
-        ],
-      ),
+            const SizedBox(height: 18),
+            ...FeatureDestinationGroup.values
+                .where((group) => group != FeatureDestinationGroup.primary)
+                .map((group) {
+                  final groupItems =
+                      items.where((item) => item.group == group).toList();
+                  if (groupItems.isEmpty) return const SizedBox.shrink();
+                  return _FeatureGroup(
+                    title: FeatureDestinations.groupLabel(group),
+                    items: groupItems,
+                  );
+                }),
+          ],
+        ),
       ),
     );
   }
@@ -129,7 +129,12 @@ class _FeatureGroup extends StatelessWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               final width = constraints.maxWidth;
-              final columns = width >= 960 ? 4 : width >= 640 ? 3 : 2;
+              final columns =
+                  width >= 960
+                      ? 4
+                      : width >= 640
+                      ? 3
+                      : 2;
               return GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),

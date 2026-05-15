@@ -71,7 +71,7 @@ class _FeedListState extends State<FeedList> {
   Future<void> _loadMore() async {
     if (_isLoadingMore || !_hasMore) return;
     setState(() => _isLoadingMore = true);
-    
+
     try {
       final lastId = _posts.isNotEmpty ? _posts.last.id : null;
       final results = await widget.fetcher(cursor: lastId);
@@ -90,7 +90,8 @@ class _FeedListState extends State<FeedList> {
   }
 
   void _onScroll() {
-    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200) {
+    if (_scrollCtrl.position.pixels >=
+        _scrollCtrl.position.maxScrollExtent - 200) {
       _loadMore();
     }
   }
@@ -158,8 +159,7 @@ class _FeedListState extends State<FeedList> {
           final post = _posts[index];
           return Column(
             children: [
-              if (index == 0 && widget.highlightAi)
-                _buildAiBadge(),
+              if (index == 0 && widget.highlightAi) _buildAiBadge(),
               PostCard(
                 post: post,
                 index: index,
@@ -194,7 +194,11 @@ class _FeedListState extends State<FeedList> {
                 color: const Color(0xFF10B981),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: const Icon(Icons.auto_awesome, size: 11, color: Colors.white),
+              child: const Icon(
+                Icons.auto_awesome,
+                size: 11,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(width: 8),
             const Text(

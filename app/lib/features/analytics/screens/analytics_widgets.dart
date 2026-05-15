@@ -1,7 +1,11 @@
 part of 'analytics_screen.dart';
 
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.title, required this.icon, required this.children});
+  const _SectionCard({
+    required this.title,
+    required this.icon,
+    required this.children,
+  });
   final String title;
   final IconData icon;
   final List<Widget> children;
@@ -19,11 +23,19 @@ class _SectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Icon(icon, size: 18, color: AppColors.primary),
-            const SizedBox(width: 8),
-            Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-          ]),
+          Row(
+            children: [
+              Icon(icon, size: 18, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           ...children,
         ],
@@ -74,7 +86,10 @@ class _MetricTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textTertiary)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 10, color: AppColors.textTertiary),
+          ),
           const SizedBox(height: 4),
           Text(
             value,
@@ -105,14 +120,22 @@ class _TagChip extends StatelessWidget {
       ),
       child: Text(
         '$tag ($count)',
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF5B53F6)),
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF5B53F6),
+        ),
       ),
     );
   }
 }
 
 class _CacheBar extends StatelessWidget {
-  const _CacheBar({required this.label, required this.count, required this.total});
+  const _CacheBar({
+    required this.label,
+    required this.count,
+    required this.total,
+  });
   final String label;
   final int count;
   final int total;
@@ -124,7 +147,16 @@ class _CacheBar extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          SizedBox(width: 90, child: Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary))),
+          SizedBox(
+            width: 90,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
           Expanded(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(999),
@@ -137,7 +169,10 @@ class _CacheBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text('$count', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+          Text(
+            '$count',
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+          ),
         ],
       ),
     );
@@ -145,7 +180,12 @@ class _CacheBar extends StatelessWidget {
 }
 
 class _QueueRow extends StatelessWidget {
-  const _QueueRow({required this.name, required this.completed, required this.failed, required this.waiting});
+  const _QueueRow({
+    required this.name,
+    required this.completed,
+    required this.failed,
+    required this.waiting,
+  });
   final String name;
   final int completed;
   final int failed;
@@ -163,7 +203,10 @@ class _QueueRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            child: Text(
+              name,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
           ),
           _QueueStat(label: 'Done', value: completed, color: AppColors.success),
           const SizedBox(width: 8),
@@ -177,7 +220,11 @@ class _QueueRow extends StatelessWidget {
 }
 
 class _QueueStat extends StatelessWidget {
-  const _QueueStat({required this.label, required this.value, required this.color});
+  const _QueueStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
   final String label;
   final int value;
   final Color color;
@@ -186,15 +233,30 @@ class _QueueStat extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text('$value', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
-        Text(label, style: const TextStyle(fontSize: 9, color: AppColors.textTertiary)),
+        Text(
+          '$value',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 9, color: AppColors.textTertiary),
+        ),
       ],
     );
   }
 }
 
 class _TopPostRow extends StatelessWidget {
-  const _TopPostRow({required this.rank, required this.title, required this.views, required this.likes});
+  const _TopPostRow({
+    required this.rank,
+    required this.title,
+    required this.views,
+    required this.likes,
+  });
   final int rank;
   final String title;
   final int views;
@@ -212,12 +274,35 @@ class _TopPostRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text('#$rank', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
+          Text(
+            '#$rank',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+            ),
+          ),
           const SizedBox(width: 10),
-          Expanded(child: Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)),
-          Text('$views views', style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Text(
+            '$views views',
+            style: const TextStyle(
+              fontSize: 10,
+              color: AppColors.textSecondary,
+            ),
+          ),
           const SizedBox(width: 6),
-          Text('$likes ♥', style: const TextStyle(fontSize: 10, color: AppColors.error)),
+          Text(
+            '$likes ♥',
+            style: const TextStyle(fontSize: 10, color: AppColors.error),
+          ),
         ],
       ),
     );
@@ -225,7 +310,11 @@ class _TopPostRow extends StatelessWidget {
 }
 
 class _ExplainCard extends StatelessWidget {
-  const _ExplainCard({required this.title, required this.text, required this.icon});
+  const _ExplainCard({
+    required this.title,
+    required this.text,
+    required this.icon,
+  });
   final String title;
   final String text;
   final IconData icon;
@@ -247,13 +336,24 @@ class _ExplainCard extends StatelessWidget {
             children: [
               Icon(icon, size: 18, color: AppColors.primary),
               const SizedBox(width: 8),
-              Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primary)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
           Text(
             text,
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.6),
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+              height: 1.6,
+            ),
           ),
         ],
       ),
