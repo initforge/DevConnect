@@ -6,6 +6,7 @@ import '../../../core/constants/routes.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/models/models.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/text_processing.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/post_repository.dart';
 
@@ -46,15 +47,7 @@ class _PostCardState extends State<PostCard> {
     return (wordCount / 200).ceil().clamp(1, 30);
   }
 
-  bool _hasCodeSnippet() {
-    final text = widget.post.content;
-    return text.contains(RegExp(r'```|`[^`]+`')) ||
-        text.contains('const ') ||
-        text.contains('function ') ||
-        text.contains('class ') ||
-        text.contains('import ') ||
-        text.contains('def ');
-  }
+  bool _hasCodeSnippet() => TextProcessing.hasCodeSnippet(widget.post.content);
 
   String _formatViews(int views) {
     if (views >= 1000000) return '${(views / 1000000).toStringAsFixed(1)}M';
@@ -74,13 +67,8 @@ class _PostCardState extends State<PostCard> {
     return firstSentence;
   }
 
-  String _previewText(String content) {
-    return content
-        .replaceAll(RegExp(r'```[\s\S]*?```'), '')
-        .replaceAll(RegExp(r'[#*_`]'), '')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-  }
+  String _previewText(String content) =>
+      TextProcessing.previewFromMarkdown(content);
 
   Future<void> _copyLink() async {
     await Clipboard.setData(

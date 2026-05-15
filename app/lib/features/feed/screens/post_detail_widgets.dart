@@ -191,44 +191,10 @@ class _CodeSnippetCard extends StatelessWidget {
     );
   }
 
-  String _extractCodeSnippet(Post post) {
-    // Try to extract fenced code block
-    final fencedMatch = RegExp(
-      r'```\w*\n?(.*?)```',
-      dotAll: true,
-    ).firstMatch(post.content);
-    if (fencedMatch != null) return fencedMatch.group(1)?.trim() ?? '';
+  String _extractCodeSnippet(Post post) =>
+      TextProcessing.extractPostCodeSnippet(post);
 
-    // Fallback: generate a representative snippet from post metadata
-    final normalizedTitle = post.title
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
-        .replaceAll(RegExp(r'_+'), '_')
-        .replaceAll(RegExp(r'^_|_\$'), '');
-    final firstTag = post.tags.isNotEmpty ? post.tags.first : 'snippet';
-    return "const ${normalizedTitle.isEmpty ? 'postDetail' : normalizedTitle} = {\n"
-        "  topic: '${post.title}',\n"
-        "  tag: '$firstTag',\n"
-        "  status: 'ready for review',\n"
-        "};";
-  }
-
-  String _detectLanguage(Post post) {
-    final content = post.content.toLowerCase();
-    final tags = post.tags.map((t) => t.toLowerCase()).toList();
-    if (tags.contains('python') ||
-        content.contains('def ') ||
-        content.contains('import '))
-      return 'python';
-    if (tags.contains('typescript') || tags.contains('nestjs'))
-      return 'typescript';
-    if (tags.contains('javascript') || tags.contains('react'))
-      return 'javascript';
-    if (tags.contains('dart') || tags.contains('flutter')) return 'dart';
-    if (tags.contains('go') || tags.contains('golang')) return 'go';
-    if (tags.contains('rust')) return 'rust';
-    return 'code';
-  }
+  String _detectLanguage(Post post) => TextProcessing.detectPostLanguage(post);
 }
 
 class _Dot2 extends StatelessWidget {

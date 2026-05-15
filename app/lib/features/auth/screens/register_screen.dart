@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/routes.dart';
+import '../../../core/localization/app_strings.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/app_preferences.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/validators.dart';
 import '../../../core/widgets/decorative_widgets.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -37,12 +39,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _calcStrength(String value) {
-    double score = 0;
-    if (value.length >= 8) score += 0.25;
-    if (value.contains(RegExp(r'[A-Z]'))) score += 0.25;
-    if (value.contains(RegExp(r'[0-9]'))) score += 0.25;
-    if (value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) score += 0.25;
-    setState(() => _passwordStrength = score);
+    setState(() => _passwordStrength = Validators.passwordStrength(value));
   }
 
   Color get _strengthColor {
@@ -76,7 +73,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (_passwordCtrl.text.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password must be at least 8 characters')),
+        SnackBar(
+          content: Text(
+            AppStrings.of(context).t('validators.passwordTooShort'),
+          ),
+        ),
       );
       return;
     }
@@ -268,17 +269,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             _PasswordRequirement(
               label: 'Uppercase letter',
-              met: _passwordCtrl.text.contains(RegExp(r'[A-Z]')),
+              met: RegExp(r'[A-Z]').hasMatch(_passwordCtrl.text),
             ),
             _PasswordRequirement(
               label: 'Number',
-              met: _passwordCtrl.text.contains(RegExp(r'[0-9]')),
+              met: RegExp(r'[0-9]').hasMatch(_passwordCtrl.text),
             ),
             _PasswordRequirement(
               label: 'Special character',
-              met: _passwordCtrl.text.contains(
-                RegExp(r'[!@#$%^&*(),.?":{}|<>]'),
-              ),
+              met: RegExp(
+                r'[!@#$%^&*(),.?":{}|<>]',
+              ).hasMatch(_passwordCtrl.text),
             ),
             if (_errorMessage != null) ...[
               const SizedBox(height: 14),

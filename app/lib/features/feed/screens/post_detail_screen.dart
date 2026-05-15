@@ -9,6 +9,7 @@ import '../../../core/services/ai_service.dart';
 import '../../../core/services/app_preferences.dart';
 import '../../../core/state/feed_refresh_bus.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/text_processing.dart';
 import '../../../core/widgets/ai_sheets.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/comment_repository.dart';

@@ -4,10 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/routes.dart';
+import '../../../core/localization/app_strings.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/app_preferences.dart';
 import '../../../core/services/oauth_redirect.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/validators.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -396,11 +398,9 @@ class _LoginScreenState extends State<LoginScreen>
                 prefix: Icons.email_outlined,
               ),
               validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your email';
-                }
-                if (!value.contains('@')) return 'Invalid email address';
-                return null;
+                final key = Validators.email(value);
+                if (key == null) return null;
+                return AppStrings.of(context).t(key);
               },
             ),
             const SizedBox(height: 12),
@@ -426,13 +426,9 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ),
               validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your password';
-                }
-                if (value.length < 8) {
-                  return 'Password must be at least 8 characters';
-                }
-                return null;
+                final key = Validators.password(value);
+                if (key == null) return null;
+                return AppStrings.of(context).t(key);
               },
             ),
             if (_errorMessage != null) ...[
