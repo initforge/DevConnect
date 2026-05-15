@@ -34,7 +34,7 @@ jobs:
         run: flutter test --coverage
       - run: node scripts/ci/check-lcov.cjs app/coverage/lcov.info
         env:
-          MIN_FLUTTER_COVERAGE: 10
+          MIN_FLUTTER_COVERAGE: 15
           MIN_CORE_COVERAGE: 80
       - working-directory: app
         run: flutter build web
