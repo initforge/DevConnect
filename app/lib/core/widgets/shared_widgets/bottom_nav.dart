@@ -1,4 +1,8 @@
-part of '../shared_widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import 'package:devconnect/core/constants/routes.dart';
+import 'package:devconnect/core/theme/app_colors.dart';
 
 class AppBottomNavItem {
   final IconData icon;
