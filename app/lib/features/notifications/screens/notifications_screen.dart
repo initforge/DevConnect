@@ -58,11 +58,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _markAllRead() async {
     await _repository.markAllAsRead();
+    if (!mounted) return;
     // Invalidate badge provider so home_screen bell updates
     ProviderScope.containerOf(
       context,
     ).invalidate(unreadNotificationCountProvider);
-    if (!mounted) return;
     setState(() {
       _items =
           _items

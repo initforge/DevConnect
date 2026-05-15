@@ -367,12 +367,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       if (!mounted) return;
       await AppPreferences.instance.clearDraft('post.title');
       await AppPreferences.instance.clearDraft('post.content');
+      if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Unable to publish post: $error')));
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.showSnackBar(
+        SnackBar(content: Text('Unable to publish post: $error')),
+      );
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);

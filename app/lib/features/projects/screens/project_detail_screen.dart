@@ -178,6 +178,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 error = null;
               });
 
+              final messenger = ScaffoldMessenger.of(context);
+              final updatedMsg = AppStrings.of(
+                context,
+              ).t('projects.projectUpdated');
+              final router = GoRouter.of(sheetContext);
+
               try {
                 await _repository.updateProject(
                   projectId: project.id,
@@ -186,15 +192,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   techStack: techStack,
                 );
                 if (mounted) {
-                  sheetContext.pop();
+                  router.pop();
                   unawaited(_refresh());
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        AppStrings.of(context).t('projects.projectUpdated'),
-                      ),
-                    ),
-                  );
+                  messenger.showSnackBar(SnackBar(content: Text(updatedMsg)));
                 }
               } catch (e) {
                 setSheetState(
