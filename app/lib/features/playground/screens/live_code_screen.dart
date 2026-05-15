@@ -3,6 +3,7 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/app_preferences.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/text_delta.dart';
 import '../../../core/utils/user_colors.dart';
 import '../../../core/widgets/decorative_widgets.dart';
 
@@ -116,7 +117,7 @@ class _LiveCodeScreenState extends State<LiveCodeScreen> {
 
   void _onCodeChanged(String code) {
     if (_applyingRemoteChange) return;
-    final delta = _TextDelta.fromChange(_lastSentCode, code);
+    final delta = TextDelta.fromChange(_lastSentCode, code);
     final baseRevision = _revision;
     _revision += 1;
     _lastSentCode = code;
@@ -622,52 +623,6 @@ class _RemoteCursor {
   final String name;
   final int offset;
   final Color color;
-}
-
-class _TextDelta {
-  const _TextDelta({
-    required this.start,
-    required this.deleteCount,
-    required this.insertText,
-    required this.deletedText,
-  });
-
-  final int start;
-  final int deleteCount;
-  final String insertText;
-  final String deletedText;
-
-  factory _TextDelta.fromChange(String previous, String next) {
-    var start = 0;
-    while (start < previous.length &&
-        start < next.length &&
-        previous.codeUnitAt(start) == next.codeUnitAt(start)) {
-      start += 1;
-    }
-
-    var previousEnd = previous.length;
-    var nextEnd = next.length;
-    while (previousEnd > start &&
-        nextEnd > start &&
-        previous.codeUnitAt(previousEnd - 1) == next.codeUnitAt(nextEnd - 1)) {
-      previousEnd -= 1;
-      nextEnd -= 1;
-    }
-
-    return _TextDelta(
-      start: start,
-      deleteCount: previousEnd - start,
-      deletedText: previous.substring(start, previousEnd),
-      insertText: next.substring(start, nextEnd),
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'start': start,
-    'deleteCount': deleteCount,
-    'deletedText': deletedText,
-    'insertText': insertText,
-  };
 }
 
 (int, int) _lineColumn(String text, int offset) {
