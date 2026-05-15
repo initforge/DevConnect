@@ -3,6 +3,7 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/app_preferences.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/user_colors.dart';
 import '../../../core/widgets/decorative_widgets.dart';
 
 class LiveCodeScreen extends StatefulWidget {
@@ -162,7 +163,7 @@ class _LiveCodeScreenState extends State<LiveCodeScreen> {
           _codeCtrl.selection.baseOffset
               .clamp(0, _codeCtrl.text.length)
               .toInt(),
-      'color': '#5B53F6',
+      'color': UserColors.hexFromColor(UserColors.colorForUserId(_localUserId)),
     };
   }
 
