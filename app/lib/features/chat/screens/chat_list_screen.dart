@@ -190,6 +190,11 @@ class _ChatListScreenState extends State<ChatListScreen>
     }
   }
 
+  Future<void> _refresh() async {
+    HapticFeedback.mediumImpact();
+    await _loadData();
+  }
+
   void _markConversationReadLocally(String conversationId) {
     setState(() {
       _conversations =
@@ -512,62 +517,71 @@ class _ChatListScreenState extends State<ChatListScreen>
                 ),
                 const SizedBox(height: 6),
                 Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
-                    itemCount: _conversations.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (_, index) {
-                      final conversation = _conversations[index];
-                      return Dismissible(
-                        key: Key(conversation.id),
-                        direction: DismissDirection.horizontal,
-                        confirmDismiss: (direction) {
-                          if (direction == DismissDirection.startToEnd) {
-                            return _muteConversation(conversation);
-                          }
-                          return _deleteConversation(conversation);
-                        },
-                        background: Container(
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF5B53F6),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          alignment: Alignment.centerLeft,
-                          padding: const EdgeInsets.only(left: 20),
-                          child: Icon(
-                            _mutedConversationIds.contains(conversation.id)
-                                ? Icons.volume_up_outlined
-                                : Icons.volume_off_outlined,
-                            color: Colors.white,
-                          ),
-                        ),
-                        secondaryBackground: Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.error,
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 20),
-                          child: const Icon(Icons.delete, color: Colors.white),
-                        ),
-                        child: _ConversationRow(
-                          conversation: conversation,
-                          isMuted: _mutedConversationIds.contains(
-                            conversation.id,
-                          ),
-                          onTap: () async {
-                            _markConversationReadLocally(conversation.id);
-                            unawaited(
-                              _repository.markConversationRead(conversation.id),
-                            );
-                            await context.push(
-                              '${AppRoutes.chatBase}/${conversation.id}',
-                            );
-                            if (mounted) _loadData();
+                  child: RefreshIndicator(
+                    onRefresh: _refresh,
+                    child: ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+                      itemCount: _conversations.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (_, index) {
+                        final conversation = _conversations[index];
+                        return Dismissible(
+                          key: Key(conversation.id),
+                          direction: DismissDirection.horizontal,
+                          confirmDismiss: (direction) {
+                            if (direction == DismissDirection.startToEnd) {
+                              return _muteConversation(conversation);
+                            }
+                            return _deleteConversation(conversation);
                           },
-                        ),
-                      );
-                    },
+                          background: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF5B53F6),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            alignment: Alignment.centerLeft,
+                            padding: const EdgeInsets.only(left: 20),
+                            child: Icon(
+                              _mutedConversationIds.contains(conversation.id)
+                                  ? Icons.volume_up_outlined
+                                  : Icons.volume_off_outlined,
+                              color: Colors.white,
+                            ),
+                          ),
+                          secondaryBackground: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.error,
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 20),
+                            child: const Icon(
+                              Icons.delete,
+                              color: Colors.white,
+                            ),
+                          ),
+                          child: _ConversationRow(
+                            conversation: conversation,
+                            isMuted: _mutedConversationIds.contains(
+                              conversation.id,
+                            ),
+                            onTap: () async {
+                              _markConversationReadLocally(conversation.id);
+                              unawaited(
+                                _repository.markConversationRead(
+                                  conversation.id,
+                                ),
+                              );
+                              await context.push(
+                                '${AppRoutes.chatBase}/${conversation.id}',
+                              );
+                              if (mounted) _loadData();
+                            },
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ],

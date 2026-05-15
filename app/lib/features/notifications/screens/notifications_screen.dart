@@ -49,6 +49,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     await _loader;
   }
 
+  Future<void> _refresh() async {
+    HapticFeedback.mediumImpact();
+    await _reload();
+  }
+
   Future<void> _markAllRead() async {
     await _repository.markAllAsRead();
     // Invalidate badge provider so home_screen bell updates
@@ -213,111 +218,115 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     List<AppNotification> earlier,
   ) {
     final strings = AppStrings.of(context);
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
-      children: [
-        ScreenGradientHeader(
-          title: strings.t('notifications.title'),
-          subtitle: strings.t('notifications.subtitle'),
-          icon: Icons.notifications_active_outlined,
-          gradientColors: const [Color(0xFF5B53F6), Color(0xFF00D9A6)],
-        ),
-        const SizedBox(height: 14),
-        _FilterTabs(
-          selected: _selectedTab,
-          onSelected: (value) => setState(() => _selectedTab = value),
-        ),
-        const SizedBox(height: 10),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton(
-            onPressed: _markAllRead,
-            child: Text(
-              AppStrings.of(context).t('notifications.markAllRead'),
-              style: const TextStyle(fontSize: 12),
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+        children: [
+          ScreenGradientHeader(
+            title: strings.t('notifications.title'),
+            subtitle: strings.t('notifications.subtitle'),
+            icon: Icons.notifications_active_outlined,
+            gradientColors: const [Color(0xFF5B53F6), Color(0xFF00D9A6)],
+          ),
+          const SizedBox(height: 14),
+          _FilterTabs(
+            selected: _selectedTab,
+            onSelected: (value) => setState(() => _selectedTab = value),
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: _markAllRead,
+              child: Text(
+                AppStrings.of(context).t('notifications.markAllRead'),
+                style: const TextStyle(fontSize: 12),
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          AppStrings.of(context).t('notifications.today'),
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 8),
-        ...today.map(
-          (item) =>
-              _NotificationTile(item: item, onTap: () => _handleTap(item)),
-        ),
-        if (earlier.isNotEmpty) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 2),
           Text(
-            AppStrings.of(context).t('notifications.earlier'),
+            AppStrings.of(context).t('notifications.today'),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
-          ...earlier.map(
+          ...today.map(
             (item) =>
                 _NotificationTile(item: item, onTap: () => _handleTap(item)),
           ),
-        ],
-        if (_teamInviteState == null) ...[
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF8EC),
-              borderRadius: BorderRadius.circular(18),
+          if (earlier.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              AppStrings.of(context).t('notifications.earlier'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppStrings.of(context).t('notifications.teamInvite'),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+            const SizedBox(height: 8),
+            ...earlier.map(
+              (item) =>
+                  _NotificationTile(item: item, onTap: () => _handleTap(item)),
+            ),
+          ],
+          if (_teamInviteState == null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF8EC),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppStrings.of(context).t('notifications.teamInvite'),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    ElevatedButton(
-                      onPressed: () => _handleInvite('accepted'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF5B53F6),
-                        minimumSize: const Size(74, 32),
-                        padding: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => _handleInvite('accepted'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF5B53F6),
+                          minimumSize: const Size(74, 32),
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          AppStrings.of(context).t('common.accept'),
+                          style: const TextStyle(fontSize: 11),
                         ),
                       ),
-                      child: Text(
-                        AppStrings.of(context).t('common.accept'),
-                        style: const TextStyle(fontSize: 11),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton(
-                      onPressed: () => _handleInvite('declined'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(74, 32),
-                        padding: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                      const SizedBox(width: 8),
+                      OutlinedButton(
+                        onPressed: () => _handleInvite('declined'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(74, 32),
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          AppStrings.of(context).t('common.decline'),
+                          style: const TextStyle(fontSize: 11),
                         ),
                       ),
-                      child: Text(
-                        AppStrings.of(context).t('common.decline'),
-                        style: const TextStyle(fontSize: 11),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ],
-      ],
+      ),
     );
   }
 

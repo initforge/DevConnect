@@ -64,6 +64,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _loader = _loadProfile());
   }
 
+  Future<void> _refresh() async {
+    HapticFeedback.mediumImpact();
+    setState(() => _loader = _loadProfile());
+    await _loader;
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<_ProfileData>(
@@ -153,10 +159,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                   ],
-              body: ResponsiveBuilder(
-                mobile: (_) => TabBarView(children: _buildProfileTabs(data)),
-                tablet: (_) => TabBarView(children: _buildProfileTabs(data)),
-                desktop: (_) => TabBarView(children: _buildProfileTabs(data)),
+              body: RefreshIndicator(
+                onRefresh: _refresh,
+                child: ResponsiveBuilder(
+                  mobile: (_) => TabBarView(children: _buildProfileTabs(data)),
+                  tablet: (_) => TabBarView(children: _buildProfileTabs(data)),
+                  desktop: (_) => TabBarView(children: _buildProfileTabs(data)),
+                ),
               ),
             ),
           ),

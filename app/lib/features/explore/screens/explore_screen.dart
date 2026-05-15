@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/routes.dart';
@@ -20,14 +21,33 @@ class ExploreScreen extends StatefulWidget {
 class _ExploreScreenState extends State<ExploreScreen> {
   final _userRepository = UserRepository();
   final _postRepository = PostRepository();
+  late Future<List<Object?>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _loadData();
+  }
+
+  Future<List<Object?>> _loadData() {
+    return Future.wait<Object?>([
+      _userRepository.getTopUsers(limit: 6),
+      _postRepository.getTrendingPosts(limit: 2),
+    ]);
+  }
+
+  Future<void> _refresh() async {
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _future = _loadData();
+    });
+    await _future;
+  }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Object?>>(
-      future: Future.wait<Object?>([
-        _userRepository.getTopUsers(limit: 6),
-        _postRepository.getTrendingPosts(limit: 2),
-      ]),
+      future: _future,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Scaffold(body: _ExploreSkeleton());
@@ -140,82 +160,174 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 constraints: BoxConstraints(
                   maxWidth: ResponsiveUtils.getContentMaxWidth(context),
                 ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        height: 34,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: 5,
-                          separatorBuilder: (_, __) => const SizedBox(width: 8),
-                          itemBuilder: (_, index) {
-                            final labels = [
-                              '#React',
-                              '#AI',
-                              '#TypeScript',
-                              '#Infra',
-                              '#Cloud',
-                            ];
-                            final colors = [
-                              const Color(0xFFE8EEFF),
-                              const Color(0xFFF5EAFE),
-                              const Color(0xFFE8FBF6),
-                              const Color(0xFFFFF0E8),
-                              const Color(0xFFFDE8EC),
-                            ];
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: colors[index],
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                labels[index],
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
+                child: RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          height: 34,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: 5,
+                            separatorBuilder:
+                                (_, __) => const SizedBox(width: 8),
+                            itemBuilder: (_, index) {
+                              final labels = [
+                                '#React',
+                                '#AI',
+                                '#TypeScript',
+                                '#Infra',
+                                '#Cloud',
+                              ];
+                              final colors = [
+                                const Color(0xFFE8EEFF),
+                                const Color(0xFFF5EAFE),
+                                const Color(0xFFE8FBF6),
+                                const Color(0xFFFFF0E8),
+                                const Color(0xFFFDE8EC),
+                              ];
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      _SectionHeader(
-                        title: AppStrings.of(context).t('explore.aiPicks'),
-                        action: AppStrings.of(context).t('explore.seeAll'),
-                        onTap:
-                            () => context.push('${AppRoutes.search}?q=flutter'),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 166,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: posts.length,
-                          separatorBuilder:
-                              (_, __) => const SizedBox(width: 12),
-                          itemBuilder: (_, index) {
-                            final post = posts[index];
-                            final cardWidth =
-                                ResponsiveUtils.isDesktop(context)
-                                    ? 160.0
-                                    : 138.0;
-                            return InkWell(
-                              borderRadius: BorderRadius.circular(18),
-                              onTap:
-                                  () => context.push(
-                                    '${AppRoutes.postBase}/${post.id}',
+                                decoration: BoxDecoration(
+                                  color: colors[index],
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  labels[index],
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                              child: Container(
-                                width: cardWidth,
-                                padding: const EdgeInsets.all(10),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        _SectionHeader(
+                          title: AppStrings.of(context).t('explore.aiPicks'),
+                          action: AppStrings.of(context).t('explore.seeAll'),
+                          onTap:
+                              () =>
+                                  context.push('${AppRoutes.search}?q=flutter'),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 166,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: posts.length,
+                            separatorBuilder:
+                                (_, __) => const SizedBox(width: 12),
+                            itemBuilder: (_, index) {
+                              final post = posts[index];
+                              final cardWidth =
+                                  ResponsiveUtils.isDesktop(context)
+                                      ? 160.0
+                                      : 138.0;
+                              return InkWell(
+                                borderRadius: BorderRadius.circular(18),
+                                onTap:
+                                    () => context.push(
+                                      '${AppRoutes.postBase}/${post.id}',
+                                    ),
+                                child: Container(
+                                  width: cardWidth,
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        Theme.of(context).colorScheme.surface,
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color: Theme.of(context).dividerColor,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        height: 84,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors:
+                                                index.isEven
+                                                    ? [
+                                                      const Color(0xFF101726),
+                                                      const Color(0xFF182D4B),
+                                                    ]
+                                                    : [
+                                                      const Color(0xFF0E1B34),
+                                                      const Color(0xFF124E7E),
+                                                    ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: Icon(
+                                          index.isEven
+                                              ? Icons.code
+                                              : Icons.auto_awesome,
+                                          color: Colors.white.withValues(
+                                            alpha: 0.88,
+                                          ),
+                                          size: 28,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        post.title,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        Text(
+                          AppStrings.of(context).t('explore.topDevelopers'),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          height: 125,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: users.length,
+                            separatorBuilder:
+                                (_, __) => const SizedBox(width: 10),
+                            itemBuilder: (_, index) {
+                              final user = users[index];
+                              final tileWidth =
+                                  ResponsiveUtils.isDesktop(context)
+                                      ? 92.0
+                                      : 82.0;
+                              return Container(
+                                width: tileWidth,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 10,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).colorScheme.surface,
                                   borderRadius: BorderRadius.circular(18),
@@ -224,147 +336,65 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   ),
                                 ),
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Container(
-                                      height: 84,
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors:
-                                              index.isEven
-                                                  ? [
-                                                    const Color(0xFF101726),
-                                                    const Color(0xFF182D4B),
-                                                  ]
-                                                  : [
-                                                    const Color(0xFF0E1B34),
-                                                    const Color(0xFF124E7E),
-                                                  ],
-                                        ),
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: Icon(
-                                        index.isEven
-                                            ? Icons.code
-                                            : Icons.auto_awesome,
-                                        color: Colors.white.withValues(
-                                          alpha: 0.88,
-                                        ),
-                                        size: 28,
-                                      ),
+                                    UserAvatar(
+                                      name: user.displayName,
+                                      size: 40,
+                                      isOnline: true,
                                     ),
-                                    const SizedBox(height: 10),
+                                    const SizedBox(height: 8),
                                     Text(
-                                      post.title,
-                                      maxLines: 2,
+                                      user.displayName.split(' ').first,
+                                      maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    SizedBox(
+                                      height: 20,
+                                      child: OutlinedButton(
+                                        onPressed:
+                                            () => context.push(
+                                              '${AppRoutes.userBase}/${user.id}',
+                                            ),
+                                        style: OutlinedButton.styleFrom(
+                                          padding: EdgeInsets.zero,
+                                          side: const BorderSide(
+                                            color: AppColors.primary,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Follow',
+                                          style: TextStyle(fontSize: 9),
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 22),
-                      Text(
-                        AppStrings.of(context).t('explore.topDevelopers'),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                        const SizedBox(height: 22),
+                        Text(
+                          AppStrings.of(context).t('explore.popularTopics'),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        height: 125,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: users.length,
-                          separatorBuilder:
-                              (_, __) => const SizedBox(width: 10),
-                          itemBuilder: (_, index) {
-                            final user = users[index];
-                            final tileWidth =
-                                ResponsiveUtils.isDesktop(context)
-                                    ? 92.0
-                                    : 82.0;
-                            return Container(
-                              width: tileWidth,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.surface,
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(
-                                  color: Theme.of(context).dividerColor,
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  UserAvatar(
-                                    name: user.displayName,
-                                    size: 40,
-                                    isOnline: true,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    user.displayName.split(' ').first,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  SizedBox(
-                                    height: 20,
-                                    child: OutlinedButton(
-                                      onPressed:
-                                          () => context.push(
-                                            '${AppRoutes.userBase}/${user.id}',
-                                          ),
-                                      style: OutlinedButton.styleFrom(
-                                        padding: EdgeInsets.zero,
-                                        side: const BorderSide(
-                                          color: AppColors.primary,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                        ),
-                                      ),
-                                      child: const Text(
-                                        'Follow',
-                                        style: TextStyle(fontSize: 9),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 22),
-                      Text(
-                        AppStrings.of(context).t('explore.popularTopics'),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _TopicsGrid(),
-                    ],
+                        const SizedBox(height: 12),
+                        _TopicsGrid(),
+                      ],
+                    ),
                   ),
                 ),
               ),

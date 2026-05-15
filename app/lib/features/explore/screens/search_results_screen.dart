@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/routes.dart';
@@ -131,6 +132,19 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     }
   }
 
+  Future<void> _refresh() async {
+    HapticFeedback.mediumImpact();
+    if (_query.isNotEmpty) {
+      await _search(_query);
+    } else {
+      setState(() {
+        _users = const [];
+        _posts = const [];
+        _projects = const [];
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -235,14 +249,18 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                       itemCount: 5,
                       itemBuilder: (_, __) => const PostCardSkeleton(),
                     )
-                    : ListView(
-                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
-                      children: [
-                        if (_selectedTab == 0)
-                          ..._buildAllSections(context)
-                        else
-                          ..._buildSingleSection(context),
-                      ],
+                    : RefreshIndicator(
+                      onRefresh: _refresh,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
+                        children: [
+                          if (_selectedTab == 0)
+                            ..._buildAllSections(context)
+                          else
+                            ..._buildSingleSection(context),
+                        ],
+                      ),
                     ),
           ),
         ],
