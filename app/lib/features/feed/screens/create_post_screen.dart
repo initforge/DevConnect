@@ -12,6 +12,8 @@ import '../../../core/services/image_compression_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/ai_sheets.dart';
 import '../../../data/repositories/post_repository.dart';
+import '../widgets/create_post/composer_toolbar.dart';
+import '../widgets/create_post/post_type_selector.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -22,9 +24,7 @@ class CreatePostScreen extends StatefulWidget {
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
   final _titleCtrl = TextEditingController();
-  final _contentCtrl = TextEditingController(
-    text: 'def hello_devs():\n    print("Hello DevConnect!")',
-  );
+  final _contentCtrl = TextEditingController();
   final _tagCtrl = TextEditingController();
   final _projectUrlCtrl = TextEditingController();
   final _projectTeamCtrl = TextEditingController();
@@ -445,7 +445,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: _BottomComposerBar(
+      bottomNavigationBar: ComposerToolbar(
         onBold: _insertBold,
         onItalic: _insertItalic,
         onLink: _insertLink,
@@ -481,37 +481,37 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: [
-                        _TypePill(
+                        PostTypePill(
                           type: PostType.article,
                           current: _type,
                           label: 'Article',
                           onTap: _setType,
                         ),
-                        _TypePill(
+                        PostTypePill(
                           type: PostType.snippet,
                           current: _type,
                           label: 'Snippet',
                           onTap: _setType,
                         ),
-                        _TypePill(
+                        PostTypePill(
                           type: PostType.til,
                           current: _type,
                           label: 'TIL',
                           onTap: _setType,
                         ),
-                        _TypePill(
+                        PostTypePill(
                           type: PostType.question,
                           current: _type,
                           label: 'Q&A',
                           onTap: _setType,
                         ),
-                        _TypePill(
+                        PostTypePill(
                           type: PostType.project,
                           current: _type,
                           label: 'Project',
                           onTap: _setType,
                         ),
-                        _TypePill(
+                        PostTypePill(
                           type: PostType.discussion,
                           current: _type,
                           label: 'Discussion',
@@ -807,178 +807,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 }
 
-class _TypePill extends StatelessWidget {
-  const _TypePill({
-    required this.type,
-    required this.current,
-    required this.label,
-    required this.onTap,
-  });
-
-  final PostType type;
-  final PostType current;
-  final String label;
-  final ValueChanged<PostType> onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final selected = type == current;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: GestureDetector(
-        onTap: () => onTap(type),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? const Color(0xFF5B53F6) : const Color(0xFFF4F6FA),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: selected ? Colors.white : AppColors.textSecondary,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BottomComposerBar extends StatelessWidget {
-  const _BottomComposerBar({
-    required this.onBold,
-    required this.onItalic,
-    required this.onLink,
-    required this.onCode,
-    required this.onList,
-    required this.onCamera,
-    required this.onImage,
-    required this.onGif,
-  });
-
-  final VoidCallback onBold;
-  final VoidCallback onItalic;
-  final VoidCallback onLink;
-  final VoidCallback onCode;
-  final VoidCallback onList;
-  final VoidCallback onCamera;
-  final VoidCallback onImage;
-  final VoidCallback onGif;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 18),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE8EAF2))),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              alignment: WrapAlignment.center,
-              children: [
-                _ToolbarButton(
-                  icon: Icons.format_bold,
-                  tooltip: 'Bold',
-                  onTap: onBold,
-                ),
-                _ToolbarButton(
-                  icon: Icons.format_italic,
-                  tooltip: 'Italic',
-                  onTap: onItalic,
-                ),
-                _ToolbarButton(
-                  icon: Icons.link,
-                  tooltip: 'Link',
-                  onTap: onLink,
-                ),
-                _ToolbarButton(
-                  icon: Icons.image_outlined,
-                  tooltip: 'Image',
-                  onTap: onImage,
-                ),
-                _ToolbarButton(
-                  icon: Icons.code,
-                  tooltip: 'Code block',
-                  onTap: onCode,
-                ),
-                _ToolbarButton(
-                  icon: Icons.format_list_bulleted,
-                  tooltip: 'List',
-                  onTap: onList,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                _MediaButton(
-                  icon: Icons.photo_camera_outlined,
-                  label: 'Camera',
-                  onTap: onCamera,
-                ),
-                const SizedBox(width: 8),
-                _MediaButton(
-                  icon: Icons.image_outlined,
-                  label: 'Image',
-                  onTap: onImage,
-                ),
-                const SizedBox(width: 8),
-                _MediaButton(
-                  icon: Icons.gif_box_outlined,
-                  label: 'GIF',
-                  onTap: onGif,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ToolbarButton extends StatelessWidget {
-  const _ToolbarButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF4F6FA),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Icon(icon, size: 18, color: AppColors.textPrimary),
-        ),
-      ),
-    );
-  }
-}
-
 class _MetadataPanel extends StatelessWidget {
   const _MetadataPanel({
     required this.title,
@@ -1048,35 +876,6 @@ class _InlineField extends StatelessWidget {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
-        ),
-      ),
-    );
-  }
-}
-
-class _MediaButton extends StatelessWidget {
-  const _MediaButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: OutlinedButton.icon(
-        onPressed: onTap,
-        icon: Icon(icon, size: 16),
-        label: Text(label, style: const TextStyle(fontSize: 12)),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
         ),
       ),
     );
