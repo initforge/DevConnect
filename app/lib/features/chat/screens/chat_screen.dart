@@ -13,6 +13,7 @@ import '../../../core/utils/responsive_utils.dart';
 import '../../../core/widgets/decorative_widgets.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/chat_repository.dart';
+import '../widgets/day_separator.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, required this.conversationId});
@@ -660,31 +661,7 @@ class _ChatScreenState extends State<ChatScreen>
       final label = DateGrouping.dayLabel(message.createdAt);
       if (label != lastDayLabel) {
         lastDayLabel = label;
-        chatItems.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
+        chatItems.add(DaySeparator(label: label));
       }
       chatItems.add(
         _MessageBubble(
