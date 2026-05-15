@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_runtime_config.dart';
 import '../../../core/constants/routes.dart';
+import '../../../core/errors/app_exceptions.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/models/models.dart';
@@ -195,6 +196,11 @@ class _ChatListScreenState extends State<ChatListScreen>
     await _loadData();
   }
 
+  String _friendlyError(Object e) {
+    if (e is AppException) return AppStrings.current().t(e.messageKey);
+    return AppStrings.current().t('errors.generic');
+  }
+
   void _markConversationReadLocally(String conversationId) {
     setState(() {
       _conversations =
@@ -262,7 +268,7 @@ class _ChatListScreenState extends State<ChatListScreen>
       if (!mounted) return false;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(e))));
       return false;
     }
   }

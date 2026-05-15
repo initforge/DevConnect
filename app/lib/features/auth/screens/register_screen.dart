@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/routes.dart';
+import '../../../core/errors/app_exceptions.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/app_preferences.dart';
@@ -40,6 +41,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _calcStrength(String value) {
     setState(() => _passwordStrength = Validators.passwordStrength(value));
+  }
+
+  String _friendlyError(Object e) {
+    if (e is AppException) return AppStrings.current().t(e.messageKey);
+    return AppStrings.current().t('errors.generic');
   }
 
   Color get _strengthColor {
@@ -125,7 +131,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = e.toString();
+        _errorMessage = _friendlyError(e);
       });
     }
   }

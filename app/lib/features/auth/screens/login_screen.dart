@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/routes.dart';
+import '../../../core/errors/app_exceptions.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/app_preferences.dart';
@@ -88,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen>
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = e.toString();
+        _errorMessage = _friendlyError(e);
       });
     }
   }
@@ -110,6 +111,11 @@ class _LoginScreenState extends State<LoginScreen>
             'GitHub OAuth is only available through the backend redirect.';
       });
     }
+  }
+
+  String _friendlyError(Object e) {
+    if (e is AppException) return AppStrings.current().t(e.messageKey);
+    return AppStrings.current().t('errors.generic');
   }
 
   Future<void> _syncOnboardingState(Map<String, dynamic> user) async {
@@ -173,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen>
               } catch (e) {
                 setSheetState(() {
                   submitting = false;
-                  error = e.toString();
+                  error = _friendlyError(e);
                 });
               }
             }
