@@ -121,6 +121,26 @@ Pass khi:
 3. Dùng `scripts/parity/visual-diff.py` để so ảnh nếu có actual đúng tên.
 4. Diff lớn không tự động đồng nghĩa lỗi, nhưng phải review: layout lệch, state thiếu, action không thật.
 
+## 5a. Visual regression baseline
+
+Baseline screenshots được lưu tại `app/screenshots/baseline/` và được commit vào repo (folder này được exclude khỏi `.gitignore` bằng negative pattern).
+
+**Capture baseline:**
+
+```powershell
+npm run smoke:responsive
+```
+
+Sau khi chạy, copy ảnh từ `output/playwright/responsive_smoke/` vào `app/screenshots/baseline/` rồi commit.
+
+**So sánh với baseline:**
+
+```powershell
+python scripts/parity/visual-diff.py --baseline-dir app/screenshots/baseline
+```
+
+Khi refactor UI có chủ đích thay đổi visual, cần commit riêng "update baseline: \<reason\>" và reviewer approve.
+
 ## 6. Kết quả verification gần nhất
 
 Ngày kiểm tra: 2026-05-13.

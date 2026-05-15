@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 from PIL import Image, ImageChops, ImageDraw, ImageOps
 
@@ -115,4 +116,14 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Visual regression diff tool")
+    parser.add_argument(
+        "--baseline-dir",
+        type=Path,
+        default=None,
+        help="Directory containing baseline screenshots. Defaults to docs/showcase/screenshots/",
+    )
+    args = parser.parse_args()
+    if args.baseline_dir is not None:
+        SHOWCASE_DIR = args.baseline_dir.resolve()
     raise SystemExit(main())

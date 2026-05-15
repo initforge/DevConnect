@@ -13,6 +13,7 @@ app/.metadata
 app/pubspec.lock
 app/coverage/
 app/screenshots/
+!app/screenshots/baseline/
 app/flutter_web_*.err
 app/flutter_web_*.out
 app/web/sqlite3.wasm
