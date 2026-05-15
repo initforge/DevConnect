@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -95,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _handleGitHubLogin() async {
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -109,6 +111,24 @@ class _LoginScreenState extends State<LoginScreen>
         _isLoading = false;
         _errorMessage =
             'GitHub OAuth is only available through the backend redirect.';
+      });
+    }
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    unawaited(HapticFeedback.lightImpact());
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      redirectToExternalUrl('${AppConstants.apiBaseUrl}/auth/google');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage =
+            'Google OAuth is only available through the backend redirect.';
       });
     }
   }
@@ -293,6 +313,8 @@ class _LoginScreenState extends State<LoginScreen>
                       _buildDivider(),
                       const SizedBox(height: 22),
                       _buildGitHubButton(),
+                      const SizedBox(height: 12),
+                      _buildGoogleButton(),
                       const SizedBox(height: 24),
                       _buildRegisterLink(),
                       const SizedBox(height: 16),
@@ -567,6 +589,28 @@ class _LoginScreenState extends State<LoginScreen>
             foregroundColor: Colors.black87,
             backgroundColor: Colors.white,
             side: const BorderSide(color: Color(0xFF111827), width: 1.1),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(25),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoogleButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      child: SizedBox(
+        height: 50,
+        child: OutlinedButton.icon(
+          onPressed: _isLoading ? null : _handleGoogleLogin,
+          icon: const Icon(Icons.g_mobiledata, size: 22, color: Colors.red),
+          label: const Text('Continue with Google'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.black87,
+            backgroundColor: Colors.white,
+            side: const BorderSide(color: Color(0xFFDD4B39), width: 1.1),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(25),
             ),
