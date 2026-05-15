@@ -11,6 +11,7 @@ import '../../../core/utils/text_processing.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/post_repository.dart';
 import '../application/feed_notifier.dart';
+import '../../profile/widgets/block_user_dialog.dart';
 
 class PostCard extends ConsumerStatefulWidget {
   const PostCard({
@@ -161,6 +162,27 @@ class _PostCardState extends ConsumerState<PostCard> {
                 onTap: () async {
                   Navigator.of(sheetContext).pop();
                   await _showReportSheet();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.block_outlined),
+                title: const Text('Block author'),
+                onTap: () async {
+                  Navigator.of(sheetContext).pop();
+                  final confirmed = await showBlockUserDialog(
+                    context,
+                    widget.post.author.displayName,
+                  );
+                  if (confirmed == true && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '${widget.post.author.displayName} blocked',
+                        ),
+                      ),
+                    );
+                    // TODO: call API when endpoint ready
+                  }
                 },
               ),
             ],
