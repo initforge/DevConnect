@@ -175,6 +175,55 @@ class _PostCardState extends ConsumerState<PostCard> {
     context.push('${AppRoutes.postBase}/${widget.post.id}');
   }
 
+  Future<void> _showReactionPicker() async {
+    final reaction = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        const reactions = ['👍', '❤️', '🔥', '🎉', '🤔', '🚀'];
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children:
+                  reactions
+                      .map(
+                        (emoji) => GestureDetector(
+                          onTap: () => Navigator.of(ctx).pop(emoji),
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF4F6FA),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              emoji,
+                              style: const TextStyle(fontSize: 24),
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+            ),
+          ),
+        );
+      },
+    );
+    if (reaction == null || !mounted) return;
+    // For now, treat any reaction as a like (backend may not support full reactions yet)
+    // TODO: when backend supports /posts/:id/reactions, send the specific reaction type
+    if (widget.feedType != null) {
+      ref
+          .read(feedNotifierProvider(widget.feedType!).notifier)
+          .toggleLike(widget.post.id);
+    }
+  }
+
   Future<void> _showReportSheet() async {
     final reasons = [
       'Spam',
@@ -598,6 +647,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                                 });
                               }
                             },
+                            onLongPress: _showReactionPicker,
                           ),
                           const SizedBox(width: 16),
                           _EngagementChip(
@@ -826,17 +876,20 @@ class _EngagementChip extends StatelessWidget {
     required this.label,
     required this.color,
     this.onTap,
+    this.onLongPress,
   });
 
   final IconData icon;
   final String label;
   final Color color;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
