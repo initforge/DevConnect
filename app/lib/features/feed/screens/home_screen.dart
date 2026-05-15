@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,13 +7,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/routes.dart';
 import '../../../core/localization/app_strings.dart';
-import '../../../core/models/models.dart';
 import '../../../core/riverpod/providers.dart';
-import '../../../core/state/feed_refresh_bus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_utils.dart';
 import '../../../core/widgets/decorative_widgets.dart';
-import '../../../data/repositories/post_repository.dart';
+import '../application/feed_notifier.dart';
+import '../application/feed_state.dart';
 import '../widgets/feed_list.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -25,19 +26,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabCtrl;
   List<String> _tabLabels = const [];
-  final _repository = PostRepository();
-
-  late Future<List<Post>> _forYouPosts;
-  late Future<List<Post>> _followingPosts;
-  late Future<List<Post>> _trendingPosts;
 
   @override
   void initState() {
     super.initState();
     _tabCtrl = TabController(length: 3, vsync: this);
     _tabCtrl.addListener(_onTabChanged);
-    FeedRefreshBus.instance.addListener(_handleExternalRefresh);
-    _loadFeeds();
   }
 
   @override
@@ -51,33 +45,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     ];
   }
 
-  void _loadFeeds() {
-    _forYouPosts = _repository.getForYouPosts();
-    _followingPosts = _repository.getFollowingPosts();
-    _trendingPosts = _repository.getTrendingPosts();
-  }
-
   void _onTabChanged() {
     if (_tabCtrl.indexIsChanging) {
       HapticFeedback.selectionClick();
     }
   }
 
-  void _handleExternalRefresh() {
-    if (!mounted) return;
-    setState(_loadFeeds);
-  }
-
   Future<void> _refresh() async {
-    HapticFeedback.mediumImpact();
-    setState(_loadFeeds);
-    await Future.wait([_forYouPosts, _followingPosts, _trendingPosts]);
+    unawaited(HapticFeedback.mediumImpact());
+    await Future.wait([
+      ref.read(feedNotifierProvider(FeedType.forYou).notifier).refresh(),
+      ref.read(feedNotifierProvider(FeedType.following).notifier).refresh(),
+      ref.read(feedNotifierProvider(FeedType.trending).notifier).refresh(),
+    ]);
   }
 
   @override
   void dispose() {
     _tabCtrl.dispose();
-    FeedRefreshBus.instance.removeListener(_handleExternalRefresh);
     super.dispose();
   }
 
@@ -205,18 +190,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               children: [
                 FeedList(
                   key: const PageStorageKey('foryou'),
-                  fetcher: _repository.getForYouPosts,
+                  feedType: FeedType.forYou,
                   highlightAi: true,
                   onRefresh: _refresh,
                 ),
                 FeedList(
                   key: const PageStorageKey('following'),
-                  fetcher: _repository.getFollowingPosts,
+                  feedType: FeedType.following,
                   onRefresh: _refresh,
                 ),
                 FeedList(
                   key: const PageStorageKey('trending'),
-                  fetcher: _repository.getTrendingPosts,
+                  feedType: FeedType.trending,
                   onRefresh: _refresh,
                 ),
               ],

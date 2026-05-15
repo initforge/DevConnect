@@ -70,6 +70,44 @@ class Post extends Equatable {
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);
   Map<String, dynamic> toJson() => _$PostToJson(this);
 
+  Post copyWith({
+    String? id,
+    User? author,
+    String? title,
+    String? content,
+    PostType? type,
+    List<String>? tags,
+    String? imageUrl,
+    int? viewCount,
+    int? likeCount,
+    int? commentCount,
+    int? bookmarkCount,
+    bool? isLikedByMe,
+    bool? isBookmarkedByMe,
+    DateTime? createdAt,
+    String? highlightedTitle,
+    String? highlightedContent,
+  }) {
+    return Post(
+      id: id ?? this.id,
+      author: author ?? this.author,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      type: type ?? this.type,
+      tags: tags ?? this.tags,
+      imageUrl: imageUrl ?? this.imageUrl,
+      viewCount: viewCount ?? this.viewCount,
+      likeCount: likeCount ?? this.likeCount,
+      commentCount: commentCount ?? this.commentCount,
+      bookmarkCount: bookmarkCount ?? this.bookmarkCount,
+      isLikedByMe: isLikedByMe ?? this.isLikedByMe,
+      isBookmarkedByMe: isBookmarkedByMe ?? this.isBookmarkedByMe,
+      createdAt: createdAt ?? this.createdAt,
+      highlightedTitle: highlightedTitle ?? this.highlightedTitle,
+      highlightedContent: highlightedContent ?? this.highlightedContent,
+    );
+  }
+
   @override
   List<Object?> get props => [id];
 }

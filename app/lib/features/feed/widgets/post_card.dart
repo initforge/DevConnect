@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/routes.dart';
@@ -9,19 +10,30 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/text_processing.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/post_repository.dart';
+import '../application/feed_notifier.dart';
 
-class PostCard extends StatefulWidget {
-  const PostCard({super.key, required this.post, this.onTap, this.index = 0});
+class PostCard extends ConsumerStatefulWidget {
+  const PostCard({
+    super.key,
+    required this.post,
+    this.onTap,
+    this.index = 0,
+    this.feedType,
+  });
 
   final Post post;
   final VoidCallback? onTap;
   final int index;
 
+  /// If provided, like/bookmark go through FeedNotifier for optimistic updates.
+  /// If null, falls back to direct repo call (for use outside feed context).
+  final FeedType? feedType;
+
   @override
-  State<PostCard> createState() => _PostCardState();
+  ConsumerState<PostCard> createState() => _PostCardState();
 }
 
-class _PostCardState extends State<PostCard> {
+class _PostCardState extends ConsumerState<PostCard> {
   final _repository = PostRepository();
   late bool _liked;
   late bool _bookmarked;
@@ -82,11 +94,16 @@ class _PostCardState extends State<PostCard> {
 
   Future<void> _toggleBookmark() async {
     HapticFeedback.lightImpact();
+    final feedType = widget.feedType;
+    if (feedType != null) {
+      await ref
+          .read(feedNotifierProvider(feedType).notifier)
+          .toggleBookmark(widget.post.id);
+      return;
+    }
+    // Fallback: direct repo call (outside feed context)
     final oldBookmarked = _bookmarked;
-
-    // Optimistic Update
     setState(() => _bookmarked = !oldBookmarked);
-
     try {
       final success = await _repository.toggleBookmark(widget.post.id);
       if (!mounted) return;
@@ -95,7 +112,6 @@ class _PostCardState extends State<PostCard> {
       }
     } catch (e) {
       if (!mounted) return;
-      // Rollback
       setState(() => _bookmarked = oldBookmarked);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -546,6 +562,16 @@ class _PostCardState extends State<PostCard> {
                                     : AppColors.textSecondary,
                             onTap: () async {
                               HapticFeedback.lightImpact();
+                              final feedType = widget.feedType;
+                              if (feedType != null) {
+                                await ref
+                                    .read(
+                                      feedNotifierProvider(feedType).notifier,
+                                    )
+                                    .toggleLike(post.id);
+                                return;
+                              }
+                              // Fallback: direct repo call
                               final oldLiked = _liked;
                               final oldLikeCount = _likeCount;
                               setState(() {
