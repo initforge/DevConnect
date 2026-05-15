@@ -22,6 +22,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   final _userRepository = UserRepository();
   final _postRepository = PostRepository();
   late Future<List<Object?>> _future;
+  final Set<String> _followingIds = {};
+  bool _isFollowLoading = false;
 
   @override
   void initState() {
@@ -34,6 +36,32 @@ class _ExploreScreenState extends State<ExploreScreen> {
       _userRepository.getTopUsers(limit: 6),
       _postRepository.getTrendingPosts(limit: 2),
     ]);
+  }
+
+  Future<void> _toggleFollow(dynamic user) async {
+    if (_isFollowLoading) return;
+    setState(() {
+      _isFollowLoading = true;
+      if (_followingIds.contains(user.id)) {
+        _followingIds.remove(user.id);
+      } else {
+        _followingIds.add(user.id as String);
+      }
+    });
+    try {
+      await _userRepository.toggleFollow(user.id as String);
+    } catch (_) {
+      // Rollback on error
+      setState(() {
+        if (_followingIds.contains(user.id)) {
+          _followingIds.remove(user.id);
+        } else {
+          _followingIds.add(user.id as String);
+        }
+      });
+    } finally {
+      if (mounted) setState(() => _isFollowLoading = false);
+    }
   }
 
   Future<void> _refresh() async {
@@ -356,14 +384,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                     SizedBox(
                                       height: 20,
                                       child: OutlinedButton(
-                                        onPressed:
-                                            () => context.push(
-                                              '${AppRoutes.userBase}/${user.id}',
-                                            ),
+                                        onPressed: () => _toggleFollow(user),
                                         style: OutlinedButton.styleFrom(
                                           padding: EdgeInsets.zero,
-                                          side: const BorderSide(
-                                            color: AppColors.primary,
+                                          side: BorderSide(
+                                            color:
+                                                _followingIds.contains(user.id)
+                                                    ? AppColors.success
+                                                    : AppColors.primary,
                                           ),
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
@@ -371,9 +399,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                             ),
                                           ),
                                         ),
-                                        child: const Text(
-                                          'Follow',
-                                          style: TextStyle(fontSize: 9),
+                                        child: Text(
+                                          _followingIds.contains(user.id)
+                                              ? 'Following'
+                                              : 'Follow',
+                                          style: const TextStyle(fontSize: 9),
                                         ),
                                       ),
                                     ),
