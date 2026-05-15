@@ -10,12 +10,11 @@ import '../../../core/riverpod/providers.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/app_preferences.dart';
 import '../../../core/services/oauth_redirect.dart';
-import '../../../core/state/profile_refresh_bus.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/validators.dart';
 import '../../../core/widgets/decorative_widgets.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/user_repository.dart';
+import '../widgets/change_password_sheet.dart';
 
 part 'settings_widgets.dart';
 
@@ -74,7 +73,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _quietHours = quietHours;
         }
       });
-    } catch (_) {}
+    } catch (e) {
+      // Remote settings unavailable — local defaults remain active.
+      // Silently ignored: app is fully functional with local prefs.
+      // ignore: avoid_catches_without_on_clauses
+      assert(() {
+        debugPrint('[Settings] _loadRemoteSettings failed: $e');
+        return true;
+      }());
+    }
   }
 
   Future<void> _saveRemoteSettings(Map<String, dynamic> data) async {
@@ -93,320 +100,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return error.toString();
   }
 
-  Future<void> _openEditProfile() async {
-    final strings = AppStrings.current();
-    final user = AppPreferences.instance.user ?? const <String, dynamic>{};
-    final nameCtrl = TextEditingController(
-      text: user['displayName']?.toString() ?? '',
-    );
-    final bioCtrl = TextEditingController(text: user['bio']?.toString() ?? '');
-    final skillsCtrl = TextEditingController(
-      text: ((user['skills'] as List?) ?? const [])
-          .map((item) => item.toString())
-          .join(', '),
-    );
-    String? error;
-    bool saving = false;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            Future<void> save() async {
-              final displayName = nameCtrl.text.trim();
-              if (displayName.isEmpty) {
-                setSheetState(
-                  () => error = strings.t('settings.displayNameRequired'),
-                );
-                return;
-              }
-
-              setSheetState(() {
-                saving = true;
-                error = null;
-              });
-
-              try {
-                await _userRepository.updateCurrentUser(
-                  displayName: displayName,
-                  bio: bioCtrl.text.trim(),
-                  skills:
-                      skillsCtrl.text
-                          .split(',')
-                          .map((item) => item.trim())
-                          .where((item) => item.isNotEmpty)
-                          .take(8)
-                          .toList(),
-                );
-                if (!sheetContext.mounted) return;
-                Navigator.of(sheetContext).pop();
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(strings.t('settings.profileUpdated'))),
-                );
-                ProfileRefreshBus.instance.refresh();
-                setState(() {});
-              } catch (e) {
-                setSheetState(() {
-                  saving = false;
-                  error = _friendlyError(e);
-                });
-              }
-            }
-
-            return Padding(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                8,
-                20,
-                MediaQuery.of(context).viewInsets.bottom + 24,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    strings.t('settings.editProfile'),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    strings.t('settings.editProfileSubtitle'),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: nameCtrl,
-                    decoration: _sheetInputDecoration(
-                      strings.t('settings.displayName'),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: bioCtrl,
-                    minLines: 3,
-                    maxLines: 4,
-                    decoration: _sheetInputDecoration(
-                      strings.t('settings.shortBio'),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: skillsCtrl,
-                    decoration: _sheetInputDecoration(
-                      strings.t('settings.skillsComma'),
-                    ),
-                  ),
-                  if (error != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      error!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.error,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: saving ? null : save,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                      ),
-                      child:
-                          saving
-                              ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.2,
-                                  color: Colors.white,
-                                ),
-                              )
-                              : Text(strings.t('settings.saveProfile')),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-
-    nameCtrl.dispose();
-    bioCtrl.dispose();
-    skillsCtrl.dispose();
-  }
-
   Future<void> _openChangePassword() async {
     final strings = AppStrings.current();
-    final currentCtrl = TextEditingController();
-    final newCtrl = TextEditingController();
-    final confirmCtrl = TextEditingController();
-    String? error;
-    bool saving = false;
-
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            Future<void> submit() async {
-              final pwKey = Validators.password(newCtrl.text);
-              if (pwKey != null) {
-                setSheetState(() => error = strings.t(pwKey));
-                return;
-              }
-              final confirmKey = Validators.confirmPassword(
-                confirmCtrl.text,
-                newCtrl.text,
+      builder:
+          (ctx) => ChangePasswordSheet(
+            onSave: () {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(strings.t('settings.passwordChanged'))),
               );
-              if (confirmKey != null) {
-                setSheetState(() => error = strings.t(confirmKey));
-                return;
-              }
-
-              setSheetState(() {
-                saving = true;
-                error = null;
-              });
-
-              try {
-                await ApiService.instance.post('/auth/change-password', {
-                  'currentPassword': currentCtrl.text,
-                  'newPassword': newCtrl.text,
-                });
-                if (!sheetContext.mounted) return;
-                Navigator.of(sheetContext).pop();
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(strings.t('settings.passwordChanged')),
-                  ),
-                );
-              } catch (e) {
-                setSheetState(() {
-                  saving = false;
-                  error = _friendlyError(e);
-                });
-              }
-            }
-
-            return Padding(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                8,
-                20,
-                MediaQuery.of(context).viewInsets.bottom + 24,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    strings.t('settings.changePassword'),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: currentCtrl,
-                    obscureText: true,
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    autofillHints: const [AutofillHints.password],
-                    decoration: _sheetInputDecoration(
-                      strings.t('settings.currentPassword'),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: newCtrl,
-                    obscureText: true,
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    autofillHints: const [AutofillHints.newPassword],
-                    decoration: _sheetInputDecoration(
-                      strings.t('settings.newPassword'),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: confirmCtrl,
-                    obscureText: true,
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    autofillHints: const [AutofillHints.newPassword],
-                    decoration: _sheetInputDecoration(
-                      strings.t('settings.confirmNewPassword'),
-                    ),
-                  ),
-                  if (error != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      error!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.error,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: saving ? null : submit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                      ),
-                      child:
-                          saving
-                              ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.2,
-                                  color: Colors.white,
-                                ),
-                              )
-                              : Text(strings.t('settings.updatePassword')),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+            },
+          ),
     );
-
-    currentCtrl.dispose();
-    newCtrl.dispose();
-    confirmCtrl.dispose();
   }
 
   Future<void> _deleteAccount() async {
@@ -505,27 +215,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (selected != null) {
       onSelected(selected);
     }
-  }
-
-  InputDecoration _sheetInputDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      labelText: hint,
-      filled: true,
-      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: AppColors.primary),
-      ),
-    );
   }
 
   @override
