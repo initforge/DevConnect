@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -125,7 +126,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   Future<void> _editProject(Project project) async {
-    if (_kScreenshotMode) return;
+    if (_kScreenshotMode && kDebugMode) return;
     final titleCtrl = TextEditingController(text: project.title);
     final descriptionCtrl = TextEditingController(text: project.description);
     final techStackCtrl = TextEditingController(
@@ -593,7 +594,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         },
       ),
       bottomSheet:
-          _kScreenshotMode
+          (_kScreenshotMode && kDebugMode)
               ? null
               : FutureBuilder<Project?>(
                 future: _detailLoader,

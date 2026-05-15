@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -285,7 +286,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_kScreenshotMode) {
+    if (_kScreenshotMode && kDebugMode) {
       return const _ShowcasePostDetailScreen();
     }
 
