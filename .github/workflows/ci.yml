@@ -44,6 +44,22 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run smoke:responsive
 
+  integration-smoke:
+    runs-on: ubuntu-latest
+    needs: flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - working-directory: app
+        run: flutter pub get
+      - working-directory: app
+        run: flutter test integration_test/flows/auth_flow_01_test.dart integration_test/flows/feed_flow_02_test.dart --no-pub
+        continue-on-error: true
+        # Integration tests require backend — run as best-effort
+        # TODO: add docker compose backend when CI resources allow
+
   backend-api:
     runs-on: ubuntu-latest
     steps:
