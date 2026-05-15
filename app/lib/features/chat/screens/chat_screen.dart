@@ -186,14 +186,12 @@ class _ChatScreenState extends State<ChatScreen>
           image.name.isNotEmpty
               ? image.name
               : 'image_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      debugPrint('[Chat] Uploading image: $name (${bytes.length} bytes)');
       final result = await ApiService.instance.uploadFileBytes(
         '/media/upload',
         bytes: bytes,
         fileName: name,
         fieldName: 'file',
       );
-      debugPrint('[Chat] Upload result: $result');
       final imageUrl = (result['fullUrl'] ?? result['url'] ?? '') as String;
       if (imageUrl.isEmpty) throw Exception('Upload returned empty URL');
 
@@ -204,7 +202,6 @@ class _ChatScreenState extends State<ChatScreen>
       );
       await _load();
     } catch (e) {
-      debugPrint('[Chat] Image send failed: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -225,9 +222,13 @@ class _ChatScreenState extends State<ChatScreen>
         content: text,
       );
       _msgCtrl.clear();
-      await AppPreferences.instance.clearDraft('chat.${widget.conversationId}');
       await _repository.markConversationRead(widget.conversationId);
       await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Unable to send message')));
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
