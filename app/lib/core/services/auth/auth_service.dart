@@ -3,7 +3,7 @@ import '../api_service.dart';
 import '../app_preferences.dart';
 import '../../errors/app_exceptions.dart';
 import '../../localization/app_strings.dart';
-import 'package:devconnect/core/constants/app_constants.dart';
+import '../../constants/app_constants.dart';
 
 /// Authentication state
 enum AuthStatus { unknown, authenticated, unauthenticated }
@@ -198,9 +198,7 @@ class AuthService {
   void _scheduleTokenRefresh() {
     _refreshTimer?.cancel();
     // Refresh 5 minutes before token expires (assuming 30min expiry)
-    _refreshTimer = Timer(const Duration(minutes: 25), () {
-      refreshToken();
-    });
+    _refreshTimer = Timer(const Duration(minutes: 25), refreshToken);
   }
 
   /// Logout and clear all tokens

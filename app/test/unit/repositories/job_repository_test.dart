@@ -11,7 +11,7 @@ void main() {
         location: 'Ho Chi Minh City',
         remote: true,
         salaryRange: '\$2,000 - \$3,000',
-        techStack: ['Flutter', 'Dart', 'Firebase'],
+        techStack: const ['Flutter', 'Dart', 'Firebase'],
         experience: '3-5 years',
         matchPercent: 85,
         createdAt: DateTime(2024, 1, 1),
@@ -50,7 +50,7 @@ void main() {
         title: 'Developer',
         location: 'Remote',
         salaryRange: '\$1,000',
-        techStack: [],
+        techStack: const [],
         experience: 'Any',
         createdAt: DateTime(2024, 1, 1),
       );

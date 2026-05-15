@@ -352,8 +352,8 @@ class _MobileNav extends StatelessWidget {
           label: strings.nav(destinations[1].id),
         ),
         NavigationDestination(
-          icon: Icon(Icons.add_circle_outline),
-          selectedIcon: Icon(Icons.add_circle),
+          icon: const Icon(Icons.add_circle_outline),
+          selectedIcon: const Icon(Icons.add_circle),
           label: strings.t('common.post'),
         ),
         NavigationDestination(
@@ -395,7 +395,7 @@ class _PreviewBadge extends StatelessWidget {
       ),
       child: Text(
         strings.t('common.preview'),
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: Color(0xFFC2410C),

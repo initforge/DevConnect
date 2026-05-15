@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -6,7 +8,6 @@ import '../../../core/constants/routes.dart';
 import '../../../core/models/models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_utils.dart';
-import '../../../core/widgets/decorative_widgets.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/job_repository.dart';
 
@@ -32,7 +33,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
   }
 
   Future<void> _refresh() async {
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     _loadApplications();
     if (!mounted) return;
     setState(() {});
@@ -92,7 +93,10 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.primary.withOpacity(0.06), Colors.transparent],
+              colors: [
+                AppColors.primary.withValues(alpha: 0.06),
+                Colors.transparent,
+              ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -127,9 +131,9 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
               onRefresh: _refresh,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                children: [
-                  const SizedBox(height: 80),
-                  const EmptyState(
+                children: const [
+                  SizedBox(height: 80),
+                  EmptyState(
                     icon: Icons.error_outline,
                     title: 'Failed to load',
                     subtitle: 'Please pull down to refresh.',
@@ -431,7 +435,7 @@ class _ApplicationCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Cover Note: ${application.coverNote}',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
                 color: AppColors.textSecondary,

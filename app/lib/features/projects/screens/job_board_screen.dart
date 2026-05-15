@@ -6,7 +6,6 @@ import '../../../core/models/models.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_utils.dart';
-import '../../../core/widgets/decorative_widgets.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/job_repository.dart';
 import '../widgets/job_card.dart';
@@ -355,7 +354,10 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.primary.withOpacity(0.06), Colors.transparent],
+              colors: [
+                AppColors.primary.withValues(alpha: 0.06),
+                Colors.transparent,
+              ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),

@@ -65,8 +65,9 @@ class JobRepository {
     if (_useApi) {
       final params = <String, dynamic>{};
       if (query != null) params['q'] = query;
-      if (techStack != null && techStack.isNotEmpty)
+      if (techStack != null && techStack.isNotEmpty) {
         params['tech'] = techStack.join(',');
+      }
       if (remote != null) params['remote'] = remote;
       final data = await ApiService.instance.get(
         '/jobs/search',

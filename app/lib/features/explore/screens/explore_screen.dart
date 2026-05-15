@@ -65,7 +65,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Future<void> _refresh() async {
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     setState(() {
       _future = _loadData();
     });
@@ -92,7 +92,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.primary.withOpacity(0.06),
+                    AppColors.primary.withValues(alpha: 0.06),
                     Colors.transparent,
                   ],
                   begin: Alignment.topCenter,
@@ -422,7 +422,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        _TopicsGrid(),
+                        const _TopicsGrid(),
                       ],
                     ),
                   ),
@@ -597,8 +597,8 @@ class _ExploreSkeleton extends StatelessWidget {
         const SizedBox(height: 18),
         const ShimmerBox(width: 120, height: 16),
         const SizedBox(height: 12),
-        Row(
-          children: const [
+        const Row(
+          children: [
             ShimmerBox(width: 138, height: 166, borderRadius: 18),
             SizedBox(width: 12),
             ShimmerBox(width: 138, height: 166, borderRadius: 18),
@@ -621,8 +621,8 @@ class _ExploreSkeleton extends StatelessWidget {
         const SizedBox(height: 12),
         const ShimmerBox(width: double.infinity, height: 132, borderRadius: 18),
         const SizedBox(height: 12),
-        Row(
-          children: const [
+        const Row(
+          children: [
             Expanded(
               child: ShimmerBox(width: 100, height: 116, borderRadius: 18),
             ),

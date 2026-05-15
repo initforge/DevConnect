@@ -67,13 +67,13 @@ void main() {
       addTearDown(() => tester.view.resetPhysicalSize());
 
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: MediaQuery(
-            data: MediaQueryData(size: const Size(390, 844)),
+            data: MediaQueryData(size: Size(390, 844)),
             child: ResponsiveScaffold(
               currentRoute: '/home',
               showBottomNav: false,
-              body: const Center(child: Text('Body without nav')),
+              body: Center(child: Text('Body without nav')),
             ),
           ),
         ),

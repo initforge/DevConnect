@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -632,7 +632,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         GestureDetector(
           onTap: () {
-            HapticFeedback.selectionClick();
+            unawaited(HapticFeedback.selectionClick());
             context.push(AppRoutes.register);
           },
           child: Text(

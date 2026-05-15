@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:devconnect/core/theme/app_colors.dart';
-import 'package:devconnect/core/theme/app_spacing.dart';
-import 'package:devconnect/core/widgets/animations/animated_card.dart'
-    show PressableScale;
+import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
+import '../animations/animated_card.dart' show PressableScale;
 
 // Border radius constants (local — shared_widgets.dart re-exports these)
 const double _kBorderRadiusMd = 12.0;

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,7 +11,6 @@ import '../../../core/models/models.dart';
 import '../../../core/services/app_preferences.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_utils.dart';
-import '../../../core/widgets/decorative_widgets.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/project_repository.dart';
 
@@ -53,7 +54,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   Future<void> _refresh() async {
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     _detailLoader = _repository.getProjectById(widget.projectId);
     _loadMembers();
     if (!mounted) return;
@@ -62,9 +63,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   Future<void> _joinProject() async {
-    if (_joinState == JoinState.joining || _joinState == JoinState.joined)
+    if (_joinState == JoinState.joining || _joinState == JoinState.joined) {
       return;
-    HapticFeedback.lightImpact();
+    }
+    unawaited(HapticFeedback.lightImpact());
 
     setState(() => _joinState = JoinState.joining);
     try {
@@ -75,7 +77,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       );
       if (joined) {
         _loadMembers();
-        _refresh();
+        unawaited(_refresh());
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppStrings.of(context).t('projects.joinedProject')),
@@ -95,7 +97,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
   Future<void> _leaveProject() async {
     if (_joinState != JoinState.joined) return;
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
 
     setState(() => _joinState = JoinState.leaving);
     try {
@@ -106,7 +108,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       );
       if (left) {
         _loadMembers();
-        _refresh();
+        unawaited(_refresh());
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppStrings.of(context).t('projects.leftProject')),
@@ -185,7 +187,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 );
                 if (mounted) {
                   sheetContext.pop();
-                  _refresh();
+                  unawaited(_refresh());
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
@@ -383,7 +385,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.primary.withOpacity(0.06), Colors.transparent],
+              colors: [
+                AppColors.primary.withValues(alpha: 0.06),
+                Colors.transparent,
+              ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -511,7 +516,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                           const SizedBox(height: 10),
                           Text(
                             project.description,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 13.5,
                               height: 1.55,
                               color: AppColors.textSecondary,
@@ -587,7 +592,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                               ),
                               if (members.isEmpty) ...[
                                 const SizedBox(height: 12),
-                                Text(
+                                const Text(
                                   'No members yet. Be the first to join!',
                                   style: TextStyle(
                                     fontSize: 12.5,
@@ -774,7 +779,7 @@ class _OwnerCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       '${owner.reputation}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),
@@ -791,7 +796,7 @@ class _OwnerCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       owner.isOnline ? 'Online' : 'Offline',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,
                       ),
@@ -892,7 +897,7 @@ class _StatItem extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           label,
-          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
           textAlign: TextAlign.center,
         ),
       ],
@@ -930,8 +935,8 @@ class _MemberRow extends StatelessWidget {
           Container(
             width: 32,
             height: 32,
-            decoration: BoxDecoration(
-              color: const Color(0xFFECEEFF),
+            decoration: const BoxDecoration(
+              color: Color(0xFFECEEFF),
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
@@ -958,7 +963,7 @@ class _MemberRow extends StatelessWidget {
                 ),
                 Text(
                   role,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
                     color: AppColors.textSecondary,
                   ),

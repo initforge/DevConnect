@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:devconnect/core/theme/app_colors.dart';
-import 'package:devconnect/core/theme/app_spacing.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
 
 // Border radius constant (local)
 const double _kBorderRadiusSm = 8.0;
@@ -84,14 +84,14 @@ class PostCardSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const ShimmerBox(width: 40, height: 40, borderRadius: 20),
-              const SizedBox(width: AppSpacing.md),
-              const Expanded(
+              ShimmerBox(width: 40, height: 40, borderRadius: 20),
+              SizedBox(width: AppSpacing.md),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -103,12 +103,12 @@ class PostCardSkeleton extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
-          const ShimmerBox(width: double.infinity, height: 18),
-          const SizedBox(height: AppSpacing.sm),
-          const ShimmerBox(width: 200, height: 18),
-          const SizedBox(height: AppSpacing.md),
-          const Row(
+          SizedBox(height: AppSpacing.md),
+          ShimmerBox(width: double.infinity, height: 18),
+          SizedBox(height: AppSpacing.sm),
+          ShimmerBox(width: 200, height: 18),
+          SizedBox(height: AppSpacing.md),
+          Row(
             children: [
               ShimmerBox(width: 60, height: 24, borderRadius: 12),
               SizedBox(width: AppSpacing.sm),
@@ -229,14 +229,14 @@ class JobCardSkeleton extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Theme.of(context).dividerColor),
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const ShimmerBox(width: 46, height: 46, borderRadius: 14),
-              const SizedBox(width: 12),
-              const Expanded(
+              ShimmerBox(width: 46, height: 46, borderRadius: 14),
+              SizedBox(width: 12),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -248,16 +248,12 @@ class JobCardSkeleton extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          const ShimmerBox(width: double.infinity, height: 12),
-          const SizedBox(height: 6),
-          const ShimmerBox(width: 200, height: 12),
-          const SizedBox(height: 12),
-          const ShimmerBox(
-            width: double.infinity,
-            height: 40,
-            borderRadius: 14,
-          ),
+          SizedBox(height: 12),
+          ShimmerBox(width: double.infinity, height: 12),
+          SizedBox(height: 6),
+          ShimmerBox(width: 200, height: 12),
+          SizedBox(height: 12),
+          ShimmerBox(width: double.infinity, height: 40, borderRadius: 14),
         ],
       ),
     );

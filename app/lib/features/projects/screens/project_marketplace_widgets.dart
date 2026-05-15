@@ -8,7 +8,7 @@ class _ShowcaseProjectMarketplaceScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       bottomNavigationBar: AppBottomNavBar(
-        items: [
+        items: const [
           AppBottomNavItem(
             icon: Icons.home_outlined,
             selectedIcon: Icons.home,

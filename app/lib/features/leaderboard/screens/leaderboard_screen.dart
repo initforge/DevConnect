@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -42,7 +44,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Future<void> _refresh() async {
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     _loadFeeds();
     if (!mounted) return;
     setState(() {});
@@ -57,7 +59,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.primary.withOpacity(0.06), Colors.transparent],
+              colors: [
+                AppColors.primary.withValues(alpha: 0.06),
+                Colors.transparent,
+              ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),

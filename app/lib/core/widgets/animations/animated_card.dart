@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:devconnect/core/theme/app_colors.dart';
+import '../../theme/app_colors.dart';
 
 // Animation duration constants (duplicated from shared_widgets.dart to avoid
 // circular import — shared_widgets.dart re-exports these via barrel).

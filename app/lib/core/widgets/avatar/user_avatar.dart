@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import 'package:devconnect/core/theme/app_colors.dart';
+import '../../theme/app_colors.dart';
 
 // ============================================================
 // AVATAR WIDGETS

@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
@@ -36,7 +35,7 @@ class ScreenGradientHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: colors.first.withOpacity(0.3),
+            color: colors.first.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -50,7 +49,7 @@ class ScreenGradientHeader extends StatelessWidget {
             child: Icon(
               icon ?? Icons.auto_awesome,
               size: 80,
-              color: Colors.white.withOpacity(0.08),
+              color: Colors.white.withValues(alpha: 0.08),
             ),
           ),
           Column(
@@ -63,7 +62,7 @@ class ScreenGradientHeader extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(icon, color: Colors.white, size: 22),
@@ -88,7 +87,7 @@ class ScreenGradientHeader extends StatelessWidget {
                 Text(
                   subtitle!,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
+                    color: Colors.white.withValues(alpha: 0.85),
                     fontSize: 13,
                     height: 1.4,
                   ),
@@ -120,7 +119,7 @@ class DecorativeBackground extends StatelessWidget {
             height: 120,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.primary.withOpacity(0.04),
+              color: AppColors.primary.withValues(alpha: 0.04),
             ),
           ),
         ),
@@ -132,7 +131,7 @@ class DecorativeBackground extends StatelessWidget {
             height: 100,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.accent.withOpacity(0.04),
+              color: AppColors.accent.withValues(alpha: 0.04),
             ),
           ),
         ),
@@ -144,7 +143,7 @@ class DecorativeBackground extends StatelessWidget {
             height: 60,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.aiPurple.withOpacity(0.03),
+              color: AppColors.aiPurple.withValues(alpha: 0.03),
             ),
           ),
         ),
@@ -178,7 +177,7 @@ class EnhancedCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE8EAF2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -197,7 +196,7 @@ class EnhancedCard extends StatelessWidget {
                   gradient: LinearGradient(
                     colors: [
                       accentColor ?? AppColors.primary,
-                      (accentColor ?? AppColors.primary).withOpacity(0.3),
+                      (accentColor ?? AppColors.primary).withValues(alpha: 0.3),
                     ],
                   ),
                 ),
@@ -348,10 +347,14 @@ class _SubtleGlowDotState extends State<SubtleGlowDot>
           height: widget.size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: widget.color.withOpacity(0.4 + _controller.value * 0.4),
+            color: widget.color.withValues(
+              alpha: 0.4 + _controller.value * 0.4,
+            ),
             boxShadow: [
               BoxShadow(
-                color: widget.color.withOpacity(0.2 + _controller.value * 0.2),
+                color: widget.color.withValues(
+                  alpha: 0.2 + _controller.value * 0.2,
+                ),
                 blurRadius: 4 + _controller.value * 4,
               ),
             ],
@@ -382,8 +385,8 @@ class MiniStatBadge extends StatelessWidget {
     final colors =
         gradientColors ??
         [
-          AppColors.primary.withOpacity(0.1),
-          AppColors.primary.withOpacity(0.05),
+          AppColors.primary.withValues(alpha: 0.1),
+          AppColors.primary.withValues(alpha: 0.05),
         ];
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:devconnect/core/riverpod/providers.dart';
-import 'package:devconnect/core/theme/app_theme.dart';
-import 'package:devconnect/routing/app_router.dart';
+import '../core/riverpod/providers.dart';
+import '../core/theme/app_theme.dart';
+import '../routing/app_router.dart';
 
 class DevConnectApp extends ConsumerWidget {
   const DevConnectApp({super.key});

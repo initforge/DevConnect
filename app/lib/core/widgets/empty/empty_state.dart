@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:devconnect/core/theme/app_colors.dart';
-import 'package:devconnect/core/theme/app_spacing.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
 
 // ============================================================
 // EMPTY STATES

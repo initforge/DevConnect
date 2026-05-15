@@ -38,7 +38,7 @@ class TextProcessing {
         "  topic: '${post.title}',\n"
         "  tag: '$firstTag',\n"
         "  status: 'ready for review',\n"
-        "};";
+        '};';
   }
 
   // ── Language detection ─────────────────────────────────────────────────────
@@ -52,10 +52,12 @@ class TextProcessing {
         content.contains('import ')) {
       return 'python';
     }
-    if (tags.contains('typescript') || tags.contains('nestjs'))
+    if (tags.contains('typescript') || tags.contains('nestjs')) {
       return 'typescript';
-    if (tags.contains('javascript') || tags.contains('react'))
+    }
+    if (tags.contains('javascript') || tags.contains('react')) {
       return 'javascript';
+    }
     if (tags.contains('dart') || tags.contains('flutter')) return 'dart';
     if (tags.contains('go') || tags.contains('golang')) return 'go';
     if (tags.contains('rust')) return 'rust';

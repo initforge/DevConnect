@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../constants/app_constants.dart';
 
@@ -67,7 +67,7 @@ class WebSocketService {
   WebSocketService._();
   static final WebSocketService instance = WebSocketService._();
 
-  IO.Socket? _socket;
+  io.Socket? _socket;
   String? _token;
   final List<WebSocketServiceListener> _listeners = [];
   final Set<WsChannel> _subscribedChannels = {};
@@ -102,9 +102,9 @@ class WebSocketService {
   void _createSocket() {
     if (_token == null) return;
 
-    final socket = IO.io(
+    final socket = io.io(
       '$_socketOrigin/chat',
-      IO.OptionBuilder()
+      io.OptionBuilder()
           .setTransports(['websocket'])
           .setAuth({'token': _token})
           .enableReconnection()

@@ -285,8 +285,9 @@ class ModelMappers {
   static List<String> _parseStringList(dynamic value) {
     if (value == null) return [];
     if (value is List) return value.map((e) => e.toString()).toList();
-    if (value is String)
+    if (value is String) {
       return value.split('|').where((e) => e.isNotEmpty).toList();
+    }
     return [];
   }
 

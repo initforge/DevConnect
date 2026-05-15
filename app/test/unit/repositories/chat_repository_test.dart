@@ -53,7 +53,7 @@ void main() {
         type: MessageType.code,
         codeLanguage: 'dart',
         codeSource: 'void main() {}',
-        reactions: ['thumbs_up'],
+        reactions: const ['thumbs_up'],
         isRead: true,
         createdAt: DateTime(2024, 1, 1),
       );
@@ -97,7 +97,7 @@ void main() {
         id: 'm1',
         senderId: 'u1',
         content: 'Great post!',
-        reactions: ['thumbs_up', 'heart', 'fire'],
+        reactions: const ['thumbs_up', 'heart', 'fire'],
         createdAt: DateTime(2024, 1, 1),
       );
 

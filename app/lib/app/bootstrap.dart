@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
@@ -32,8 +33,7 @@ class AppBootstrap {
     runApp(const ProviderScope(child: DevConnectApp()));
 
     // Pull latest data from backend after UI is rendered (offline-first, non-blocking)
-    // ignore: unused_result
-    SyncService().pullAll();
+    unawaited(SyncService().pullAll());
   }
 
   static void _configureDatabaseFactory() {

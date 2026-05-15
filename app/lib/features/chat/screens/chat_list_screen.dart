@@ -210,7 +210,7 @@ class _ChatListScreenState extends State<ChatListScreen>
   }
 
   Future<void> _refresh() async {
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     await _loadData();
   }
 
@@ -316,7 +316,7 @@ class _ChatListScreenState extends State<ChatListScreen>
   }
 
   Future<void> _showNewChatDialog() async {
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
     final users = await _userRepository.getAllUsers();
     if (!mounted) return;
 
@@ -375,7 +375,7 @@ class _ChatListScreenState extends State<ChatListScreen>
     if (existing.isNotEmpty) {
       _markConversationReadLocally(existing.first.id);
       unawaited(_repository.markConversationRead(existing.first.id));
-      context.push('${AppRoutes.chatBase}/${existing.first.id}');
+      unawaited(context.push('${AppRoutes.chatBase}/${existing.first.id}'));
       return;
     }
     // Create conversation via API
@@ -386,7 +386,7 @@ class _ChatListScreenState extends State<ChatListScreen>
       if (!mounted) return;
       final conversationId = result['id']?.toString();
       if (conversationId != null && conversationId.isNotEmpty) {
-        context.push('${AppRoutes.chatBase}/$conversationId');
+        unawaited(context.push('${AppRoutes.chatBase}/$conversationId'));
         await _loadData();
       }
     } catch (_) {
@@ -476,7 +476,7 @@ class _ChatListScreenState extends State<ChatListScreen>
                       borderRadius: BorderRadius.circular(21),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
+                          color: Colors.black.withValues(alpha: 0.03),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -651,7 +651,7 @@ class _ChatListScreenState extends State<ChatListScreen>
                                       await context.push(
                                         '${AppRoutes.chatBase}/${conversation.id}',
                                       );
-                                      if (mounted) _loadData();
+                                      if (mounted) unawaited(_loadData());
                                     },
                                   ),
                                 );

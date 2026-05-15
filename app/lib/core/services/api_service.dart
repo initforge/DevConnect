@@ -188,9 +188,9 @@ class ApiService {
         if (data.length == 1 && data[0] is Map<String, dynamic>) {
           return data[0] as Map<String, dynamic>;
         }
-        throw ApiException(
-          0,
+        throw NetworkException(
           AppStrings.current().t('errors.expectedObjectButGotList'),
+          0,
         );
       }
       return {};

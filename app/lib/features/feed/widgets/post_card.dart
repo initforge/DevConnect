@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -94,7 +96,7 @@ class _PostCardState extends ConsumerState<PostCard> {
   }
 
   Future<void> _toggleBookmark() async {
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
     final feedType = widget.feedType;
     if (feedType != null) {
       await ref
@@ -240,9 +242,11 @@ class _PostCardState extends ConsumerState<PostCard> {
     // For now, treat any reaction as a like (backend may not support full reactions yet)
     // TODO: when backend supports /posts/:id/reactions, send the specific reaction type
     if (widget.feedType != null) {
-      ref
-          .read(feedNotifierProvider(widget.feedType!).notifier)
-          .toggleLike(widget.post.id);
+      unawaited(
+        ref
+            .read(feedNotifierProvider(widget.feedType!).notifier)
+            .toggleLike(widget.post.id),
+      );
     }
   }
 
@@ -632,7 +636,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                                     ? const Color(0xFFEF4444)
                                     : AppColors.textSecondary,
                             onTap: () async {
-                              HapticFeedback.lightImpact();
+                              unawaited(HapticFeedback.lightImpact());
                               final feedType = widget.feedType;
                               if (feedType != null) {
                                 await ref
@@ -697,7 +701,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.visibility_outlined,
                                 size: 13,
                                 color: AppColors.textTertiary,
@@ -713,7 +717,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                               if (post.type == PostType.article ||
                                   post.type == PostType.til) ...[
                                 const SizedBox(width: 10),
-                                Icon(
+                                const Icon(
                                   Icons.schedule,
                                   size: 13,
                                   color: AppColors.textTertiary,

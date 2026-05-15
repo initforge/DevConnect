@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -41,7 +43,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   void _togglePreview() {
     setState(() => _isPreview = !_isPreview);
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
   }
 
   @override
@@ -88,7 +90,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Future<void> _pickImage() async {
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
     final image = await _imageCompression.pickCompressedImage(
       source: ImageSource.gallery,
     );

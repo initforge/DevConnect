@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -65,7 +67,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   Future<void> _refresh() async {
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     setState(() => _loader = _load());
     await _loader;
   }
@@ -495,7 +497,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   onCancelReply: _cancelReply,
                   onLike: _handleLike,
                   onBookmark: _handleBookmark,
-                  onComment: () => _commentFocus.requestFocus(),
+                  onComment: _commentFocus.requestFocus,
                   onSend: _addComment,
                 ),
               ],
@@ -716,7 +718,7 @@ class _ShowcasePostDetailScreenState extends State<_ShowcasePostDetailScreen> {
           ),
           const SizedBox(height: 18),
           const Text(
-            "NestJS is a powerful framework for building efficient, reliable, and scalable server-side applications. It leverages TypeScript and combines elements of OOP, Functional Programming, and Functional Reactive Programming.",
+            'NestJS is a powerful framework for building efficient, reliable, and scalable server-side applications. It leverages TypeScript and combines elements of OOP, Functional Programming, and Functional Reactive Programming.',
             style: TextStyle(
               fontSize: 14,
               height: 1.65,
@@ -740,12 +742,12 @@ class _ShowcasePostDetailScreenState extends State<_ShowcasePostDetailScreen> {
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: Theme.of(context).dividerColor),
             ),
-            child: Column(
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       'TYPESCRIPT',
                       style: TextStyle(
                         fontSize: 10,
@@ -753,9 +755,9 @@ class _ShowcasePostDetailScreenState extends State<_ShowcasePostDetailScreen> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const Spacer(),
+                    Spacer(),
                     Row(
-                      children: const [
+                      children: [
                         Icon(
                           Icons.copy_outlined,
                           size: 12,
@@ -774,8 +776,8 @@ class _ShowcasePostDetailScreenState extends State<_ShowcasePostDetailScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                const Text(
+                SizedBox(height: 12),
+                Text(
                   "@Controller('users')\nexport class UsersController {\n  constructor(private readonly usersService: UsersService) {}\n\n  @Get()\n  findAll(): Promise<User[]> {\n    return this.usersService.findAll();\n  }\n}",
                   style: TextStyle(
                     fontFamily: 'monospace',

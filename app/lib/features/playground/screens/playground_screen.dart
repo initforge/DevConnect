@@ -228,7 +228,10 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.primary.withOpacity(0.06), Colors.transparent],
+              colors: [
+                AppColors.primary.withValues(alpha: 0.06),
+                Colors.transparent,
+              ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),

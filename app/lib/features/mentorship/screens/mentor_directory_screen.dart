@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/shared_widgets.dart';
 
 class MentorDirectoryScreen extends StatelessWidget {
   const MentorDirectoryScreen({super.key});

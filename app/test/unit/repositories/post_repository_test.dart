@@ -17,7 +17,7 @@ void main() {
         title: 'Test Post',
         content: 'Test content',
         type: PostType.article,
-        tags: ['flutter', 'dart'],
+        tags: const ['flutter', 'dart'],
         viewCount: 100,
         likeCount: 10,
         commentCount: 5,

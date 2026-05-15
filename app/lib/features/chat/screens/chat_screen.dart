@@ -229,7 +229,7 @@ class _ChatScreenState extends State<ChatScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Unable to send message')));
+      ).showSnackBar(const SnackBar(content: Text('Unable to send message')));
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
@@ -390,8 +390,8 @@ class _ChatScreenState extends State<ChatScreen>
                       value: selectedLanguage,
                       decoration: InputDecoration(
                         labelText: AppStrings.of(ctx).t('chat.language'),
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
+                        border: const OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 10,
                         ),
@@ -435,8 +435,8 @@ class _ChatScreenState extends State<ChatScreen>
                       ),
                       decoration: InputDecoration(
                         hintText: AppStrings.of(ctx).t('chat.pasteCode'),
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.all(12),
+                        border: const OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.all(12),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -766,7 +766,7 @@ class _ChatScreenState extends State<ChatScreen>
                       decoration: InputDecoration(
                         hintText: AppStrings.of(context).t('chat.typeMessage'),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 12,
                         ),

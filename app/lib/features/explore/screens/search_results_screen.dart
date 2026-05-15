@@ -133,7 +133,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   }
 
   Future<void> _refresh() async {
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     if (_query.isNotEmpty) {
       await _search(_query);
     } else {

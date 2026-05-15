@@ -44,9 +44,9 @@ abstract class AppException implements Exception {
 /// No internet, timeout, DNS failure, or connection refused.
 class NetworkException extends AppException {
   const NetworkException([
-    String messageKey = 'errors.connectionError',
+    super.messageKey = 'errors.connectionError',
     int? statusCode,
-  ]) : super(messageKey, statusCode: statusCode);
+  ]) : super(statusCode: statusCode);
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -127,8 +127,8 @@ class UnknownException extends AppException {
   'Use AppException subclasses (NetworkException, AuthException, etc.)',
 )
 class ApiException extends AppException {
-  const ApiException(int statusCode, String message)
-    : super(message, statusCode: statusCode);
+  const ApiException(int statusCode, super.message)
+    : super(statusCode: statusCode);
 
   /// Alias for messageKey — backward compat with old callers using .message.
   String get message => messageKey;

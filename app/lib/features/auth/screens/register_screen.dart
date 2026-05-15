@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -83,7 +85,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
         return;
       }
-      HapticFeedback.selectionClick();
+      unawaited(HapticFeedback.selectionClick());
       setState(() => _step = 1);
       return;
     }
@@ -197,21 +199,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _FieldLabel('Full Name'),
+            const _FieldLabel('Full Name'),
             _RoundedField(
               controller: _nameCtrl,
               hint: 'Enter your full name',
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 12),
-            _FieldLabel('Username'),
+            const _FieldLabel('Username'),
             _RoundedField(
               controller: _usernameCtrl,
               hint: '@ john_dev',
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 12),
-            _FieldLabel('Email Address'),
+            const _FieldLabel('Email Address'),
             _RoundedField(
               controller: _emailCtrl,
               hint: 'name@example.com',
@@ -243,7 +245,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _FieldLabel('Password'),
+            const _FieldLabel('Password'),
             _RoundedField(
               controller: _passwordCtrl,
               hint: 'Enter a secure password',

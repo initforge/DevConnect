@@ -473,7 +473,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       themeMode == ThemeMode.dark
                           ? strings.t('common.dark')
                           : strings.t('common.light'),
-                  onTap: () => themeNotifier.toggleTheme(),
+                  onTap: themeNotifier.toggleTheme,
                 ),
                 _ValueRow(
                   icon: Icons.language_outlined,

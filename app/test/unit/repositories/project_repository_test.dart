@@ -16,7 +16,7 @@ void main() {
         owner: owner,
         title: 'Test Project',
         description: 'A test project description',
-        techStack: ['Flutter', 'Dart', 'Firebase'],
+        techStack: const ['Flutter', 'Dart', 'Firebase'],
         status: 'LOOKING_FOR_MEMBERS',
         memberCount: 2,
         maxMembers: 5,
@@ -68,7 +68,7 @@ void main() {
         owner: owner,
         title: 'Test',
         description: 'Test',
-        techStack: [],
+        techStack: const [],
         createdAt: DateTime(2024, 1, 1),
       );
 

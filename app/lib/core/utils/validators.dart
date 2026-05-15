@@ -36,8 +36,9 @@ class Validators {
     final v = value.trim();
     if (v.length < 3 || v.length > 30) return 'validators.usernameFormat';
     if (v.startsWith('_')) return 'validators.usernameStartsWithUnderscore';
-    if (!RegExp(r'^[a-z0-9_]+$').hasMatch(v))
+    if (!RegExp(r'^[a-z0-9_]+$').hasMatch(v)) {
       return 'validators.usernameFormat';
+    }
     return null;
   }
 
@@ -52,10 +53,12 @@ class Validators {
   static String? password(String? value, {bool requireSpecial = false}) {
     if (value == null || value.isEmpty) return 'validators.required';
     if (value.length < 8) return 'validators.passwordTooShort';
-    if (!RegExp(r'[a-zA-Z]').hasMatch(value))
+    if (!RegExp(r'[a-zA-Z]').hasMatch(value)) {
       return 'validators.passwordNeedsLetter';
-    if (!RegExp(r'[0-9]').hasMatch(value))
+    }
+    if (!RegExp(r'[0-9]').hasMatch(value)) {
       return 'validators.passwordNeedsNumber';
+    }
     if (requireSpecial && !RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) {
       return 'validators.passwordNeedsSpecial';
     }

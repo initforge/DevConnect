@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,7 +52,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _refresh() async {
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     await _reload();
   }
 
@@ -342,31 +344,31 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _handleTap(AppNotification item) async {
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
     await _markSingleRead(item);
     if (!mounted) return;
     switch (item.type.toLowerCase()) {
       case 'follow':
         if (item.fromUser != null) {
-          context.push('${AppRoutes.userBase}/${item.fromUser!.id}');
+          unawaited(context.push('${AppRoutes.userBase}/${item.fromUser!.id}'));
         }
         break;
       case 'like':
       case 'comment':
       case 'mention':
         if (item.targetPostId != null && item.targetPostId!.isNotEmpty) {
-          context.push('${AppRoutes.postBase}/${item.targetPostId}');
+          unawaited(context.push('${AppRoutes.postBase}/${item.targetPostId}'));
         } else if (item.fromUser != null) {
-          context.push('${AppRoutes.userBase}/${item.fromUser!.id}');
+          unawaited(context.push('${AppRoutes.userBase}/${item.fromUser!.id}'));
         } else {
           context.go(AppRoutes.home);
         }
         break;
       default:
         if (item.targetPostId != null && item.targetPostId!.isNotEmpty) {
-          context.push('${AppRoutes.postBase}/${item.targetPostId}');
+          unawaited(context.push('${AppRoutes.postBase}/${item.targetPostId}'));
         } else if (item.fromUser != null) {
-          context.push('${AppRoutes.userBase}/${item.fromUser!.id}');
+          unawaited(context.push('${AppRoutes.userBase}/${item.fromUser!.id}'));
         }
     }
   }

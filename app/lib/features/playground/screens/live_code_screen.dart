@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/app_preferences.dart';
 import '../../../core/theme/app_colors.dart';
@@ -16,9 +16,9 @@ class LiveCodeScreen extends StatefulWidget {
 }
 
 class _LiveCodeScreenState extends State<LiveCodeScreen> {
-  late IO.Socket _socket;
+  late io.Socket _socket;
   final TextEditingController _codeCtrl = TextEditingController(
-    text: "const DevConnect = () => {\n  return <LiveCodeRoom />;\n};",
+    text: 'const DevConnect = () => {\n  return <LiveCodeRoom />;\n};',
   );
   final Map<String, _RemoteCursor> _remoteCursors = {};
   late final String _localUserId;
@@ -46,9 +46,9 @@ class _LiveCodeScreenState extends State<LiveCodeScreen> {
 
   void _initSocket() {
     final liveUrl = AppConstants.wsBaseUrl.replaceFirst(RegExp(r'^ws'), 'http');
-    _socket = IO.io(
+    _socket = io.io(
       '$liveUrl/live',
-      IO.OptionBuilder()
+      io.OptionBuilder()
           .setTransports(['websocket'])
           .setAuth({'userId': _localUserId})
           .disableAutoConnect()

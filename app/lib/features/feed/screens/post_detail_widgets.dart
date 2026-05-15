@@ -410,7 +410,7 @@ String _buildPostSnippet(Post post) {
       "  topic: '${post.title}',\n"
       "  tag: '$firstTag',\n"
       "  status: 'ready for review',\n"
-      "};";
+      '};';
 }
 
 String _timeAgo(DateTime dateTime) {

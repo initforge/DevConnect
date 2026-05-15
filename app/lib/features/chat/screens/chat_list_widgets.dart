@@ -230,8 +230,8 @@ class _ShowcaseConversationRow extends StatelessWidget {
           Container(
             width: 44,
             height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF4EEDF),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF4EEDF),
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -45,7 +47,7 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
   }
 
   Future<void> _refresh() async {
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     _loadFeeds();
     if (!mounted) return;
     setState(() {});
@@ -54,7 +56,7 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
 
   Future<void> _joinProject(Project project) async {
     if (_joinedProjects.contains(project.id)) return;
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
 
     try {
       final joined = await _repository.joinProject(project.id);
@@ -194,7 +196,7 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
                   const SizedBox(height: 8),
                   Text(
                     AppStrings.of(context).t('projects.createSubtitle'),
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 13,
                       color: AppColors.textSecondary,
                     ),
@@ -292,7 +294,10 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.primary.withOpacity(0.06), Colors.transparent],
+              colors: [
+                AppColors.primary.withValues(alpha: 0.06),
+                Colors.transparent,
+              ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -369,7 +374,10 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
                         context,
                       ).t('projects.marketplaceSubtitle'),
                       icon: Icons.rocket_launch_outlined,
-                      gradientColors: [Color(0xFF5B53F6), Color(0xFF00D9A6)],
+                      gradientColors: const [
+                        Color(0xFF5B53F6),
+                        Color(0xFF00D9A6),
+                      ],
                     ),
                     const SizedBox(height: 14),
                     // Search bar

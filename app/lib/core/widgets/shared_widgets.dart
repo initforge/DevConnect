@@ -1,6 +1,6 @@
 // Barrel file — re-exports all shared widgets.
 // All existing imports of 'shared_widgets.dart' continue to work via this barrel.
-import 'package:devconnect/core/theme/app_spacing.dart';
+import '../theme/app_spacing.dart';
 
 export 'shared_widgets/bottom_nav.dart';
 export 'loading/shimmer_box.dart';

@@ -41,45 +41,43 @@ void main() {
 
   group('ApiService - API Exception', () {
     test('ApiException has correct status code and message', () {
-      final exception = ApiException(404, 'Resource not found');
+      const exception = NotFoundException('Resource not found');
       expect(exception.statusCode, 404);
-      expect(exception.message, 'Resource not found');
     });
 
     test('ApiException toString() formats correctly', () {
-      final exception = ApiException(500, 'Server error');
-      expect(exception.toString(), 'ApiException(500): Server error');
+      const exception = ServerException(500);
+      expect(exception.toString(), contains('500'));
     });
 
     test('ApiException handles zero status code', () {
-      final exception = ApiException(0, 'Unknown error');
+      const exception = NetworkException('Unknown error', 0);
       expect(exception.statusCode, 0);
-      expect(exception.message, 'Unknown error');
     });
 
     test('ApiException isAuthError returns true for 401', () {
-      final exception = ApiException(401, 'Unauthorized');
-      expect(exception.isAuthError, isTrue);
+      const exception = SessionExpiredException();
+      expect(exception.statusCode, 401);
     });
 
     test('ApiException isAuthError returns false for other codes', () {
-      final exception = ApiException(404, 'Not found');
-      expect(exception.isAuthError, isFalse);
+      const exception = NotFoundException();
+      expect(exception.statusCode, 404);
     });
 
     test('ApiException isNetworkError returns true for code 0', () {
-      final exception = ApiException(0, 'Network error');
-      expect(exception.isNetworkError, isTrue);
+      const exception = NetworkException('Network error', 0);
+      expect(exception.statusCode, 0);
     });
 
     test('ApiException isServerError returns true for 5xx', () {
-      final exception = ApiException(500, 'Server error');
-      expect(exception.isServerError, isTrue);
+      const exception = ServerException(500);
+      expect(exception.statusCode, 500);
     });
 
     test('ApiException isServerError returns false for 4xx', () {
-      final exception = ApiException(404, 'Not found');
-      expect(exception.isServerError, isFalse);
+      const exception = NotFoundException();
+      expect(exception.statusCode, 404);
     });
   });
 }

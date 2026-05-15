@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -64,7 +66,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _refresh() async {
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     setState(() => _loader = _loadProfile());
     await _loader;
   }
@@ -484,7 +486,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _handleFollow(User user) async {
     if (_isFollowingLoading) return;
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
     final prev = _isFollowing;
     setState(() {
       _isFollowingLoading = true;
@@ -509,7 +511,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
       final conversationId = result['id']?.toString();
       if (conversationId != null && conversationId.isNotEmpty) {
-        context.push('${AppRoutes.chatBase}/$conversationId');
+        unawaited(context.push('${AppRoutes.chatBase}/$conversationId'));
       }
     } catch (_) {
       // Fallback: try to find existing conversation
@@ -518,7 +520,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           conversations.where((c) => c.otherUser.id == user.id).toList();
       if (!mounted) return;
       if (existing.isNotEmpty) {
-        context.push('${AppRoutes.chatBase}/${existing.first.id}');
+        unawaited(context.push('${AppRoutes.chatBase}/${existing.first.id}'));
       }
     }
   }
@@ -749,7 +751,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             onPressed: () => _handleMessage(user),
                             child: Text(
                               strings.t('common.message'),
-                              style: TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),
@@ -1263,9 +1267,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: Text(strings.t('profile.editSkills')),
             content: TextField(
               controller: ctrl,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Flutter, React, TypeScript...',
-                border: const OutlineInputBorder(),
+                border: OutlineInputBorder(),
               ),
               maxLines: 3,
             ),
@@ -1353,14 +1357,14 @@ class _ProfileSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       padding: EdgeInsets.zero,
-      children: [
+      children: const [
         // Hero placeholder
-        const ShimmerBox(width: double.infinity, height: 520),
-        const SizedBox(height: 12),
+        ShimmerBox(width: double.infinity, height: 520),
+        SizedBox(height: 12),
         // Posts skeleton
-        const PostCardSkeleton(),
-        const PostCardSkeleton(),
-        const PostCardSkeleton(),
+        PostCardSkeleton(),
+        PostCardSkeleton(),
+        PostCardSkeleton(),
       ],
     );
   }
