@@ -9,6 +9,8 @@ import '../../../core/utils/responsive_utils.dart';
 import '../../../core/widgets/decorative_widgets.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/job_repository.dart';
+import '../widgets/job_card.dart';
+import '../widgets/jobs_summary.dart';
 
 class JobBoardScreen extends StatefulWidget {
   const JobBoardScreen({super.key});
@@ -20,6 +22,9 @@ class JobBoardScreen extends StatefulWidget {
 class _JobBoardScreenState extends State<JobBoardScreen> {
   final _repository = JobRepository();
   late Future<List<Job>> _loader;
+  // NOTE: _appliedJobs is intentionally NOT cleared on reload (UX: preserve
+  // applied state during session). It MUST be reset when the user logs out.
+  // TODO(auth): clear _appliedJobs in the logout flow (auth_service.signOut).
   final Set<String> _appliedJobs = <String>{};
   bool _remoteOnly = false;
 
@@ -419,7 +424,7 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(12, 10, 12, 90),
                   children: [
-                    _JobsSummary(
+                    JobsSummary(
                       totalJobs: jobs.length,
                       remoteJobs: remoteJobs,
                       avgMatch: avgMatch,
@@ -526,7 +531,7 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
                     ),
                     const SizedBox(height: 14),
                     ...filtered.map(
-                      (job) => _JobCard(
+                      (job) => JobCard(
                         job: job,
                         applied: _appliedJobs.contains(job.id),
                         onApply: () => _applyForJob(job),
@@ -598,274 +603,6 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
     }
     final sorted = tags.toList()..sort();
     return sorted.take(15).toList();
-  }
-}
-
-class _JobsSummary extends StatelessWidget {
-  const _JobsSummary({
-    required this.totalJobs,
-    required this.remoteJobs,
-    required this.avgMatch,
-  });
-
-  final int totalJobs;
-  final int remoteJobs;
-  final int avgMatch;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE8EAF2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.work_history_outlined, color: Color(0xFF5B53F6)),
-              const SizedBox(width: 8),
-              Text(
-                AppStrings.of(context).t('jobs.hiringPulse'),
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _MetricTile(
-                  value: '$totalJobs',
-                  label: AppStrings.of(context).t('jobs.openRoles'),
-                  tint: const Color(0xFFEFF3FF),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MetricTile(
-                  value: '$remoteJobs',
-                  label: AppStrings.of(context).t('jobs.remote'),
-                  tint: const Color(0xFFECFDF5),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MetricTile(
-                  value: '$avgMatch%',
-                  label: AppStrings.of(context).t('jobs.avgMatch'),
-                  tint: const Color(0xFFF5F3FF),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({
-    required this.value,
-    required this.label,
-    required this.tint,
-  });
-
-  final String value;
-  final String label;
-  final Color tint;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: tint,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            value,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _JobCard extends StatelessWidget {
-  const _JobCard({
-    required this.job,
-    required this.applied,
-    required this.onApply,
-  });
-
-  final Job job;
-  final bool applied;
-  final VoidCallback onApply;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EAF2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3F2FF),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  job.company.isEmpty ? '?' : job.company[0].toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF5B53F6),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      job.title,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      job.company,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  '${job.matchPercent}% ${AppStrings.of(context).t('jobs.match')}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.success,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children:
-                job.techStack.map((tech) => TechChip(label: tech)).toList(),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 14,
-            runSpacing: 8,
-            children: [
-              _JobMeta(
-                icon:
-                    job.remote
-                        ? Icons.home_work_outlined
-                        : Icons.location_on_outlined,
-                label: '${job.location}${job.remote ? ' · Remote' : ''}',
-              ),
-              _JobMeta(icon: Icons.payments_outlined, label: job.salaryRange),
-              _JobMeta(icon: Icons.timeline_outlined, label: job.experience),
-            ],
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            height: 40,
-            child: ElevatedButton(
-              onPressed: applied ? null : onApply,
-              style: ElevatedButton.styleFrom(
-                elevation: 0,
-                backgroundColor:
-                    applied ? const Color(0xFFECFDF5) : const Color(0xFF5B53F6),
-                foregroundColor: applied ? AppColors.success : Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: Text(
-                applied
-                    ? AppStrings.of(context).t('jobs.applied')
-                    : AppStrings.of(context).t('jobs.applyNow'),
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _JobMeta extends StatelessWidget {
-  const _JobMeta({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: AppColors.textSecondary),
-        const SizedBox(width: 5),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-        ),
-      ],
-    );
   }
 }
 
