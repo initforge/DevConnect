@@ -520,6 +520,17 @@ class PostRepository {
     await db.delete('posts', where: 'id = ?', whereArgs: [postId]);
   }
 
+  Future<void> reportPost(
+    String postId,
+    String reason, {
+    String? details,
+  }) async {
+    await ApiService.instance.post('/posts/$postId/report', {
+      'reason': reason,
+      if (details != null && details.isNotEmpty) 'details': details,
+    });
+  }
+
   Future<void> _savePostsToDb(List<Post> posts) async {
     final db = await _database.database;
     await db.transaction((txn) async {

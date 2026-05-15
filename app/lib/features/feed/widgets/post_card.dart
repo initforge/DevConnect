@@ -142,15 +142,9 @@ class _PostCardState extends State<PostCard> {
               ListTile(
                 leading: const Icon(Icons.flag_outlined),
                 title: Text(AppStrings.of(context).t('feed.reportPost')),
-                onTap: () {
+                onTap: () async {
                   Navigator.of(sheetContext).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        AppStrings.of(context).t('feed.reportNoted'),
-                      ),
-                    ),
-                  );
+                  await _showReportSheet();
                 },
               ),
             ],
@@ -163,6 +157,141 @@ class _PostCardState extends State<PostCard> {
   void _openPostDetail() {
     if (!mounted) return;
     context.push('${AppRoutes.postBase}/${widget.post.id}');
+  }
+
+  Future<void> _showReportSheet() async {
+    final reasons = [
+      'Spam',
+      'Harassment',
+      'Misinformation',
+      'Inappropriate content',
+      'Copyright violation',
+      'Other',
+    ];
+    String? selectedReason;
+    final detailsCtrl = TextEditingController();
+    bool submitting = false;
+    String? error;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            Future<void> submit() async {
+              if (selectedReason == null) {
+                setModalState(() => error = 'Please select a reason');
+                return;
+              }
+              setModalState(() {
+                submitting = true;
+                error = null;
+              });
+              try {
+                await _repository.reportPost(
+                  widget.post.id,
+                  selectedReason!,
+                  details:
+                      detailsCtrl.text.trim().isEmpty
+                          ? null
+                          : detailsCtrl.text.trim(),
+                );
+                if (!ctx.mounted) return;
+                Navigator.of(ctx).pop();
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Cảm ơn, chúng tôi sẽ xem xét báo cáo trong 48h',
+                    ),
+                  ),
+                );
+              } catch (e) {
+                setModalState(() {
+                  submitting = false;
+                  error = 'Unable to submit report';
+                });
+              }
+            }
+
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                8,
+                20,
+                MediaQuery.of(ctx).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Report post',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 12),
+                  ...reasons.map(
+                    (r) => RadioListTile<String>(
+                      value: r,
+                      groupValue: selectedReason,
+                      title: Text(r),
+                      onChanged: (v) => setModalState(() => selectedReason = v),
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                    ),
+                  ),
+                  if (selectedReason == 'Other') ...[
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: detailsCtrl,
+                      maxLines: 3,
+                      maxLength: 500,
+                      decoration: const InputDecoration(
+                        hintText: 'Additional details (optional)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                  if (error != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      error!,
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: submitting ? null : submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF5B53F6),
+                        foregroundColor: Colors.white,
+                      ),
+                      child:
+                          submitting
+                              ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : const Text('Submit Report'),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+    detailsCtrl.dispose();
   }
 
   Widget _buildHighlightedText(
@@ -591,8 +720,8 @@ class _CodePreviewSurface extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: const [
+          const Row(
+            children: [
               _Dot(Color(0xFFF87171)),
               SizedBox(width: 6),
               _Dot(Color(0xFFFBBF24)),
