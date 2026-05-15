@@ -138,6 +138,14 @@ class AppColors {
     colors: [aiPurple, Color(0xFF6366F1)],
   );
 
+  /// Profile hero gradient (profile_screen.dart cover).
+  /// Defined here so it can be replaced without hunting scattered hardcodes.
+  static const heroGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF7A74FF), Color(0xFFE46EA7)],
+  );
+
   // ============================================================
   // SHADOW COLORS
   // ============================================================
