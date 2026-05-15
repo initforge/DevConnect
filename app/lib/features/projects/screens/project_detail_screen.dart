@@ -15,6 +15,9 @@ import '../../../data/repositories/project_repository.dart';
 
 const bool _kScreenshotMode = AppRuntimeConfig.screenshotMode;
 
+/// Represents the join/leave lifecycle for a project.
+enum JoinState { notJoined, joining, joined, leaving }
+
 class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
   final Project? initialProject;
@@ -33,9 +36,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   final _repository = ProjectRepository();
   late Future<Project?> _detailLoader;
   Future<List<Map<String, dynamic>>>? _membersLoader;
-  bool _hasJoined = false;
-  bool _isLoadingJoin = false;
-  bool _isLoadingLeave = false;
+  JoinState _joinState = JoinState.notJoined;
 
   @override
   void initState() {
@@ -61,17 +62,17 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   Future<void> _joinProject() async {
-    if (_hasJoined || _isLoadingJoin) return;
+    if (_joinState == JoinState.joining || _joinState == JoinState.joined)
+      return;
     HapticFeedback.lightImpact();
 
+    setState(() => _joinState = JoinState.joining);
     try {
-      setState(() => _isLoadingJoin = true);
       final joined = await _repository.joinProject(widget.projectId);
       if (!mounted) return;
-      setState(() {
-        _hasJoined = joined;
-        _isLoadingJoin = false;
-      });
+      setState(
+        () => _joinState = joined ? JoinState.joined : JoinState.notJoined,
+      );
       if (joined) {
         _loadMembers();
         _refresh();
@@ -83,7 +84,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       }
     } catch (_) {
       if (!mounted) return;
-      setState(() => _isLoadingJoin = false);
+      setState(() => _joinState = JoinState.notJoined);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppStrings.of(context).t('projects.unableJoin2')),
@@ -93,17 +94,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   Future<void> _leaveProject() async {
-    if (!_hasJoined || _isLoadingLeave) return;
+    if (_joinState != JoinState.joined) return;
     HapticFeedback.lightImpact();
 
+    setState(() => _joinState = JoinState.leaving);
     try {
-      setState(() => _isLoadingLeave = true);
       final left = await _repository.leaveProject(widget.projectId);
       if (!mounted) return;
-      setState(() {
-        _hasJoined = !left;
-        _isLoadingLeave = false;
-      });
+      setState(
+        () => _joinState = left ? JoinState.notJoined : JoinState.joined,
+      );
       if (left) {
         _loadMembers();
         _refresh();
@@ -115,7 +115,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       }
     } catch (_) {
       if (!mounted) return;
-      setState(() => _isLoadingLeave = false);
+      setState(() => _joinState = JoinState.joined);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppStrings.of(context).t('projects.unableLeave')),
@@ -643,15 +643,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         height: 48,
                         child: ElevatedButton(
                           onPressed:
-                              _isLoadingJoin || _isLoadingLeave
+                              (_joinState == JoinState.joining ||
+                                      _joinState == JoinState.leaving)
                                   ? null
-                                  : _hasJoined
+                                  : _joinState == JoinState.joined
                                   ? _leaveProject
                                   : _joinProject,
                           style: ElevatedButton.styleFrom(
                             elevation: 0,
                             backgroundColor:
-                                _hasJoined
+                                _joinState == JoinState.joined
                                     ? AppColors.error
                                     : AppColors.primary,
                             foregroundColor: Colors.white,
@@ -660,7 +661,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                             ),
                           ),
                           child:
-                              _isLoadingJoin
+                              (_joinState == JoinState.joining ||
+                                      _joinState == JoinState.leaving)
                                   ? const SizedBox(
                                     width: 20,
                                     height: 20,
@@ -670,7 +672,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                     ),
                                   )
                                   : Text(
-                                    _hasJoined
+                                    _joinState == JoinState.joined
                                         ? 'Leave Project'
                                         : 'Join Project',
                                     style: const TextStyle(
