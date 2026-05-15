@@ -28,6 +28,7 @@ import '../features/playground/screens/live_code_screen.dart';
 
 import '../features/settings/screens/settings_screen.dart';
 import '../features/more/screens/more_screen.dart';
+import '../features/mentorship/screens/mentor_directory_screen.dart';
 import '../core/constants/routes.dart';
 import '../core/config/app_runtime_config.dart';
 import '../core/state/feed_refresh_bus.dart';
@@ -179,7 +180,7 @@ final appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.mentorship,
           name: AppRoutes.nameMentorship,
-          builder: (_, __) => const _MentorshipPlaceholderScreen(),
+          builder: (_, __) => const MentorDirectoryScreen(),
         ),
         GoRoute(
           path: AppRoutes.more,
@@ -283,33 +284,6 @@ class _MainShellState extends ConsumerState<_MainShell> {
                 child: const Icon(Icons.edit),
               )
               : null,
-    );
-  }
-}
-
-/// Placeholder screen for Mentorship feature (plan: feature-01-mentorship-paid-sessions.md)
-class _MentorshipPlaceholderScreen extends StatelessWidget {
-  const _MentorshipPlaceholderScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Mentorship')),
-      body: const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.school_outlined, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'Mentorship',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            SizedBox(height: 8),
-            Text('Coming soon', style: TextStyle(color: Colors.grey)),
-          ],
-        ),
-      ),
     );
   }
 }
