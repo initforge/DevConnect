@@ -40,6 +40,13 @@ class _ChatScreenState extends State<ChatScreen>
     WebSocketService.instance.subscribe(WsChannel.messages);
     _msgCtrl.addListener(_onTextChanged);
     unawaited(_repository.markConversationRead(widget.conversationId));
+    // Load draft for this conversation
+    final draft = AppPreferences.instance.getDraft(
+      'chat.${widget.conversationId}',
+    );
+    if (draft != null && draft.isNotEmpty) {
+      _msgCtrl.text = draft;
+    }
     _load();
   }
 
@@ -87,6 +94,11 @@ class _ChatScreenState extends State<ChatScreen>
   void dispose() {
     _typingTimer?.cancel();
     _msgCtrl.removeListener(_onTextChanged);
+    // Save draft if text non-empty
+    final text = _msgCtrl.text.trim();
+    if (text.isNotEmpty) {
+      AppPreferences.instance.setDraft('chat.${widget.conversationId}', text);
+    }
     WebSocketService.instance.unsubscribe(WsChannel.messages);
     WebSocketService.instance.removeListener(this);
     unawaited(_repository.markConversationRead(widget.conversationId));
@@ -212,6 +224,7 @@ class _ChatScreenState extends State<ChatScreen>
         content: text,
       );
       _msgCtrl.clear();
+      await AppPreferences.instance.clearDraft('chat.${widget.conversationId}');
       await _repository.markConversationRead(widget.conversationId);
       await _load();
     } finally {

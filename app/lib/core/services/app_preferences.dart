@@ -160,4 +160,15 @@ class AppPreferences {
     await _prefs.remove(_onboardingCompletedKey);
     await _prefs.remove(_onboardingDataKey);
   }
+
+  // Draft persistence
+  Future<void> setDraft(String key, String value) async {
+    await _prefs.setString('draft_$key', value);
+  }
+
+  String? getDraft(String key) => _prefs.getString('draft_$key');
+
+  Future<void> clearDraft(String key) async {
+    await _prefs.remove('draft_$key');
+  }
 }

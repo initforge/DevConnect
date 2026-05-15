@@ -7,6 +7,7 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/models/models.dart';
 import '../../../core/services/ai_service.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/services/app_preferences.dart';
 import '../../../core/services/image_compression_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/ai_sheets.dart';
@@ -44,7 +45,24 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    final titleDraft = AppPreferences.instance.getDraft('post.title');
+    final contentDraft = AppPreferences.instance.getDraft('post.content');
+    if (titleDraft != null && titleDraft.isNotEmpty) {
+      _titleCtrl.text = titleDraft;
+    }
+    if (contentDraft != null && contentDraft.isNotEmpty) {
+      _contentCtrl.text = contentDraft;
+    }
+  }
+
+  @override
   void dispose() {
+    if (_contentCtrl.text.trim().isNotEmpty) {
+      AppPreferences.instance.setDraft('post.title', _titleCtrl.text);
+      AppPreferences.instance.setDraft('post.content', _contentCtrl.text);
+    }
     _titleCtrl.dispose();
     _contentCtrl.dispose();
     _tagCtrl.dispose();
@@ -345,6 +363,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         tags: _tags,
       );
       if (!mounted) return;
+      await AppPreferences.instance.clearDraft('post.title');
+      await AppPreferences.instance.clearDraft('post.content');
       Navigator.of(context).pop(true);
     } catch (error) {
       if (!mounted) return;
