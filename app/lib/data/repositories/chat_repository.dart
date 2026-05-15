@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import '../../core/database/app_database.dart';
+import '../../core/errors/app_exceptions.dart';
 import '../../core/models/models.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/app_preferences.dart';
@@ -15,21 +16,17 @@ class ChatRepository {
 
   Future<List<Conversation>> getConversations() async {
     if (_useApi) {
-      try {
-        final data = await ApiService.instance.get('/chat/conversations');
-        final conversations =
-            data
-                .map(
-                  (json) => ModelMappers.conversationFromJson(
-                    json as Map<String, dynamic>,
-                  ),
-                )
-                .toList();
-        await _saveConversationsToDb(conversations);
-        return conversations;
-      } catch (_) {
-        rethrow;
-      }
+      final data = await ApiService.instance.get('/chat/conversations');
+      final conversations =
+          data
+              .map(
+                (json) => ModelMappers.conversationFromJson(
+                  json as Map<String, dynamic>,
+                ),
+              )
+              .toList();
+      await _saveConversationsToDb(conversations);
+      return conversations;
     }
     final db = await _database.database;
     final rows = await db.query('conversations', orderBy: 'updated_at DESC');
@@ -38,15 +35,11 @@ class ChatRepository {
 
   Future<Conversation?> getConversationById(String id) async {
     if (_useApi) {
-      try {
-        final data = await ApiService.instance.getObject(
-          '/chat/conversations/$id',
-        );
-        if (data.isNotEmpty) {
-          return ModelMappers.conversationFromJson(data);
-        }
-      } catch (_) {
-        rethrow;
+      final data = await ApiService.instance.getObject(
+        '/chat/conversations/$id',
+      );
+      if (data.isNotEmpty) {
+        return ModelMappers.conversationFromJson(data);
       }
     }
     final db = await _database.database;
@@ -66,51 +59,47 @@ class ChatRepository {
     int limit = 50,
   }) async {
     if (_useApi) {
-      try {
-        final data = await ApiService.instance.get(
-          '/chat/conversations/$conversationId/messages',
-          queryParams: {'limit': limit},
+      final data = await ApiService.instance.get(
+        '/chat/conversations/$conversationId/messages',
+        queryParams: {'limit': limit},
+      );
+      return data.map((json) {
+        final reactions = json['reactions'];
+        List<String> reactionsList = [];
+        if (reactions is List) {
+          reactionsList = reactions.map((e) => e.toString()).toList();
+        } else if (reactions is String) {
+          reactionsList =
+              reactions.split('|').where((e) => e.isNotEmpty).toList();
+        }
+
+        final isRead = json['isRead'] ?? json['is_read'];
+        final isReadBool = isRead == true || isRead == 1 || isRead == 'true';
+
+        return Message(
+          id: json['id']?.toString() ?? '',
+          senderId:
+              json['senderId']?.toString() ??
+              json['sender_id']?.toString() ??
+              '',
+          content: json['content']?.toString() ?? '',
+          type: MessageType.values.firstWhere(
+            (e) => e.name == (json['type']?.toString() ?? 'text'),
+            orElse: () => MessageType.text,
+          ),
+          codeLanguage: json['codeLanguage']?.toString(),
+          codeSource: json['codeSource']?.toString(),
+          reactions: reactionsList,
+          isRead: isReadBool,
+          createdAt:
+              DateTime.tryParse(
+                json['createdAt']?.toString() ??
+                    json['created_at']?.toString() ??
+                    '',
+              ) ??
+              DateTime.now(),
         );
-        return data.map((json) {
-          final reactions = json['reactions'];
-          List<String> reactionsList = [];
-          if (reactions is List) {
-            reactionsList = reactions.map((e) => e.toString()).toList();
-          } else if (reactions is String) {
-            reactionsList =
-                reactions.split('|').where((e) => e.isNotEmpty).toList();
-          }
-
-          final isRead = json['isRead'] ?? json['is_read'];
-          final isReadBool = isRead == true || isRead == 1 || isRead == 'true';
-
-          return Message(
-            id: json['id']?.toString() ?? '',
-            senderId:
-                json['senderId']?.toString() ??
-                json['sender_id']?.toString() ??
-                '',
-            content: json['content']?.toString() ?? '',
-            type: MessageType.values.firstWhere(
-              (e) => e.name == (json['type']?.toString() ?? 'text'),
-              orElse: () => MessageType.text,
-            ),
-            codeLanguage: json['codeLanguage']?.toString(),
-            codeSource: json['codeSource']?.toString(),
-            reactions: reactionsList,
-            isRead: isReadBool,
-            createdAt:
-                DateTime.tryParse(
-                  json['createdAt']?.toString() ??
-                      json['created_at']?.toString() ??
-                      '',
-                ) ??
-                DateTime.now(),
-          );
-        }).toList();
-      } catch (_) {
-        rethrow;
-      }
+      }).toList();
     }
     final db = await _database.database;
     final rows = await db.query(
@@ -154,7 +143,7 @@ class ChatRepository {
     String? codeSource,
   }) async {
     final userId = AppPreferences.instance.userId;
-    if (userId == null) throw Exception('User not logged in');
+    if (userId == null) throw const UnauthenticatedException();
 
     if (_useApi) {
       final data = await ApiService.instance
@@ -354,19 +343,15 @@ class ChatRepository {
 
   Future<List<User>> getOnlineUsers() async {
     if (_useApi) {
-      try {
-        final data = await ApiService.instance.get('/users');
-        final users =
-            data
-                .map(
-                  (json) =>
-                      ModelMappers.userFromJson(json as Map<String, dynamic>),
-                )
-                .toList();
-        return users.where((u) => u.isOnline).toList();
-      } catch (_) {
-        rethrow;
-      }
+      final data = await ApiService.instance.get('/users');
+      final users =
+          data
+              .map(
+                (json) =>
+                    ModelMappers.userFromJson(json as Map<String, dynamic>),
+              )
+              .toList();
+      return users.where((u) => u.isOnline).toList();
     }
     final db = await _database.database;
     final rows = await db.query('users', where: 'is_online = 1');

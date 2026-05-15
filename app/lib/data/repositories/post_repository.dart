@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../core/database/app_database.dart';
+import '../../core/errors/app_exceptions.dart';
 import '../../core/models/models.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/app_preferences.dart';
@@ -152,14 +153,10 @@ class PostRepository {
 
   Future<Post?> getPostById(String postId) async {
     if (_useApi) {
-      try {
-        final data = await ApiService.instance.getObject('/posts/$postId');
-        final post = ModelMappers.postFromJson(data);
-        await _savePostToDb(post);
-        return post;
-      } catch (_) {
-        rethrow;
-      }
+      final data = await ApiService.instance.getObject('/posts/$postId');
+      final post = ModelMappers.postFromJson(data);
+      await _savePostToDb(post);
+      return post;
     }
     final items = await _fetchPosts(
       'SELECT * FROM posts WHERE id = ? LIMIT 1',
@@ -177,10 +174,10 @@ class PostRepository {
     String? imageUrl,
   }) async {
     final userId = authorId ?? AppPreferences.instance.userId;
-    if (userId == null) throw Exception('User not logged in');
+    if (userId == null) throw const UnauthenticatedException();
 
     final author = await _userRepository.getUserById(userId);
-    if (author == null) throw Exception('User not found');
+    if (author == null) throw const NotFoundException('user');
 
     final now = DateTime.now();
     final id = 'p${now.millisecondsSinceEpoch}';
@@ -401,40 +398,32 @@ class PostRepository {
 
   Future<List<Post>> getBookmarkedPosts() async {
     if (_useApi) {
-      try {
-        final data = await ApiService.instance.get('/posts/bookmarked');
-        final posts =
-            data
-                .map(
-                  (json) =>
-                      ModelMappers.postFromJson(json as Map<String, dynamic>),
-                )
-                .toList();
-        return posts;
-      } catch (_) {
-        rethrow;
-      }
+      final data = await ApiService.instance.get('/posts/bookmarked');
+      final posts =
+          data
+              .map(
+                (json) =>
+                    ModelMappers.postFromJson(json as Map<String, dynamic>),
+              )
+              .toList();
+      return posts;
     }
     return _fetchPosts(
-      "SELECT * FROM posts WHERE is_bookmarked_by_me = 1 ORDER BY created_at DESC",
+      'SELECT * FROM posts WHERE is_bookmarked_by_me = 1 ORDER BY created_at DESC',
     );
   }
 
   Future<List<Post>> searchPosts(String query) async {
     if (_useApi) {
-      try {
-        final data = await ApiService.instance.get(
-          '/posts/search',
-          queryParams: {'q': query},
-        );
-        return data
-            .map(
-              (json) => ModelMappers.postFromJson(json as Map<String, dynamic>),
-            )
-            .toList();
-      } catch (_) {
-        rethrow;
-      }
+      final data = await ApiService.instance.get(
+        '/posts/search',
+        queryParams: {'q': query},
+      );
+      return data
+          .map(
+            (json) => ModelMappers.postFromJson(json as Map<String, dynamic>),
+          )
+          .toList();
     }
     return _fetchPosts(
       'SELECT * FROM posts WHERE title LIKE ? OR content LIKE ? ORDER BY created_at DESC',

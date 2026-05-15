@@ -1,4 +1,5 @@
 import '../../core/database/app_database.dart';
+import '../../core/errors/app_exceptions.dart';
 import '../../core/models/models.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/app_preferences.dart';
@@ -49,7 +50,7 @@ class CommentRepository {
     String? parentId,
   }) async {
     final userId = AppPreferences.instance.userId;
-    if (userId == null) throw Exception('User not logged in');
+    if (userId == null) throw const UnauthenticatedException();
 
     if (_useApi) {
       final data = await ApiService.instance.post('/posts/$postId/comments', {

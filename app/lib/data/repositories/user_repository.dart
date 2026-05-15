@@ -37,20 +37,16 @@ class UserRepository {
 
   Future<List<User>> getAllUsers() async {
     if (_useApi) {
-      try {
-        final data = await ApiService.instance.get('/users');
-        final users =
-            data
-                .map(
-                  (json) =>
-                      ModelMappers.userFromJson(json as Map<String, dynamic>),
-                )
-                .toList();
-        await _saveUsersToDb(users);
-        return users;
-      } catch (_) {
-        rethrow;
-      }
+      final data = await ApiService.instance.get('/users');
+      final users =
+          data
+              .map(
+                (json) =>
+                    ModelMappers.userFromJson(json as Map<String, dynamic>),
+              )
+              .toList();
+      await _saveUsersToDb(users);
+      return users;
     }
     final db = await _database.database;
     final rows = await db.query('users', orderBy: 'created_at DESC');
@@ -59,21 +55,17 @@ class UserRepository {
 
   Future<List<User>> getTopUsers({int limit = 6}) async {
     if (_useApi) {
-      try {
-        final data = await ApiService.instance.get('/users');
-        final users =
-            data
-                .take(limit)
-                .map(
-                  (json) =>
-                      ModelMappers.userFromJson(json as Map<String, dynamic>),
-                )
-                .toList();
-        await _saveUsersToDb(users);
-        return users;
-      } catch (_) {
-        rethrow;
-      }
+      final data = await ApiService.instance.get('/users');
+      final users =
+          data
+              .take(limit)
+              .map(
+                (json) =>
+                    ModelMappers.userFromJson(json as Map<String, dynamic>),
+              )
+              .toList();
+      await _saveUsersToDb(users);
+      return users;
     }
     final db = await _database.database;
     final rows = await db.query(
@@ -86,14 +78,10 @@ class UserRepository {
 
   Future<User?> getUserById(String id) async {
     if (_useApi) {
-      try {
-        final data = await ApiService.instance.getObject('/users/$id');
-        final user = ModelMappers.userFromJson(data);
-        await _saveUserToDb(user);
-        return user;
-      } catch (_) {
-        rethrow;
-      }
+      final data = await ApiService.instance.getObject('/users/$id');
+      final user = ModelMappers.userFromJson(data);
+      await _saveUserToDb(user);
+      return user;
     }
     final db = await _database.database;
     final rows = await db.query(
@@ -108,23 +96,19 @@ class UserRepository {
 
   Future<List<User>> getLeaderboard() async {
     if (_useApi) {
-      try {
-        final data = await ApiService.instance.get('/leaderboard');
-        final List<dynamic> dataList = data;
-        final users =
-            dataList
-                .map(
-                  (item) => ModelMappers.userFromJson(
-                    (item as Map<String, dynamic>)['user']
-                        as Map<String, dynamic>,
-                  ),
-                )
-                .toList();
-        await _saveUsersToDb(users);
-        return users;
-      } catch (_) {
-        rethrow;
-      }
+      final data = await ApiService.instance.get('/leaderboard');
+      final List<dynamic> dataList = data;
+      final users =
+          dataList
+              .map(
+                (item) => ModelMappers.userFromJson(
+                  (item as Map<String, dynamic>)['user']
+                      as Map<String, dynamic>,
+                ),
+              )
+              .toList();
+      await _saveUsersToDb(users);
+      return users;
     }
     final db = await _database.database;
     final rows = await db.query('users', orderBy: 'reputation DESC', limit: 20);
@@ -134,22 +118,18 @@ class UserRepository {
   Future<List<User>> searchUsers(String query) async {
     if (query.length < 2) return [];
     if (_useApi) {
-      try {
-        final data = await ApiService.instance.get(
-          '/users/search',
-          queryParams: {'q': query},
-        );
-        final users =
-            data
-                .map(
-                  (json) =>
-                      ModelMappers.userFromJson(json as Map<String, dynamic>),
-                )
-                .toList();
-        return users;
-      } catch (_) {
-        rethrow;
-      }
+      final data = await ApiService.instance.get(
+        '/users/search',
+        queryParams: {'q': query},
+      );
+      final users =
+          data
+              .map(
+                (json) =>
+                    ModelMappers.userFromJson(json as Map<String, dynamic>),
+              )
+              .toList();
+      return users;
     }
     final db = await _database.database;
     final rows = await db.query(

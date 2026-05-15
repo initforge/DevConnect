@@ -14,24 +14,20 @@ class NotificationRepository {
 
   Future<List<AppNotification>> getNotifications({int limit = 50}) async {
     if (_useApi) {
-      try {
-        final data = await ApiService.instance.get(
-          '/notifications',
-          queryParams: {'limit': limit},
-        );
-        final notifications =
-            data
-                .map(
-                  (json) => ModelMappers.notificationFromJson(
-                    json as Map<String, dynamic>,
-                  ),
-                )
-                .toList();
-        await _saveNotificationsToDb(notifications);
-        return notifications;
-      } catch (_) {
-        rethrow;
-      }
+      final data = await ApiService.instance.get(
+        '/notifications',
+        queryParams: {'limit': limit},
+      );
+      final notifications =
+          data
+              .map(
+                (json) => ModelMappers.notificationFromJson(
+                  json as Map<String, dynamic>,
+                ),
+              )
+              .toList();
+      await _saveNotificationsToDb(notifications);
+      return notifications;
     }
     final db = await _database.database;
     final rows = await db.query(
@@ -68,14 +64,8 @@ class NotificationRepository {
 
   Future<int> getUnreadCount() async {
     if (_useApi) {
-      try {
-        final data = await ApiService.instance.getObject(
-          '/notifications/count',
-        );
-        return data['count'] as int? ?? 0;
-      } catch (_) {
-        rethrow;
-      }
+      final data = await ApiService.instance.getObject('/notifications/count');
+      return data['count'] as int? ?? 0;
     }
     final db = await _database.database;
     final result = await db.rawQuery(
