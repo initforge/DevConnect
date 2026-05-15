@@ -18,7 +18,7 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  final Set<String> _selected = {'React', 'Node.js', 'Go'};
+  final Set<String> _selected = {};
 
   List<String> get _items => [
     'React',
@@ -70,6 +70,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       return;
     }
 
+    if (!mounted) return;
+    context.go(AppRoutes.home);
+  }
+
+  Future<void> _skip() async {
+    try {
+      await AppPreferences.instance.setOnboardingCompleted(true);
+    } catch (_) {}
     if (!mounted) return;
     context.go(AppRoutes.home);
   }
@@ -129,8 +137,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       padding: const EdgeInsets.only(top: 4),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(4, (index) {
-                          final selected = index == 3;
+                        children: List.generate(1, (index) {
+                          final selected = true;
                           return Container(
                             width: 6,
                             height: 6,
@@ -217,7 +225,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ),
                           const SizedBox(height: 10),
                           TextButton(
-                            onPressed: _continue,
+                            onPressed: _skip,
                             child: const Text(
                               'Skip for now',
                               style: TextStyle(color: AppColors.textSecondary),
