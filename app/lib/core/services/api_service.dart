@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
 
 import '../constants/app_constants.dart';
+import '../errors/app_exceptions.dart';
 import '../localization/app_strings.dart';
 import 'websocket_service.dart';
 
@@ -454,38 +455,61 @@ class ApiService {
   Map<String, String> get _authHeaders =>
       _token != null ? {'Authorization': 'Bearer $_token'} : {};
 
-  ApiException _handleError(DioException e) {
+  AppException _handleError(DioException e) {
     final strings = AppStrings.current();
-    String message;
-    int statusCode = e.response?.statusCode ?? 0;
+    final statusCode = e.response?.statusCode ?? 0;
 
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
-        message = strings.t('errors.connectionTimeout');
-        break;
+        return NetworkException(
+          strings.t('errors.connectionTimeout'),
+          statusCode,
+        );
       case DioExceptionType.sendTimeout:
-        message = strings.t('errors.sendTimeout');
-        break;
+        return NetworkException(strings.t('errors.sendTimeout'), statusCode);
       case DioExceptionType.receiveTimeout:
-        message = strings.t('errors.receiveTimeout');
-        break;
+        return NetworkException(strings.t('errors.receiveTimeout'), statusCode);
       case DioExceptionType.connectionError:
-        message = strings.t('errors.connectionError');
-        break;
+        return NetworkException(
+          strings.t('errors.connectionError'),
+          statusCode,
+        );
       case DioExceptionType.badCertificate:
-        message = strings.t('errors.badCertificate');
-        break;
+        return NetworkException(strings.t('errors.badCertificate'), statusCode);
       case DioExceptionType.cancel:
-        message = strings.t('errors.cancelled');
-        break;
+        return NetworkException(strings.t('errors.cancelled'), statusCode);
       case DioExceptionType.badResponse:
-        message = _parseErrorMessage(e.response?.data, statusCode);
-        break;
+        return _exceptionFromStatus(statusCode, e.response?.data);
       case DioExceptionType.unknown:
-        message = e.message ?? strings.t('errors.unknown');
+        return NetworkException(
+          e.message ?? strings.t('errors.unknown'),
+          statusCode,
+        );
     }
+  }
 
-    return ApiException(statusCode, message);
+  AppException _exceptionFromStatus(int statusCode, dynamic data) {
+    final message = _parseErrorMessage(data, statusCode);
+    switch (statusCode) {
+      case 401:
+        return const SessionExpiredException();
+      case 403:
+        return UnknownException(
+          message,
+        ); // 403 Forbidden — no dedicated subclass
+      case 404:
+        return const NotFoundException();
+      case 409:
+        return const ConflictException();
+      case 422:
+        final details = data is Map<String, dynamic> ? data : null;
+        return ValidationException(messageKey: message, details: details);
+      case 429:
+        return const RateLimitException();
+      default:
+        if (statusCode >= 500) return ServerException(statusCode);
+        return UnknownException(message);
+    }
   }
 
   String _parseErrorMessage(dynamic data, int statusCode) {
@@ -538,24 +562,4 @@ class _PendingRequest {
   final DioException error;
 
   _PendingRequest(this.requestOptions, this.handler, this.error);
-}
-
-/// Custom exception for API errors
-class ApiException implements Exception {
-  final int statusCode;
-  final String message;
-
-  const ApiException(this.statusCode, this.message);
-
-  @override
-  String toString() => 'ApiException($statusCode): $message';
-
-  /// Check if this is an authentication error
-  bool get isAuthError => statusCode == 401;
-
-  /// Check if this is a network error
-  bool get isNetworkError => statusCode == 0;
-
-  /// Check if this is a server error
-  bool get isServerError => statusCode >= 500;
 }

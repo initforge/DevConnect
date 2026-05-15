@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:devconnect/core/errors/app_exceptions.dart';
 import 'package:devconnect/core/services/api_service.dart';
 
 void main() {

@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../../core/database/app_database.dart';
+import '../../core/errors/app_exceptions.dart';
 import '../../core/models/models.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/app_preferences.dart';
@@ -194,7 +195,7 @@ class UserRepository {
   }) async {
     final userId = AppPreferences.instance.userId;
     if (userId == null) {
-      throw Exception('User not logged in');
+      throw const UnauthenticatedException();
     }
 
     final data = await ApiService.instance.put('/users/$userId', {
@@ -212,7 +213,7 @@ class UserRepository {
   Future<void> deleteCurrentUser() async {
     final userId = AppPreferences.instance.userId;
     if (userId == null) {
-      throw Exception('User not logged in');
+      throw const UnauthenticatedException();
     }
 
     await ApiService.instance.delete('/users/$userId');
@@ -221,7 +222,7 @@ class UserRepository {
   Future<void> updateOnlineStatus(bool isOnline) async {
     final userId = AppPreferences.instance.userId;
     if (userId == null) {
-      throw Exception('User not logged in');
+      throw const UnauthenticatedException();
     }
 
     final data = await ApiService.instance.put('/users/$userId', {
