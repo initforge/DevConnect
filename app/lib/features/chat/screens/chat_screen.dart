@@ -8,6 +8,7 @@ import '../../../core/services/api_service.dart';
 import '../../../core/services/app_preferences.dart';
 import '../../../core/services/websocket_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/date_grouping.dart';
 import '../../../core/utils/responsive_utils.dart';
 import '../../../core/widgets/decorative_widgets.dart';
 import '../../../core/widgets/shared_widgets.dart';
@@ -651,37 +652,55 @@ class _ChatScreenState extends State<ChatScreen>
       );
     }
 
-    return Column(
-      children: [
-        const SizedBox(height: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text(
-            '${AppStrings.of(context).t('chat.today')}, ${TimeOfDay.now().format(context)}',
-            style: TextStyle(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
+    // Build list items with day separators inserted between messages from different days
+    final List<Widget> chatItems = [];
+    String? lastDayLabel;
+    for (final message in messages) {
+      final label = DateGrouping.dayLabel(message.createdAt);
+      if (label != lastDayLabel) {
+        lastDayLabel = label;
+        chatItems.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ),
           ),
+        );
+      }
+      chatItems.add(
+        _MessageBubble(
+          msg: message,
+          isMe: message.senderId == currentUserId,
+          isDesktop: isDesktop,
+          onLongPress: () => _showReactionPicker(message),
         ),
+      );
+    }
+
+    return Column(
+      children: [
         Expanded(
-          child: ListView.builder(
+          child: ListView(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
-            itemCount: messages.length,
-            itemBuilder: (_, index) {
-              final message = messages[index];
-              return _MessageBubble(
-                msg: message,
-                isMe: message.senderId == currentUserId,
-                isDesktop: isDesktop,
-                onLongPress: () => _showReactionPicker(message),
-              );
-            },
+            children: chatItems,
           ),
         ),
         if (_otherUserTyping)
