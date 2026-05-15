@@ -1,0 +1,21 @@
+title = "DevConnect Gitleaks Config"
+
+[allowlist]
+  description = "Allowlist for known safe patterns"
+  paths = [
+    ".env.example",
+    "plan/",
+    ".kiro/",
+  ]
+  regexes = [
+    '''sk-or-v1-[a-f0-9]{8}\.\.\.''',  # truncated key in docs
+    '''your-key-here''',
+    '''<your-.*>''',
+    '''xxx+''',
+  ]
+
+[[rules]]
+  description = "OpenRouter API Key"
+  id = "openrouter-api-key"
+  regex = '''sk-or-v1-[a-f0-9]{64}'''
+  tags = ["key", "openrouter"]

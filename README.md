@@ -366,3 +366,21 @@ npm run seed:users
 ```
 
 
+
+### 🔐 Secrets Management
+
+Repo dùng `.env` (gitignored) cho secrets. **Không commit key thật vào repo.**
+
+```powershell
+# Setup local: copy template rồi điền key thật
+cp .env.example .env
+# Mở .env và điền OPENROUTER_API_KEY, JWT_SECRET, ...
+```
+
+Nếu vô tình commit secret:
+1. **Revoke key ngay** tại provider (OpenRouter, GitHub, Cloudflare, ...)
+2. Tạo key mới, lưu vào `.env` local
+3. Thêm key mới vào GitHub Secrets (Settings → Secrets → Actions)
+4. Commit fix xóa key khỏi file (key đã revoke nên không cần rewrite history)
+
+Config gitleaks: `.gitleaks.toml` — scan pattern cho OpenRouter key và các provider phổ biến.
