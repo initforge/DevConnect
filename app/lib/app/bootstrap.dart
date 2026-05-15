@@ -11,6 +11,7 @@ import '../core/database/app_database.dart';
 import '../core/services/app_preferences.dart';
 import '../core/services/api_service.dart';
 import '../core/services/sync_service.dart';
+import '../core/services/push_notification_service.dart';
 
 class AppBootstrap {
   const AppBootstrap._();
@@ -20,6 +21,7 @@ class AppBootstrap {
     _configureDatabaseFactory();
     await AppDatabase.instance.database;
     final preferences = await AppPreferences.getInstance();
+    await PushNotificationService.instance.initialize();
 
     // Restore auth token if exists
     final token = preferences.token;
