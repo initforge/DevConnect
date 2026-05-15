@@ -79,3 +79,15 @@ final projectRepositoryProvider = Provider<ProjectRepository>(
 final jobRepositoryProvider = Provider<JobRepository>((ref) => JobRepository());
 
 final aiServiceProvider = Provider<AiService>((ref) => AiService.instance);
+
+/// Unread notification count — used by home_screen bell badge.
+///
+/// Fetches once on first watch. Invalidate after mark-read to refresh badge.
+final unreadNotificationCountProvider = FutureProvider<int>((ref) async {
+  final repo = ref.watch(notificationRepositoryProvider);
+  try {
+    return await repo.getUnreadCount();
+  } catch (_) {
+    return 0; // Fail silently — badge is non-critical
+  }
+});

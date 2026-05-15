@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/routes.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/models/models.dart';
+import '../../../core/riverpod/providers.dart';
 import '../../../core/state/feed_refresh_bus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_utils.dart';
@@ -12,14 +14,14 @@ import '../../../core/widgets/decorative_widgets.dart';
 import '../../../data/repositories/post_repository.dart';
 import '../widgets/feed_list.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
+class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabCtrl;
   List<String> _tabLabels = const [];
@@ -137,17 +139,24 @@ class _HomeScreenState extends State<HomeScreen>
               clipBehavior: Clip.none,
               children: [
                 const Icon(Icons.notifications_none, size: 20),
-                Positioned(
-                  right: -1,
-                  top: -1,
-                  child: Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(
-                      color: AppColors.error,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final count = ref.watch(unreadNotificationCountProvider);
+                    final unread = count.valueOrNull ?? 0;
+                    if (unread <= 0) return const SizedBox.shrink();
+                    return Positioned(
+                      right: -1,
+                      top: -1,
+                      child: Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
+                          color: AppColors.error,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

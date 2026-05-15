@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/routes.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/models/models.dart';
+import '../../../core/riverpod/providers.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/app_preferences.dart';
 import '../../../core/theme/app_colors.dart';
@@ -49,6 +51,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _markAllRead() async {
     await _repository.markAllAsRead();
+    // Invalidate badge provider so home_screen bell updates
+    ProviderScope.containerOf(
+      context,
+    ).invalidate(unreadNotificationCountProvider);
     if (!mounted) return;
     setState(() {
       _items =
