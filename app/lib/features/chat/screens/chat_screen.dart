@@ -10,7 +10,7 @@ import '../../../core/services/websocket_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_grouping.dart';
 import '../../../core/utils/responsive_utils.dart';
-import '../../../core/widgets/decorative_widgets.dart';
+import '../../../core/widgets/code_block.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../widgets/day_separator.dart';
@@ -876,74 +876,28 @@ class _MessageBubble extends StatelessWidget {
                     horizontal: isCode ? 0 : 14,
                     vertical: isCode ? 0 : 12,
                   ),
-                  decoration: BoxDecoration(
-                    color:
-                        isCode
-                            ? Theme.of(
-                              context,
-                            ).colorScheme.surfaceContainerHighest
-                            : isMe
-                            ? AppColors.primary
-                            : Theme.of(
-                              context,
-                            ).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(18),
-                      topRight: const Radius.circular(18),
-                      bottomLeft: Radius.circular(isMe ? 18 : 6),
-                      bottomRight: Radius.circular(isMe ? 6 : 18),
-                    ),
-                  ),
+                  decoration:
+                      isCode
+                          ? null
+                          : BoxDecoration(
+                            color:
+                                isMe
+                                    ? AppColors.primary
+                                    : Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(18),
+                              topRight: const Radius.circular(18),
+                              bottomLeft: Radius.circular(isMe ? 18 : 6),
+                              bottomRight: Radius.circular(isMe ? 6 : 18),
+                            ),
+                          ),
                   child:
                       isCode
-                          ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF2D2B55),
-                                  borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(18),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      (msg.codeLanguage ?? 'Code')
-                                          .toUpperCase(),
-                                      style: const TextStyle(
-                                        fontSize: 9,
-                                        color: Colors.white70,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    const Icon(
-                                      Icons.code,
-                                      size: 12,
-                                      color: Colors.white54,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Text(
-                                  msg.content,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    height: 1.5,
-                                    color: Color(0xFF6E59F7),
-                                    fontFamily: 'monospace',
-                                  ),
-                                ),
-                              ),
-                            ],
+                          ? CodeBlock(
+                            code: msg.content,
+                            language: msg.codeLanguage,
                           )
                           : Text(
                             msg.content,

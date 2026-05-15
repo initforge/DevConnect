@@ -75,139 +75,15 @@ class _CodeSnippetCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final snippet = _extractCodeSnippet(post);
     if (snippet.isEmpty) return const SizedBox.shrink();
-    final lines = snippet.split('\n');
     final lang = _detectLanguage(post);
 
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x18000000),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title bar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: const BoxDecoration(color: Color(0xFF1E1E2E)),
-            child: Row(
-              children: [
-                const Row(
-                  children: [
-                    _Dot2(Color(0xFFFF5F56)),
-                    SizedBox(width: 6),
-                    _Dot2(Color(0xFFFFBD2E)),
-                    SizedBox(width: 6),
-                    _Dot2(Color(0xFF27C93F)),
-                  ],
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF313244),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    lang.toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF89B4FA),
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {
-                    Clipboard.setData(ClipboardData(text: snippet));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Code copied')),
-                    );
-                  },
-                  child: const Icon(
-                    Icons.copy_outlined,
-                    size: 14,
-                    color: Color(0xFF6C7086),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Code body
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            color: const Color(0xFF1E1E2E),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: List.generate(lines.length.clamp(0, 12), (i) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 24,
-                        child: Text(
-                          '${i + 1}',
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 11,
-                            color: Color(0xFF585B70),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          lines[i],
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 12,
-                            height: 1.5,
-                            color: Color(0xFFCDD6F4),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-            ),
-          ),
-        ],
-      ),
-    );
+    return CodeBlock(code: snippet, language: lang);
   }
 
   String _extractCodeSnippet(Post post) =>
       TextProcessing.extractPostCodeSnippet(post);
 
   String _detectLanguage(Post post) => TextProcessing.detectPostLanguage(post);
-}
-
-class _Dot2 extends StatelessWidget {
-  const _Dot2(this.color);
-  final Color color;
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 10,
-      height: 10,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
-  }
 }
 
 class _MetaRow extends StatelessWidget {
