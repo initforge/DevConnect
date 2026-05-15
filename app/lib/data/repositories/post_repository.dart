@@ -47,114 +47,75 @@ class PostRepository {
   final UserRepository _userRepository;
   final bool _useApi;
 
-  Future<List<Post>> getForYouPosts({String? cursor, int limit = 20}) async {
+  Future<List<Post>> getForYouPosts({String? cursor, int limit = 20}) =>
+      _getPostsByType(FeedType.forYou, cursor: cursor, limit: limit);
+
+  Future<List<Post>> getFollowingPosts({String? cursor, int limit = 20}) =>
+      _getPostsByType(FeedType.following, cursor: cursor, limit: limit);
+
+  Future<List<Post>> getTrendingPosts({String? cursor, int limit = 20}) =>
+      _getPostsByType(FeedType.trending, cursor: cursor, limit: limit);
+
+  /// Private helper — shared logic for all 3 feed types.
+  /// API path is identical (/posts?type=<param>); offline SQL differs per type.
+  Future<List<Post>> _getPostsByType(
+    FeedType type, {
+    String? cursor,
+    int limit = 20,
+  }) async {
     if (_useApi) {
-      try {
-        final queryParams = <String, dynamic>{'type': 'foryou', 'limit': limit};
-        if (cursor != null) queryParams['cursor'] = cursor;
+      final queryParams = <String, dynamic>{
+        'type': type.apiQueryParam,
+        'limit': limit,
+      };
+      if (cursor != null) queryParams['cursor'] = cursor;
 
-        final data = await ApiService.instance.get(
-          '/posts',
-          queryParams: queryParams,
-        );
-        final posts =
-            data
-                .map(
-                  (json) =>
-                      ModelMappers.postFromJson(json as Map<String, dynamic>),
-                )
-                .toList();
-        await _savePostsToDb(posts);
-        return posts;
-      } catch (_) {
-        rethrow;
-      }
-    }
-
-    return _fetchPosts('SELECT * FROM posts ORDER BY created_at DESC LIMIT ?', [
-      limit,
-    ]);
-  }
-
-  Future<List<Post>> getFollowingPosts({String? cursor, int limit = 20}) async {
-    final currentUserId = AppPreferences.instance.userId;
-
-    if (_useApi) {
-      try {
-        final queryParams = <String, dynamic>{
-          'type': 'following',
-          'limit': limit,
-        };
-        if (cursor != null) queryParams['cursor'] = cursor;
-
-        final data = await ApiService.instance.get(
-          '/posts',
-          queryParams: queryParams,
-        );
-        final posts =
-            data
-                .map(
-                  (json) =>
-                      ModelMappers.postFromJson(json as Map<String, dynamic>),
-                )
-                .toList();
-        await _savePostsToDb(posts);
-        return posts;
-      } catch (_) {
-        rethrow;
-      }
-    }
-
-    if (currentUserId == null) {
-      return _fetchPosts(
-        'SELECT * FROM posts ORDER BY created_at DESC LIMIT ?',
-        [limit],
+      final data = await ApiService.instance.get(
+        '/posts',
+        queryParams: queryParams,
       );
+      final posts =
+          data
+              .map(
+                (json) =>
+                    ModelMappers.postFromJson(json as Map<String, dynamic>),
+              )
+              .toList();
+      await _savePostsToDb(posts);
+      return posts;
     }
 
-    return _fetchPosts(
-      '''
-      SELECT p.* FROM posts p
-      INNER JOIN user_follows f ON p.author_id = f.following_id
-      WHERE f.follower_id = ?
-      ORDER BY p.created_at DESC
-      LIMIT ?
-      ''',
-      [currentUserId, limit],
-    );
-  }
-
-  Future<List<Post>> getTrendingPosts({String? cursor, int limit = 20}) async {
-    if (_useApi) {
-      try {
-        final queryParams = <String, dynamic>{
-          'type': 'trending',
-          'limit': limit,
-        };
-        if (cursor != null) queryParams['cursor'] = cursor;
-
-        final data = await ApiService.instance.get(
-          '/posts',
-          queryParams: queryParams,
+    // Offline SQLite fallback — SQL differs per feed type.
+    switch (type) {
+      case FeedType.following:
+        final currentUserId = AppPreferences.instance.userId;
+        if (currentUserId == null) {
+          return _fetchPosts(
+            'SELECT * FROM posts ORDER BY created_at DESC LIMIT ?',
+            [limit],
+          );
+        }
+        return _fetchPosts(
+          '''
+          SELECT p.* FROM posts p
+          INNER JOIN user_follows f ON p.author_id = f.following_id
+          WHERE f.follower_id = ?
+          ORDER BY p.created_at DESC
+          LIMIT ?
+          ''',
+          [currentUserId, limit],
         );
-        final posts =
-            data
-                .map(
-                  (json) =>
-                      ModelMappers.postFromJson(json as Map<String, dynamic>),
-                )
-                .toList();
-        await _savePostsToDb(posts);
-        return posts;
-      } catch (_) {
-        rethrow;
-      }
+      case FeedType.trending:
+        return _fetchPosts(
+          'SELECT * FROM posts ORDER BY like_count DESC, created_at DESC LIMIT ?',
+          [limit],
+        );
+      case FeedType.forYou:
+        return _fetchPosts(
+          'SELECT * FROM posts ORDER BY created_at DESC LIMIT ?',
+          [limit],
+        );
     }
-
-    return _fetchPosts(
-      'SELECT * FROM posts ORDER BY like_count DESC, created_at DESC LIMIT ?',
-      [limit],
-    );
   }
 
   Future<List<Post>> getPostsByAuthor(
