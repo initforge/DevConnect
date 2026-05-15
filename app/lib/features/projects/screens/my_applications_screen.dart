@@ -115,7 +115,11 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         future: _loader,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView.builder(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 96),
+              itemCount: 4,
+              itemBuilder: (_, __) => const JobCardSkeleton(),
+            );
           }
 
           if (snapshot.hasError) {

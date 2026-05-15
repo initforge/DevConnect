@@ -99,7 +99,11 @@ class _FeedListState extends State<FeedList> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return ListView.builder(
+        padding: const EdgeInsets.fromLTRB(0, 8, 0, 80),
+        itemCount: 5,
+        itemBuilder: (_, __) => const PostCardSkeleton(),
+      );
     }
 
     if (_error != null) {
@@ -151,8 +155,8 @@ class _FeedListState extends State<FeedList> {
         itemBuilder: (context, index) {
           if (index == _posts.length) {
             return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
-              child: Center(child: CircularProgressIndicator()),
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: PostCardSkeleton(),
             );
           }
 

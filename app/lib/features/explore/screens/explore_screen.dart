@@ -30,9 +30,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ]),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: _ExploreSkeleton());
         }
 
         final users = snapshot.data?[0] as List? ?? const [];
@@ -516,6 +514,66 @@ class _TopicCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ExploreSkeleton extends StatelessWidget {
+  const _ExploreSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
+      children: [
+        Row(
+          children: List.generate(
+            5,
+            (_) => const Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: ShimmerBox(width: 70, height: 34, borderRadius: 16),
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        const ShimmerBox(width: 120, height: 16),
+        const SizedBox(height: 12),
+        Row(
+          children: const [
+            ShimmerBox(width: 138, height: 166, borderRadius: 18),
+            SizedBox(width: 12),
+            ShimmerBox(width: 138, height: 166, borderRadius: 18),
+          ],
+        ),
+        const SizedBox(height: 22),
+        const ShimmerBox(width: 160, height: 16),
+        const SizedBox(height: 10),
+        Row(
+          children: List.generate(
+            4,
+            (_) => const Padding(
+              padding: EdgeInsets.only(right: 10),
+              child: ShimmerBox(width: 82, height: 125, borderRadius: 18),
+            ),
+          ),
+        ),
+        const SizedBox(height: 22),
+        const ShimmerBox(width: 140, height: 16),
+        const SizedBox(height: 12),
+        const ShimmerBox(width: double.infinity, height: 132, borderRadius: 18),
+        const SizedBox(height: 12),
+        Row(
+          children: const [
+            Expanded(
+              child: ShimmerBox(width: 100, height: 116, borderRadius: 18),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: ShimmerBox(width: 100, height: 116, borderRadius: 18),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

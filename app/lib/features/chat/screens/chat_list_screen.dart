@@ -377,7 +377,14 @@ class _ChatListScreenState extends State<ChatListScreen>
     }
 
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        appBar: AppBar(title: Text(AppStrings.of(context).t('chat.messages'))),
+        body: ListView.builder(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 18),
+          itemCount: 8,
+          itemBuilder: (_, __) => const ConversationRowSkeleton(),
+        ),
+      );
     }
 
     return Scaffold(

@@ -1,6 +1,8 @@
 import 'dart:async';
 import '../api_service.dart';
 import '../app_preferences.dart';
+import '../../errors/app_exceptions.dart';
+import '../../localization/app_strings.dart';
 import 'package:devconnect/core/constants/app_constants.dart';
 
 /// Authentication state
@@ -116,8 +118,11 @@ class AuthService {
         status: AuthStatus.unauthenticated,
         error: 'Invalid response from server',
       );
-    } on ApiException catch (e) {
-      return AuthState(status: AuthStatus.unauthenticated, error: e.message);
+    } on AppException catch (e) {
+      return AuthState(
+        status: AuthStatus.unauthenticated,
+        error: AppStrings.current().t(e.messageKey),
+      );
     } catch (e) {
       return AuthState(status: AuthStatus.unauthenticated, error: e.toString());
     }
@@ -156,8 +161,11 @@ class AuthService {
         status: AuthStatus.unauthenticated,
         error: 'Registration failed',
       );
-    } on ApiException catch (e) {
-      return AuthState(status: AuthStatus.unauthenticated, error: e.message);
+    } on AppException catch (e) {
+      return AuthState(
+        status: AuthStatus.unauthenticated,
+        error: AppStrings.current().t(e.messageKey),
+      );
     } catch (e) {
       return AuthState(status: AuthStatus.unauthenticated, error: e.toString());
     }

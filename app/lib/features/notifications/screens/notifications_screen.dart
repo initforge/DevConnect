@@ -127,9 +127,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       future: _loader,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: _NotificationsSkeleton());
         }
 
         if (snapshot.hasError) {
@@ -532,5 +530,18 @@ class _NotificationTile extends StatelessWidget {
     return strings.isVietnamese
         ? '${diff.inDays} ngày trước'
         : '${diff.inDays}d ago';
+  }
+}
+
+class _NotificationsSkeleton extends StatelessWidget {
+  const _NotificationsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+      itemCount: 6,
+      itemBuilder: (_, __) => const NotificationTileSkeleton(),
+    );
   }
 }

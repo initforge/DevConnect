@@ -230,7 +230,11 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           Expanded(
             child:
                 _loading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
+                      itemCount: 5,
+                      itemBuilder: (_, __) => const PostCardSkeleton(),
+                    )
                     : ListView(
                       padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
                       children: [

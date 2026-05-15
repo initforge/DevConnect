@@ -365,7 +365,11 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
         future: _loader,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView.builder(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 90),
+              itemCount: 4,
+              itemBuilder: (_, __) => const JobCardSkeleton(),
+            );
           }
 
           if (snapshot.hasError) {

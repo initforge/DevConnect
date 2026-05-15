@@ -72,7 +72,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         future: _loader,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView.builder(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 40),
+              itemCount: 7,
+              itemBuilder: (_, __) => const LeaderboardRowSkeleton(),
+            );
           }
 
           if (snapshot.hasError) {

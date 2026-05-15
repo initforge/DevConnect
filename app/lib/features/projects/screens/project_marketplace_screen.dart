@@ -317,7 +317,11 @@ class _ProjectMarketplaceScreenState extends State<ProjectMarketplaceScreen> {
         future: _loader,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView.builder(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 110),
+              itemCount: 4,
+              itemBuilder: (_, __) => const ProjectCardSkeleton(),
+            );
           }
 
           if (snapshot.hasError) {

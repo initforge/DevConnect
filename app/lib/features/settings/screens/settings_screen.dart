@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/routes.dart';
+import '../../../core/errors/app_exceptions.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/riverpod/providers.dart';
 import '../../../core/services/api_service.dart';
@@ -87,7 +88,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   String _friendlyError(Object error) {
-    if (error is ApiException) return error.message;
+    if (error is AppException) return AppStrings.current().t(error.messageKey);
     return error.toString();
   }
 

@@ -70,9 +70,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       future: _loader,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: _ProfileSkeleton());
         }
 
         final data = snapshot.data;
@@ -1336,6 +1334,26 @@ class _StatusPill extends StatelessWidget {
           color: color,
         ),
       ),
+    );
+  }
+}
+
+class _ProfileSkeleton extends StatelessWidget {
+  const _ProfileSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        // Hero placeholder
+        const ShimmerBox(width: double.infinity, height: 520),
+        const SizedBox(height: 12),
+        // Posts skeleton
+        const PostCardSkeleton(),
+        const PostCardSkeleton(),
+        const PostCardSkeleton(),
+      ],
     );
   }
 }
