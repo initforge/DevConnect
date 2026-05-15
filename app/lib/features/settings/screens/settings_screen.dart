@@ -12,6 +12,7 @@ import '../../../core/services/app_preferences.dart';
 import '../../../core/services/oauth_redirect.dart';
 import '../../../core/state/profile_refresh_bus.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/validators.dart';
 import '../../../core/widgets/decorative_widgets.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/user_repository.dart';
@@ -270,16 +271,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return StatefulBuilder(
           builder: (context, setSheetState) {
             Future<void> submit() async {
-              if (newCtrl.text.length < 8) {
-                setSheetState(
-                  () => error = strings.t('settings.newPasswordTooShort'),
-                );
+              final pwKey = Validators.password(newCtrl.text);
+              if (pwKey != null) {
+                setSheetState(() => error = strings.t(pwKey));
                 return;
               }
-              if (newCtrl.text != confirmCtrl.text) {
-                setSheetState(
-                  () => error = strings.t('settings.passwordsDoNotMatch'),
-                );
+              final confirmKey = Validators.confirmPassword(
+                confirmCtrl.text,
+                newCtrl.text,
+              );
+              if (confirmKey != null) {
+                setSheetState(() => error = strings.t(confirmKey));
                 return;
               }
 

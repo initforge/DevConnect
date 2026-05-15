@@ -58,11 +58,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _nextStep() async {
     if (_step == 0) {
-      if (_nameCtrl.text.trim().isEmpty ||
-          _usernameCtrl.text.trim().isEmpty ||
-          _emailCtrl.text.trim().isEmpty) {
+      // Validate all fields before proceeding
+      final nameKey = Validators.notEmpty(_nameCtrl.text);
+      final usernameKey = Validators.username(_usernameCtrl.text);
+      final emailKey = Validators.email(_emailCtrl.text);
+      if (nameKey != null || usernameKey != null || emailKey != null) {
+        final strings = AppStrings.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please complete all fields')),
+          SnackBar(
+            content: Text(
+              nameKey != null
+                  ? strings.t(nameKey)
+                  : usernameKey != null
+                  ? strings.t(usernameKey)
+                  : strings.t(emailKey!),
+            ),
+          ),
         );
         return;
       }

@@ -26,6 +26,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _isFormValid = false;
   String? _errorMessage;
 
   late final AnimationController _animController;
@@ -369,6 +370,10 @@ class _LoginScreenState extends State<LoginScreen>
       ),
       child: Form(
         key: _formKey,
+        onChanged: () {
+          final valid = _formKey.currentState?.validate() ?? false;
+          if (valid != _isFormValid) setState(() => _isFormValid = valid);
+        },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -393,6 +398,7 @@ class _LoginScreenState extends State<LoginScreen>
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               decoration: _fieldDecoration(
                 hint: 'Email Address',
                 prefix: Icons.email_outlined,
@@ -408,6 +414,7 @@ class _LoginScreenState extends State<LoginScreen>
               controller: _passwordController,
               obscureText: _obscurePassword,
               textInputAction: TextInputAction.done,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               onFieldSubmitted: (_) => _handleLogin(),
               decoration: _fieldDecoration(
                 hint: 'Password',
@@ -463,7 +470,7 @@ class _LoginScreenState extends State<LoginScreen>
             SizedBox(
               height: 50,
               child: ElevatedButton(
-                onPressed: _isLoading ? null : _handleLogin,
+                onPressed: (_isLoading || !_isFormValid) ? null : _handleLogin,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4F46E5),
                   elevation: 0,
