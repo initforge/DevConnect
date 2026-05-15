@@ -36,7 +36,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   List<dynamic> _users = const [];
   List<dynamic> _posts = const [];
   List<dynamic> _projects = const [];
-  List<String> _recent = const ['flutter', 'nestjs auth', 'docker'];
+  List<String> _recent = const [];
 
   @override
   void initState() {
@@ -343,51 +343,53 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
         ),
       const SizedBox(height: 16),
       // Trending topics
-      Row(
-        children: [
-          const Icon(Icons.trending_up, size: 14, color: Color(0xFF5B53F6)),
-          const SizedBox(width: 6),
-          Text(
-            strings.t('search.trending'),
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-          ),
-        ],
-      ),
-      const SizedBox(height: 8),
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children:
-            ['Flutter', 'NestJS', 'Docker', 'React', 'AI'].map((topic) {
-              return GestureDetector(
-                onTap: () {
-                  _controller.text = topic;
-                  _search(topic);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFF5F3FF), Color(0xFFEDE9FE)],
+      if (_query.isEmpty) ...[
+        Row(
+          children: [
+            const Icon(Icons.trending_up, size: 14, color: Color(0xFF5B53F6)),
+            const SizedBox(width: 6),
+            Text(
+              strings.t('search.trending'),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children:
+              ['Flutter', 'NestJS', 'Docker', 'React', 'AI'].map((topic) {
+                return GestureDetector(
+                  onTap: () {
+                    _controller.text = topic;
+                    _search(topic);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
                     ),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '#$topic',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF5B53F6),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF5F3FF), Color(0xFFEDE9FE)],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '#$topic',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF5B53F6),
+                      ),
                     ),
                   ),
-                ),
-              );
-            }).toList(),
-      ),
-      const SizedBox(height: 20),
+                );
+              }).toList(),
+        ),
+        const SizedBox(height: 20),
+      ],
       _SectionTitle(
         title: AppStrings.of(context).t('search.posts'),
         trailing:
