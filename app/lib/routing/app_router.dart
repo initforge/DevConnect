@@ -6,6 +6,7 @@ import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/oauth_callback_screen.dart';
 import '../features/auth/screens/register_screen.dart';
 import '../features/auth/screens/onboarding_screen.dart';
+import '../features/auth/screens/reset_password_screen.dart';
 import '../features/feed/screens/home_screen.dart';
 import '../features/feed/screens/post_detail_screen.dart';
 import '../features/feed/screens/create_post_screen.dart';
@@ -101,6 +102,14 @@ final appRouter = GoRouter(
       path: AppRoutes.oauthCallback,
       name: AppRoutes.nameOauthCallback,
       builder: (_, __) => const OAuthCallbackScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.resetPassword,
+      name: AppRoutes.nameResetPassword,
+      builder:
+          (_, state) => ResetPasswordScreen(
+            token: state.uri.queryParameters['token'] ?? '',
+          ),
     ),
 
     // Main app — Navigation shell with responsive layout

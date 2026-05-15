@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/routes.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/riverpod/providers.dart';
+import '../../../core/services/app_preferences.dart';
+import '../../../core/services/api_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_utils.dart';
 import '../../../core/widgets/decorative_widgets.dart';
@@ -26,6 +28,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabCtrl;
   List<String> _tabLabels = const [];
+  bool _bannerDismissed = false;
 
   @override
   void initState() {
@@ -58,6 +61,69 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ref.read(feedNotifierProvider(FeedType.following).notifier).refresh(),
       ref.read(feedNotifierProvider(FeedType.trending).notifier).refresh(),
     ]);
+  }
+
+  bool get _showVerificationBanner {
+    if (_bannerDismissed) return false;
+    final user = AppPreferences.instance.user;
+    if (user == null) return false;
+    final emailVerified = user['emailVerified'];
+    return emailVerified == false;
+  }
+
+  Widget _buildVerificationBanner() {
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFFFFF3CD),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline, size: 18, color: Color(0xFF856404)),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'Please verify your email.',
+              style: TextStyle(fontSize: 13, color: Color(0xFF856404)),
+            ),
+          ),
+          TextButton(
+            onPressed: _resendVerification,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              'Resend',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF856404),
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () => setState(() => _bannerDismissed = true),
+            child: const Icon(Icons.close, size: 18, color: Color(0xFF856404)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _resendVerification() async {
+    try {
+      await ApiService.instance.post('/auth/send-verification', {});
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Verification email sent.')));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not send verification email.')),
+      );
+    }
   }
 
   @override
@@ -180,33 +246,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
       ),
       body: DecorativeBackground(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: ResponsiveUtils.getContentMaxWidth(context),
+        child: Column(
+          children: [
+            if (_showVerificationBanner) _buildVerificationBanner(),
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: ResponsiveUtils.getContentMaxWidth(context),
+                  ),
+                  child: TabBarView(
+                    controller: _tabCtrl,
+                    children: [
+                      FeedList(
+                        key: const PageStorageKey('foryou'),
+                        feedType: FeedType.forYou,
+                        highlightAi: true,
+                        onRefresh: _refresh,
+                      ),
+                      FeedList(
+                        key: const PageStorageKey('following'),
+                        feedType: FeedType.following,
+                        onRefresh: _refresh,
+                      ),
+                      FeedList(
+                        key: const PageStorageKey('trending'),
+                        feedType: FeedType.trending,
+                        onRefresh: _refresh,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            child: TabBarView(
-              controller: _tabCtrl,
-              children: [
-                FeedList(
-                  key: const PageStorageKey('foryou'),
-                  feedType: FeedType.forYou,
-                  highlightAi: true,
-                  onRefresh: _refresh,
-                ),
-                FeedList(
-                  key: const PageStorageKey('following'),
-                  feedType: FeedType.following,
-                  onRefresh: _refresh,
-                ),
-                FeedList(
-                  key: const PageStorageKey('trending'),
-                  feedType: FeedType.trending,
-                  onRefresh: _refresh,
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );

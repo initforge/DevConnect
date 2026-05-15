@@ -44,6 +44,9 @@ class AppRoutes {
   static const String userBase = '/user';
   static const String projectBase = '/projects';
 
+  // Auth flow routes
+  static const String resetPassword = '/reset-password';
+
   // Debug Routes
   static const String shotLab = '/shot-lab';
 
@@ -74,4 +77,7 @@ class AppRoutes {
   static const String nameMyApplications = 'myApplications';
   static const String nameMentorship = 'mentorship';
   static const String nameShotLab = 'shotLab';
+
+  // Auth flow route names
+  static const String nameResetPassword = 'resetPassword';
 }
