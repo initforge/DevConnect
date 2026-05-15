@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_runtime_config.dart';
+import '../../../core/localization/app_strings.dart';
 import '../../../core/models/models.dart';
 import '../../../core/services/app_preferences.dart';
 import '../../../core/theme/app_colors.dart';
@@ -74,15 +75,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       if (joined) {
         _loadMembers();
         _refresh();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Joined project!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppStrings.of(context).t('projects.joinedProject')),
+          ),
+        );
       }
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoadingJoin = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to join project right now')),
+        SnackBar(
+          content: Text(AppStrings.of(context).t('projects.unableJoin2')),
+        ),
       );
     }
   }
@@ -102,15 +107,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       if (left) {
         _loadMembers();
         _refresh();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Left project')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppStrings.of(context).t('projects.leftProject')),
+          ),
+        );
       }
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoadingLeave = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to leave project right now')),
+        SnackBar(
+          content: Text(AppStrings.of(context).t('projects.unableLeave')),
+        ),
       );
     }
   }
@@ -178,12 +187,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   sheetContext.pop();
                   _refresh();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Project updated')),
+                    SnackBar(
+                      content: Text(
+                        AppStrings.of(context).t('projects.projectUpdated'),
+                      ),
+                    ),
                   );
                 }
               } catch (e) {
                 setSheetState(
-                  () => error = 'Failed to update project. Please try again.',
+                  () => error = AppStrings.current().t('projects.failedUpdate'),
                 );
               } finally {
                 setSheetState(() => saving = false);
@@ -312,14 +325,18 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       await _repository.deleteProject(projectId);
       if (!mounted) return;
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Project deleted')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.of(context).t('projects.projectDeleted')),
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to delete project')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.of(context).t('projects.failedDelete')),
+        ),
+      );
     }
   }
 

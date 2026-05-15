@@ -445,4 +445,22 @@ const Map<String, String> stringsEn = {
   'search.hint': 'Search posts, people, projects...',
   'search.noRecent': 'No recent searches yet',
   'search.trending': 'Trending Topics',
+
+  // i18n-02: onboarding
+  'onboarding.almostThere': 'Almost there!',
+  'onboarding.pickInterests': 'Pick your interests to personalize your feed',
+  'onboarding.skipForNow': 'Skip for now',
+  'onboarding.continue': 'Continue',
+  'onboarding.failedSave': 'Failed to save onboarding state',
+  'onboarding.failedSync': 'Failed to sync onboarding profile',
+
+  // i18n-02: project detail
+  'projects.joinedProject': 'Joined project!',
+  'projects.unableJoin2': 'Unable to join project right now',
+  'projects.leftProject': 'Left project',
+  'projects.unableLeave': 'Unable to leave project right now',
+  'projects.projectDeleted': 'Project deleted',
+  'projects.failedDelete': 'Failed to delete project',
+  'projects.projectUpdated': 'Project updated',
+  'projects.failedUpdate': 'Failed to update project. Please try again.',
 };

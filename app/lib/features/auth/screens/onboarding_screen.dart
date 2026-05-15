@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/constants/app_seed_constants.dart';
 import '../../../core/constants/routes.dart';
+import '../../../core/localization/app_strings.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/app_preferences.dart';
 import '../../../core/theme/app_colors.dart';
@@ -47,7 +48,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save onboarding state: $e')),
+        SnackBar(
+          content: Text(
+            '${AppStrings.current().t('onboarding.failedSave')}: $e',
+          ),
+        ),
       );
       return;
     }
@@ -65,7 +70,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to sync onboarding profile: $e')),
+        SnackBar(
+          content: Text(
+            '${AppStrings.current().t('onboarding.failedSync')}: $e',
+          ),
+        ),
       );
       return;
     }
@@ -156,24 +165,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 18)),
-                  const SliverToBoxAdapter(
+                  SliverToBoxAdapter(
                     child: Text(
-                      'Almost there!',
+                      AppStrings.of(context).t('onboarding.almostThere'),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                  const SliverToBoxAdapter(
+                  SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 28),
+                      padding: const EdgeInsets.symmetric(horizontal: 28),
                       child: Text(
-                        'Pick your interests to personalize your feed',
+                        AppStrings.of(context).t('onboarding.pickInterests'),
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,
                         ),
@@ -220,15 +229,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   borderRadius: BorderRadius.circular(25),
                                 ),
                               ),
-                              child: const Text('Continue'),
+                              child: Text(
+                                AppStrings.of(context).t('onboarding.continue'),
+                              ),
                             ),
                           ),
                           const SizedBox(height: 10),
                           TextButton(
                             onPressed: _skip,
-                            child: const Text(
-                              'Skip for now',
-                              style: TextStyle(color: AppColors.textSecondary),
+                            child: Text(
+                              AppStrings.of(context).t('onboarding.skipForNow'),
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ),
                         ],

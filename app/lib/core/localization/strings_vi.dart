@@ -438,4 +438,22 @@ const Map<String, String> stringsVi = {
   'search.hint': 'Tìm bài viết, người dùng, dự án...',
   'search.noRecent': 'Chưa có tìm kiếm gần đây',
   'search.trending': 'Chủ đề thịnh hành',
+
+  // i18n-02: onboarding
+  'onboarding.almostThere': 'Gần xong rồi!',
+  'onboarding.pickInterests': 'Chọn sở thích để cá nhân hóa feed của bạn',
+  'onboarding.skipForNow': 'Bỏ qua',
+  'onboarding.continue': 'Tiếp tục',
+  'onboarding.failedSave': 'Không thể lưu trạng thái onboarding',
+  'onboarding.failedSync': 'Không thể đồng bộ hồ sơ onboarding',
+
+  // i18n-02: project detail
+  'projects.joinedProject': 'Đã tham gia dự án!',
+  'projects.unableJoin2': 'Không thể tham gia dự án lúc này',
+  'projects.leftProject': 'Đã rời dự án',
+  'projects.unableLeave': 'Không thể rời dự án lúc này',
+  'projects.projectDeleted': 'Đã xóa dự án',
+  'projects.failedDelete': 'Không thể xóa dự án',
+  'projects.projectUpdated': 'Đã cập nhật dự án',
+  'projects.failedUpdate': 'Không thể cập nhật dự án. Vui lòng thử lại.',
 };
