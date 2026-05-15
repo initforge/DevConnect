@@ -16,6 +16,7 @@ import '../../../core/widgets/shared_widgets.dart';
 import '../../../data/repositories/comment_repository.dart';
 import '../../../data/repositories/post_repository.dart';
 import '../../../data/repositories/user_repository.dart';
+import '../widgets/post_detail/comment_card.dart';
 
 part 'post_detail_widgets.dart';
 
@@ -536,7 +537,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           .map(
             (comment) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: _CommentCard(
+              child: CommentCard(
                 comment: comment,
                 canMarkBest: canMarkBest && !comment.isBest,
                 onReply: () => _replyTo(comment),
@@ -554,7 +555,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       return [
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
-          child: _CommentCard(
+          child: CommentCard(
             comment: comment,
             canMarkBest: canMarkBest && !comment.isBest,
             replyCount:
