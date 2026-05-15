@@ -688,23 +688,6 @@ class ErrorState extends StatelessWidget {
   }
 }
 
-class EmptyPostFeed extends StatelessWidget {
-  final VoidCallback? onCreatePost;
-
-  const EmptyPostFeed({super.key, this.onCreatePost});
-
-  @override
-  Widget build(BuildContext context) {
-    return EmptyState(
-      icon: Icons.article_outlined,
-      title: 'Chua co bai viet nao',
-      subtitle: 'Hay la nguoi dau tien chia se kien thuc voi cong dong!',
-      actionLabel: onCreatePost != null ? 'Tao bai viet' : null,
-      onAction: onCreatePost,
-    );
-  }
-}
-
 class EmptySearchResults extends StatelessWidget {
   final String? query;
 
@@ -737,123 +720,9 @@ class EmptyNotifications extends StatelessWidget {
   }
 }
 
-class EmptyMessages extends StatelessWidget {
-  final VoidCallback? onNewMessage;
-
-  const EmptyMessages({super.key, this.onNewMessage});
-
-  @override
-  Widget build(BuildContext context) {
-    return EmptyState(
-      icon: Icons.chat_bubble_outline_outlined,
-      title: 'Chua co tin nhan nao',
-      subtitle: 'Bat dau cuoc tro chuyen voi ban be va dong nghiep!',
-      actionLabel: onNewMessage != null ? 'Tin nhan moi' : null,
-      onAction: onNewMessage,
-    );
-  }
-}
-
 // ============================================================
 // BANNERS
 // ============================================================
-
-class FuturePhaseBanner extends StatelessWidget {
-  final String title;
-  final String description;
-  final String badge;
-  final IconData icon;
-  final bool showActionHint;
-
-  const FuturePhaseBanner({
-    super.key,
-    required this.title,
-    required this.description,
-    this.badge = 'PHASE 2',
-    this.icon = Icons.rocket_launch_outlined,
-    this.showActionHint = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: kSpacingLg),
-      padding: const EdgeInsets.all(kSpacingLg),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(kBorderRadiusLg),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(kSpacingSm),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(kBorderRadiusMd),
-                ),
-                child: Icon(icon, color: AppColors.primary, size: 18),
-              ),
-              const SizedBox(width: kSpacingMd),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  badge,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: kSpacingMd),
-          Text(
-            description,
-            style: const TextStyle(
-              fontSize: 13,
-              height: 1.45,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          if (showActionHint) ...[
-            const SizedBox(height: 10),
-            const Text(
-              'Giao dien duoc giu lai de minh hoa roadmap. CRUD, realtime hoac backend se duoc bo sung o giai doan sau.',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textTertiary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
 
 // ============================================================
 // ACTION BAR
