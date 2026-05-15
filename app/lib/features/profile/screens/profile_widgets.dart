@@ -1,7 +1,8 @@
-part of 'profile_screen.dart';
+import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 
-class _StatBlock extends StatelessWidget {
-  const _StatBlock({required this.value, required this.label});
+class ProfileStatBlock extends StatelessWidget {
+  const ProfileStatBlock({super.key, required this.value, required this.label});
 
   final String value;
   final String label;
@@ -24,8 +25,9 @@ class _StatBlock extends StatelessWidget {
   }
 }
 
-class _AboutInfo extends StatelessWidget {
-  const _AboutInfo({
+class ProfileAboutInfo extends StatelessWidget {
+  const ProfileAboutInfo({
+    super.key,
     required this.icon,
     required this.title,
     required this.subtitle,

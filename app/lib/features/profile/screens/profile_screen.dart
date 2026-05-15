@@ -15,8 +15,7 @@ import '../../../data/repositories/post_repository.dart';
 import '../../../data/repositories/project_repository.dart';
 import '../../../data/repositories/user_repository.dart';
 import '../../feed/widgets/post_card.dart';
-
-part 'profile_widgets.dart';
+import 'profile_widgets.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, this.userId});
@@ -695,15 +694,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _StatBlock(
+                          ProfileStatBlock(
                             value: '${user.followerCount}',
                             label: strings.t('profile.followers').toUpperCase(),
                           ),
-                          _StatBlock(
+                          ProfileStatBlock(
                             value: '${user.followingCount}',
                             label: strings.t('profile.following').toUpperCase(),
                           ),
-                          _StatBlock(
+                          ProfileStatBlock(
                             value: '${user.postCount}',
                             label: strings.t('profile.posts').toUpperCase(),
                           ),
@@ -1229,18 +1228,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
             ],
             const SizedBox(height: 8),
-            _AboutInfo(
+            ProfileAboutInfo(
               icon: Icons.emoji_events_outlined,
               title: '${user.reputation} XP',
               subtitle: strings.t('common.reputation'),
             ),
-            _AboutInfo(
+            ProfileAboutInfo(
               icon: Icons.calendar_today_outlined,
               title: 'Joined ${user.createdAt.year}',
               subtitle: strings.t('common.memberSince'),
             ),
             if (user.isMentor)
-              _AboutInfo(
+              ProfileAboutInfo(
                 icon: Icons.school_outlined,
                 title: strings.t('common.mentor'),
                 subtitle: strings.t('common.availableForGuidance'),
